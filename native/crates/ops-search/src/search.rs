@@ -543,15 +543,14 @@ fn glob_with(request: &Request, source: Option<&dyn FsDataSource>) -> Result<Val
     if args.limit == 0 || args.limit > 10_000 {
         return Err(Failure::new("INVALID_ARGUMENT", "glob limit is 1-10000"));
     }
-    if let Some((index, _)) = args
-        .pattern
-        .iter()
-        .enumerate()
-        .find(|(_, pattern)| pattern.trim().is_empty())
-    {
+    // #797: an entry the compiler can never match (empty, whitespace, or a
+    // segment no relative path carries) used to come back as a complete scan
+    // with zero files, indistinguishable from an empty tree. Reject before the
+    // path is opened, so a bad pattern never costs a traversal.
+    if let Some((index, fault)) = super::patterns::first_invalid(&args.pattern) {
         return Err(Failure::new(
             "INVALID_ARGUMENT",
-            format!("pattern[{index}] must be a non-empty glob"),
+            super::patterns::invalid_message("pattern", index, fault),
         ));
     }
     if args.pattern.is_empty() || args.pattern.iter().all(|pattern| pattern.starts_with('!')) {
@@ -705,6 +704,15 @@ fn grep_with(request: &Request, source: Option<&dyn FsDataSource>) -> Result<Val
     }
     if args.limit == 0 || args.limit > 10_000 {
         return Err(Failure::new("INVALID_ARGUMENT", "grep limit is 1-10000"));
+    }
+    // The glob filter is compiled by the same Patterns type as glob's pattern,
+    // so an impossible entry would filter every file out and report a complete
+    // scan with zero matches (#797).
+    if let Some((index, fault)) = super::patterns::first_invalid(&args.glob) {
+        return Err(Failure::new(
+            "INVALID_ARGUMENT",
+            super::patterns::invalid_message("glob", index, fault),
+        ));
     }
     if args.before_context > 32 || args.after_context > 32 {
         return Err(Failure::new(
@@ -920,6 +928,10 @@ fn grep_with(request: &Request, source: Option<&dyn FsDataSource>) -> Result<Val
     let observed = if definitions { observed } else { match_count };
     finish(scan, cursor, page, observed, total, extra)
 }
+
+#[cfg(test)]
+#[path = "invalid_pattern_tests.rs"]
+mod invalid_pattern_tests;
 
 #[cfg(test)]
 #[path = "index_source_tests.rs"]
