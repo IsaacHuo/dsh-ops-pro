@@ -1,6 +1,7 @@
 //! Windows-only FFI boundary. Callers supply owned/borrowed file handles; no
 //! model paths, shells, privilege enabling, or publication policy live here.
 #![cfg(windows)]
+mod ea;
 mod inheritance;
 pub use inheritance::inherit_new_file_dacl;
 use std::{
@@ -58,82 +59,9 @@ unsafe extern "system" {
         length: u32,
         class: u32,
     ) -> i32;
-    fn NtQueryEaFile(
-        handle: HANDLE,
-        status: *mut IoStatus,
-        buffer: *mut c_void,
-        length: u32,
-        single: u8,
-        list: *const c_void,
-        list_length: u32,
-        index: *const u32,
-        restart: u8,
-    ) -> i32;
     fn RtlNtStatusToDosError(status: i32) -> u32;
 }
 
-/// Kernel-owned EAs that the file system deletes on the next modification.
-/// User mode can neither write nor preserve them, so they are not metadata a
-/// replacement could lose (security/indexing products tag files with these).
-const PURGEABLE_KERNEL_EA: &[u8] = b"$KERNEL.PURGE.";
-
-/// Walk a FILE_FULL_EA_INFORMATION chain and report whether every entry is a
-/// purgeable kernel EA. Malformed chains are an error, never a pass.
-fn only_purgeable_kernel_eas(buffer: &[u8]) -> io::Result<bool> {
-    let malformed = || unsupported("Malformed Windows extended attribute list");
-    let mut offset = 0usize;
-    loop {
-        let header = buffer.get(offset..offset + 8).ok_or_else(malformed)?;
-        let next = u32::from_le_bytes(header[0..4].try_into().unwrap()) as usize;
-        let name_length = header[5] as usize;
-        let name = buffer
-            .get(offset + 8..offset + 8 + name_length)
-            .ok_or_else(malformed)?;
-        if !(name.len() > PURGEABLE_KERNEL_EA.len()
-            && name[..PURGEABLE_KERNEL_EA.len()].eq_ignore_ascii_case(PURGEABLE_KERNEL_EA))
-        {
-            return Ok(false);
-        }
-        if next == 0 {
-            return Ok(true);
-        }
-        if next < 8 || next % 4 != 0 {
-            return Err(malformed());
-        }
-        offset = offset.checked_add(next).ok_or_else(malformed)?;
-    }
-}
-
-fn only_purgeable_kernel_eas_on(file: &File) -> io::Result<bool> {
-    // An EA set is bounded at 64KiB; FILE_FULL_EA_INFORMATION padding fits in 2x.
-    let mut buffer = vec![0u32; 32 * 1024];
-    let mut status = IoStatus {
-        status: 0,
-        information: 0,
-    };
-    // SAFETY: the buffer is a live, 4-byte aligned 128KiB allocation; no EA
-    // name list or index is supplied, so the scan returns every entry.
-    let result = unsafe {
-        NtQueryEaFile(
-            file.as_raw_handle(),
-            &mut status,
-            buffer.as_mut_ptr().cast(),
-            (buffer.len() * 4) as u32,
-            0,
-            std::ptr::null(),
-            0,
-            std::ptr::null(),
-            1,
-        )
-    };
-    if result < 0 {
-        return Err(nt_error(result));
-    }
-    // SAFETY: reinterpreting the initialised u32 allocation as bytes.
-    let bytes =
-        unsafe { std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>(), buffer.len() * 4) };
-    only_purgeable_kernel_eas(&bytes[..status.information.min(bytes.len())])
-}
 fn unsupported(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Unsupported, message)
 }
@@ -392,6 +320,7 @@ pub fn verify_cache(file: &File, write_sid: Option<&str>) -> io::Result<()> {
 pub struct Metadata {
     sd: Option<LocalBox<SecurityDescriptor>>,
     basic: FILE_BASIC_INFO,
+    eas: ea::CapturedEas,
     warnings: Vec<String>,
 }
 impl Metadata {
@@ -448,29 +377,15 @@ impl Metadata {
                 return Err(unsupported("Unknown Windows stream metadata"));
             }
         }
-        if capabilities.extended_attributes() {
-            let mut ea_size = 0u32;
-            let mut status = IoStatus {
-                status: 0,
-                information: 0,
-            };
-            // SAFETY: FileEaInformation (7) writes one ULONG into ea_size.
-            let result = unsafe {
-                NtQueryInformationFile(
-                    file.as_raw_handle(),
-                    &mut status,
-                    addr_of_mut!(ea_size).cast(),
-                    4,
-                    7,
-                )
-            };
-            if result < 0 {
-                return Err(nt_error(result));
-            }
-            if ea_size != 0 && !only_purgeable_kernel_eas_on(file)? {
-                return Err(unsupported("Windows extended attributes are not supported"));
-            }
-        }
+        // #874: user EAs are captured for an exact restore instead of refusing
+        // the whole write; kernel-owned EAs degrade with named evidence.
+        let eas = if capabilities.extended_attributes() {
+            ea::capture(file)?
+        } else {
+            ea::CapturedEas::default()
+        };
+        let mut warnings = capabilities.warnings();
+        warnings.extend(eas.warnings());
         Ok(Self {
             sd: if capabilities.persistent_acls() {
                 Some(descriptor(file)?)
@@ -478,7 +393,8 @@ impl Metadata {
                 None
             },
             basic,
-            warnings: capabilities.warnings(),
+            eas,
+            warnings,
         })
     }
     pub fn warnings(&self) -> &[String] {
@@ -535,6 +451,8 @@ impl Metadata {
         {
             return Err(io::Error::last_os_error());
         }
+        // Restored before verification: the destination is our own staged file.
+        ea::restore(file, &self.eas)?;
         self.verify(file)
     }
     pub fn verify(&self, file: &File) -> io::Result<()> {
@@ -569,6 +487,7 @@ impl Metadata {
         {
             return Err(unsupported("Windows basic metadata verification failed"));
         }
+        ea::verify(file, &self.eas)?;
         Ok(())
     }
 }
@@ -662,42 +581,6 @@ mod tests {
         assert_eq!(streams_only.warnings().len(), 2);
     }
 
-    fn ea_entry(name: &[u8], value: usize, last: bool) -> Vec<u8> {
-        let mut entry = vec![0u8; 8];
-        entry[5] = name.len() as u8;
-        entry[6..8].copy_from_slice(&(value as u16).to_le_bytes());
-        entry.extend_from_slice(name);
-        entry.push(0);
-        entry.extend(std::iter::repeat_n(0xAB, value));
-        while entry.len() % 4 != 0 {
-            entry.push(0);
-        }
-        if !last {
-            let next = entry.len() as u32;
-            entry[0..4].copy_from_slice(&next.to_le_bytes());
-        }
-        entry
-    }
-
-    #[test]
-    fn purgeable_kernel_eas_are_tolerated_and_user_eas_still_fail_closed() {
-        let kernel = ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, true);
-        assert!(only_purgeable_kernel_eas(&kernel).unwrap());
-        let mut two = ea_entry(b"$Kernel.Purge.ESBCACHE", 3, false);
-        two.extend(ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, true));
-        assert!(only_purgeable_kernel_eas(&two).unwrap());
-        let mut mixed = ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, false);
-        mixed.extend(ea_entry(b"USER.TAG", 4, true));
-        assert!(!only_purgeable_kernel_eas(&mixed).unwrap());
-        assert!(!only_purgeable_kernel_eas(&ea_entry(b"$KERNEL.SMARTLOCKER", 4, true)).unwrap());
-        assert!(!only_purgeable_kernel_eas(&ea_entry(b"$KERNEL.PURGE.", 1, true)).unwrap());
-        assert!(only_purgeable_kernel_eas(&kernel[..10]).is_err());
-        let mut looping = kernel.clone();
-        looping[0..4].copy_from_slice(&4u32.to_le_bytes());
-        assert!(only_purgeable_kernel_eas(&looping).is_err());
-        assert!(only_purgeable_kernel_eas(&[]).is_err());
-    }
-
     #[test]
     fn real_named_streams_on_a_capable_volume_still_fail_closed() {
         let root = std::env::temp_dir().join(format!(
@@ -760,5 +643,161 @@ mod tests {
         drop(parent);
         assert!(!root.join("private").exists());
         std::fs::remove_dir(root).unwrap();
+    }
+
+    // Test-local fixture FFI: it only creates the EA set; the capture and
+    // restore code under test never calls it, and the signature matches the
+    // crate's own NtSetEaFile declaration exactly.
+    #[link(name = "ntdll")]
+    unsafe extern "system" {
+        fn NtSetEaFile(
+            handle: HANDLE,
+            status: *mut IoStatus,
+            buffer: *const c_void,
+            length: u32,
+        ) -> i32;
+    }
+    fn probe_error(result: i32) -> io::Error {
+        // SAFETY: total scalar conversion, no pointer arguments.
+        io::Error::from_raw_os_error(unsafe { RtlNtStatusToDosError(result) } as i32)
+    }
+    /// Build one FILE_FULL_EA_INFORMATION entry and set it on a file.
+    fn set_ea(path: &std::path::Path, name: &[u8], value: &[u8]) -> io::Result<()> {
+        let mut buffer = Vec::with_capacity(8 + name.len() + 1 + value.len());
+        buffer.extend_from_slice(&0u32.to_le_bytes());
+        buffer.push(0);
+        buffer.push(name.len() as u8);
+        buffer.extend_from_slice(&(value.len() as u16).to_le_bytes());
+        buffer.extend_from_slice(name);
+        buffer.push(0);
+        buffer.extend_from_slice(value);
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)?;
+        let mut status = IoStatus {
+            status: 0,
+            information: 0,
+        };
+        // SAFETY: borrowed handle; buffer and status outlive the call.
+        let result = unsafe {
+            NtSetEaFile(
+                file.as_raw_handle(),
+                &mut status,
+                buffer.as_ptr().cast(),
+                buffer.len() as u32,
+            )
+        };
+        if result < 0 {
+            return Err(probe_error(result));
+        }
+        Ok(())
+    }
+    #[test]
+    fn user_extended_attributes_round_trip_instead_of_refusing_the_write() {
+        // #874: files carrying user EAs were all refused; they must round-trip.
+        let root = std::env::temp_dir().join(format!(
+            "dsh-metadata-ea-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("tagged");
+        std::fs::write(&path, b"payload").unwrap();
+        set_ea(&path, b"dsh-ops.test", b"fixture")
+            .expect("this volume must accept user EAs for the fixture");
+        // NTFS folds user EA names to uppercase when storing and querying them.
+        let observed = ea::capture(&File::open(&path).unwrap()).unwrap();
+        assert_eq!(observed.entries.len(), 1);
+        assert_eq!(observed.entries[0].name, b"DSH-OPS.TEST".to_vec());
+        assert_eq!(observed.entries[0].value, b"fixture".to_vec());
+        assert!(observed.kernel.is_empty());
+        // #874: capture must describe the EA set instead of refusing the file.
+        let file = File::open(&path).unwrap();
+        assert!(
+            VolumeCapabilities::query(&file)
+                .unwrap()
+                .extended_attributes()
+        );
+        let captured = Metadata::capture(&file).expect("user EAs must be captured, not rejected");
+        let parent = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(0x02000000)
+            .open(&root)
+            .unwrap();
+        let mut staging = create_private(&parent, "staged").unwrap();
+        staging.write_all(b"payload").unwrap();
+        captured.restore(&staging).unwrap();
+        captured.verify(&staging).unwrap();
+        drop(staging);
+        drop(file);
+        let restored = ea::capture(&File::open(root.join("staged")).unwrap()).unwrap();
+        assert_eq!(restored.entries.len(), 1);
+        assert_eq!(restored.entries[0].name, b"DSH-OPS.TEST".to_vec());
+        assert_eq!(restored.entries[0].value, b"fixture".to_vec());
+        assert_eq!(std::fs::read(&root.join("staged")).unwrap(), b"payload");
+        drop(parent);
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn kernel_named_eas_belong_to_the_kernel_not_user_mode() {
+        // The $KERNEL.* namespace is kernel-owned. A user-mode NtSetEaFile with
+        // such a name is either refused or silently dropped (observed here:
+        // the call succeeds and nothing is stored), so real kernel EAs on disk
+        // (EFS's PurgeEFSProxyCache, SmartLocker tags) can never be restored
+        // from user mode. Capture therefore classifies them by name and the
+        // publication reports each one; that classification and its warnings
+        // are asserted in the ea:: unit tests (#874).
+        let root = std::env::temp_dir().join(format!(
+            "dsh-metadata-kernel-ea-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("kernel-tagged");
+        std::fs::write(&path, b"payload").unwrap();
+        let parent = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(0x02000000)
+            .open(&root)
+            .unwrap();
+        if let Err(refusal) = set_ea(&path, b"$KERNEL.SimTag", b"v") {
+            // The kernel refused user-mode $KERNEL.* creation itself: that is
+            // the documented reason no restore path can preserve them either.
+            assert!(refusal.raw_os_error().is_some(), "{refusal}");
+            drop(parent);
+            std::fs::remove_dir_all(&root).unwrap();
+            return;
+        }
+        // On this build the user-mode set reports success while the kernel
+        // silently drops the reserved name: nothing exists to capture, and an
+        // empty EA set must not be refused either.
+        let observed = ea::capture(&File::open(&path).unwrap()).unwrap();
+        assert!(
+            observed.entries.is_empty() && observed.kernel.is_empty(),
+            "the kernel must own the $KERNEL namespace: {observed:?}"
+        );
+        let file = File::open(&path).unwrap();
+        let captured = Metadata::capture(&file).expect("an empty EA set must not be refused");
+        assert!(captured.warnings().is_empty());
+        let mut staging = create_private(&parent, "kernel-staged").unwrap();
+        staging.write_all(b"payload").unwrap();
+        captured.restore(&staging).unwrap();
+        captured.verify(&staging).unwrap();
+        drop(staging);
+        drop(file);
+        assert_eq!(
+            std::fs::read(root.join("kernel-staged")).unwrap(),
+            b"payload"
+        );
+        drop(parent);
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }
