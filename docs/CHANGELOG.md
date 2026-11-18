@@ -68,6 +68,10 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - When no grant is entitled, the publication registrar consults every same-agent `deferred()` advisor in grant order instead of only the first one it finds. An advisor that answers `undefined` or throws no longer masks a later grant's pointer: one entry can hold several same-agent file leases — a PTC pool grant and a discovery pool grant for the same public name — and a host that ignores `when` used to get `PUBLICATION_GRANT_UNAVAILABLE` (retry: never) even though a later advisor could name `ops_load_sdk` or `ops_discover_tools`. The first advisor that answers wins; when none can help, the honest generic denial stays (#968 review finding).
 - 无有资格 grant 时，发布 registrar 按插入顺序逐一咨询同 agent 的每个 `deferred()` advisor，不再只问找到的第一个。返回 `undefined` 或抛错的 advisor 不再遮蔽后续 grant 的指路：同一个注册项可同时持有多个同 agent 的文件租约——例如 PTC 候选池与发现池指向同一公开名——忽略 `when` 的宿主此前会拿到 `PUBLICATION_GRANT_UNAVAILABLE`（retry: never），即使后面的 advisor 本可点名 `ops_load_sdk` 或 `ops_discover_tools`。第一个给出答案的 advisor 胜出；全都无法指路时保持诚实的通用拒绝（#968 审核发现）。
+- Unloading or disabling the `dsh-ops` row no longer strands `selectedDefault: ops-ptc`: when the live default still names the removed preset, the row lease restores the host's configured default. A default naming any other preset is never rewritten, and a missing or rejecting settings service reports the leftover instead of guessing (#928).
+- 禁用或卸载 `dsh-ops` 行不再遗留 `selectedDefault: ops-ptc`：若当前默认仍指向被移除的预设，行级清理会恢复宿主配置的默认值；指向任何其他预设的选择绝不改写。settings 服务缺失或拒绝写入时会明确报告残留，不会猜测修复（#928）。
+- Session Bash publication now deduplicates overlapping row ownership, carries queued registration identity to settlement, latches one failure per generation, and re-asserts authority at `turn/start`. This closes the append-reentry retry storm, duplicate-registration pair and interrupted-turn tool disappearance without weakening per-agent authority (#579, #842, #873).
+- 会话 Bash 发布现在会对重叠行所有权去重，把排队注册的身份跟踪到结算，每代只报告一次失败，并在 `turn/start` 重新断言权限。修复 append 重入重试风暴、成对重复注册与中断回合后的工具消失，同时不削弱每个 agent 的权限边界（#579、#842、#873）。
 
 ## [0.5.5] — 2026-11-13 — Patch release
 
