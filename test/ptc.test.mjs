@@ -414,7 +414,7 @@ try {
   fs.copyFileSync('package.json',path.join(isolatedPackage,'package.json'))
   const runtimeDir = path.resolve('runtime',`${process.platform}-${process.arch}`)
   fs.cpSync(runtimeDir,path.join(isolatedPackage,'runtime',`${process.platform}-${process.arch}`),{recursive:true})
-  assert.throws(() => resolveWorker({}, {platform:'linux',arch:'arm64'}), /unsupported runtime target/)
+  assert.throws(() => resolveWorker({}, {platform:'linux',arch:'ia32'}), /unsupported runtime target/)
   assert.throws(() => resolveWorker({}, {platform:'win32',arch:'arm64'}), /unsupported runtime target/)
   assert.throws(() => resolveWorker({}, {platform:'darwin',arch:'riscv64'}), /unsupported runtime target/)
   assert.ok(resolveWorker({}, {packageRoot:isolatedPackage}).startsWith(isolatedPackage))
