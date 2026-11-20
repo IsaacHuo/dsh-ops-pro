@@ -66,13 +66,15 @@ const WORKER_TARGET = option('worker-target', undefined)
  * Windows is the interesting one: `file-metadata` and `linux-attributes` are POSIX
  * concepts (mode bits, POSIX ACLs, `user.*` xattrs, inode identity, sparse allocation),
  * and `linux-shell` drives the POSIX bash rung — its own subject. On a POSIX host the
- * Windows-only cache preparation and windows-security suites skip on POSIX; `mount` may skip when no native worker can be resolved
- * there (component composition needs it).
+ * Windows-only cache preparation, windows-security and the Windows Niubash runtime-branch suites
+ * skip on POSIX; `mount` may skip when no native worker can be resolved there (component
+ * composition needs it).
  * A platform that skips anything else is a finding, not a footnote.
  */
 const ALLOWED_SKIPS = TARGET === 'win32-x64'
   ? ['file-metadata', 'linux-attributes', 'linux-shell']
-  : ['mount', 'result-storage-cache-prep', 'windows-security', 'niubash-consumer', 'niubash-security-host']
+  : ['mount', 'result-storage-cache-prep', 'windows-security', 'niubash-consumer', 'niubash-security-host',
+    'shells-full-access-confinement', 'shells-msys-shared-section', 'shells-niubash-prepared-boundary']
 
 /**
  * Suites that need an *optional external* checkout (`DSH_OPS_TUI_ROOT`, and for the native one also
