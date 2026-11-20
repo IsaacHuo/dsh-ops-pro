@@ -11,7 +11,7 @@
 ## 示例
 
 ```ts
-import { registerSystemSection, registerStepTailProvider } from 'dsh-ops/prompt-injection'
+import { registerSystemSection, registerStepTailProvider } from 'dsh-ops-pro/prompt-injection'
 
 // Call inside a plugin with the target Agent already available.
 const removeSection = registerSystemSection(ctx, agent, {

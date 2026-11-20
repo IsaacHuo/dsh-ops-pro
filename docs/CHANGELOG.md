@@ -7,6 +7,26 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Windows `write_file`/`edit_file` atomic replacement backs off a transient `ERROR_ACCESS_DENIED`/`ERROR_SHARING_VIOLATION` on the publishing rename (25–800 ms, about 1.6 s in total). Endpoint-security and indexing products briefly hold a freshly written file open, and an edit right after a write used to fail with `ACCESS_DENIED: Atomic replacement publish … (os error 5)`. Nothing is published while the rename fails, so repeating it cannot apply twice; a denial that outlasts the budget and every other error are reported as before.
+- Windows 上 `write_file`/`edit_file` 的原子替换在发布 rename 遇到暂时性 `ERROR_ACCESS_DENIED`/`ERROR_SHARING_VIOLATION` 时有界退避重试（25–800 ms，合计约 1.6 秒）。终端安全与索引软件会短暂占用刚写出的文件，此前写入后立即编辑会报 `ACCESS_DENIED: Atomic replacement publish … (os error 5)`。rename 失败期间没有任何发布，重复执行不会重复生效；超过预算的拒绝与其它错误照旧报告。
+- **Breaking:** the package is published as `dsh-ops-pro`, a long-term fork of `dsh-ops`. The npm name, bundle row id and entry, browser module id, profile bundle name and the public subpaths (`dsh-ops-pro/integration`, `dsh-ops-pro/prompt-injection`, `dsh-ops-pro/ptc-sdk`) all come from one `PACKAGE_NAME`. Tool names, the `dsh-ops` CLI (now also installed as `dsh-ops-pro`) and the managed state under `<DSH_HOME>/dsh-ops/` are unchanged. Remove upstream `dsh-ops` before adding this package; settings saved on the old row are not migrated. The retired-row check no longer hard-codes the row name.
+- **破坏性变更：** 包改以 `dsh-ops-pro` 发布，作为 `dsh-ops` 的长期分支。npm 包名、bundle 行 id 与 entry、浏览器模块 id、profile bundle 名以及公开子路径（`dsh-ops-pro/integration`、`dsh-ops-pro/prompt-injection`、`dsh-ops-pro/ptc-sdk`）统一取自 `PACKAGE_NAME`。工具名、`dsh-ops` 命令行（现同时以 `dsh-ops-pro` 安装）与 `<DSH_HOME>/dsh-ops/` 下的托管状态不变。添加本包前先移除上游 `dsh-ops`；旧行上保存的设置不会迁移。退役行检测不再硬编码行名。
+- Every composition-root lookup now goes through one `hostRoot(ctx)` helper that reads `Symbol.for('cordis.root')` first and the released `ctx.root` property second. Newer cordis builds dropped `ctx.root`, and the 21 bare reads made the whole row fail to activate with `cannot get property "root" without inject` (#1026).
+- 所有组合根查找统一经由 `hostRoot(ctx)`：先读 `Symbol.for('cordis.root')`，再读已发布 cordis 的 `ctx.root` 属性。较新的 cordis 去掉了 `ctx.root`，原先 21 处裸读取会让整行激活失败并报 `cannot get property "root" without inject`（#1026）。
+- Cap ops-ptc batching shape notices at 3 per agent session. Each notice enters history and is re-sent on every later request; the per-turn re-arm let one session collect 80 of them (#1027). Within the cap the latch behaves as before: categories re-arm on a new turn and after a compliant program. The opt-in telemetry line now reports the `session` total.
+- ops-ptc 批量形态提醒每个 agent 会话最多发送 3 条。每条提醒都会进入历史并在之后每次请求中重发，而按轮重新武装曾让一个会话累计 80 条（#1027）。上限内行为不变：新一轮与合规程序之后类别重新武装。可选遥测行新增 `session` 总数。
+- Changelog: remove a duplicated copy of the 0.5.0 preset-mode roster section and turn two stray `## [Unreleased]` headings into subsections of the releases they shipped in. Bump the native core crate to 0.5.5 to match the package, and drop two empty type imports in `src/legacy/host.ts`.
+- CHANGELOG：删除重复的 0.5.0 预设模式组件清单一节，把两个误留的 `## [Unreleased]` 标题改为所属版本下的子节。native 核心 crate 版本升至 0.5.5 与包版本一致；删除 `src/legacy/host.ts` 中两条空的类型导入。
+- Update Windows Niubash `NIUBASH_FACES` for WinuxCmd 1.2.1 (#973): remove unimplemented/conflicting `jq` (migrated to `wpm`) and `link` (shadows MSVC `link.exe`), materialize the 26 missing commands from `winuxcmd wpm links list` (`egrep`, `fgrep`, `pgrep`, `pkill`, `killall`, `envsubst`, `getopt`, `whereis`, `wpm`, etc.), and keep the 6 external utility faces (`env`, `false`, `kill`, `test`, `[`, `true`) needed by `find -exec` and `xargs`. Key the prepared cache directory by `NIUBASH_PREPARED_SHA256` (manifest + face list) so existing hosts retire stale `jq.exe`/`link.exe` caches on next launch.
+- 按 WinuxCmd 1.2.1 实际可用命令更新 Windows Niubash `NIUBASH_FACES`（#973）：移除已迁往 `wpm` 的 `jq` 与冲突的 `link`（会遮蔽系统 `jq` 与 MSVC `link.exe`），补齐 `winuxcmd wpm links list` 中缺失的 26 个命令（含 `egrep`、`fgrep`、`pgrep`、`pkill`、`killall`、`envsubst`、`getopt`、`whereis`、`wpm` 等），并保留 `env`、`false`、`kill`、`test`、`[`、`true` 6 个独立命令供 `find -exec` / `xargs` 等外部进程调用。准备缓存目录键改由 manifest 与命令 face 清单共同计算（`NIUBASH_PREPARED_SHA256`），确保老环境升级后自动退役旧缓存、不再残留废弃的 `jq.exe`/`link.exe`。
+
+- `uninstall --profile` clears `selectedDefault: ops-ptc` from the profile once the official manager has removed the bundle, and the new `repair-default --profile` does the same after a marketplace or `dsh plugin remove` removal (#881, #928). The plugin cannot do this while it is being disposed (settings writes fail with "HMR transactions cannot be nested"). Only the registry row's value `ops-ptc` is removed; other defaults stay, and an unrecognised layout is reported, never rewritten.
+- `uninstall --profile` 在官方管理器移除插件后清除 profile 中的 `selectedDefault: ops-ptc`；新增的 `repair-default --profile` 用于在市场或 `dsh plugin remove` 卸载之后做同样的清理（#881、#928）。插件被卸载时自身无法写入设置（会报 "HMR transactions cannot be nested"）。只删除注册表行里值为 `ops-ptc` 的项；其它默认值保留，无法识别的布局只报告、不改写。
+- Windows file writes, edits, copies and moves no longer fail with `METADATA_UNSUPPORTED: Windows extended attributes are not supported` when the only extended attributes on a file are kernel-owned `$KERNEL.PURGE.*` entries. Endpoint-security and indexing products tag every file with these (for example `$KERNEL.PURGE.CSOOA0000`); user mode cannot write or preserve them and NTFS deletes them on the next modification, so a replacement loses nothing. Any other extended attribute, or a malformed list, still fails closed.
+- Windows 上的文件写入、编辑、复制与移动，在文件仅带有内核所有的 `$KERNEL.PURGE.*` 扩展属性时，不再报 `METADATA_UNSUPPORTED: Windows extended attributes are not supported`。终端安全与索引类产品会给每个文件打上这类属性（例如 `$KERNEL.PURGE.CSOOA0000`）；用户态既不能写入也不能保留它们，NTFS 会在下一次修改时自动删除，因此替换不会丢失任何元数据。其它任何扩展属性或格式异常的属性列表仍按失败处理。
+
+- Installing the frozen Niubash payload and provisioning a pinned shell now back off a transient Windows `EPERM`/`EBUSY`/`EACCES` on the rename that publishes the verified tree, with the same bounded 2.5 s budget the Bash IPC cache already used (#352). Endpoint scanners briefly hold freshly written executables, so the first install on such a host failed with "Niubash provisioning failed: EPERM … rename". Cleanup renames keep their no-retry contract.
+- 安装冻结的 Niubash 载荷与按 pin 预置 shell 时，发布已校验目录树的那次 rename 遇到 Windows 暂时性 `EPERM`/`EBUSY`/`EACCES` 会有界退避重试，预算与 Bash IPC 缓存已用的 2.5 秒相同（#352）。终端安全软件会短暂占用刚写出的可执行文件，此前这类主机上首次安装会报 "Niubash provisioning failed: EPERM … rename"。清理类 rename 仍保持不重试。
 - Native tool construction and the publication refusal queue no longer attach listeners or lifetime effects to the composition root. The evidence observer and result admission subscribe on the caller's context with global dispatch, and the refusal queue falls back to the caller lifetime when the root refuses an effect. dsh-tui 0.20 refuses `root.events.on` and `root.effect` from a plugin activation, and the native-tools row is one, so every `dsh-tui --resume` aborted with "cannot resume session" before the agent mounted.
 - 原生工具构造与发布拒绝队列不再向组合根挂监听或生命周期 effect：证据观察者与 result admission 改为在调用方上下文订阅并声明 global 分发，拒绝队列在 root 拒绝 effect 时回落到调用方生命周期。dsh-tui 0.20 会拒绝插件激活期内的 `root.events.on` 与 `root.effect`，而原生工具行正是插件激活，导致每次 `dsh-tui --resume` 都在 agent 挂载前报 "cannot resume session"。
 - The Bash tool description now states the parse contract of `stdout`/`stderr` where the model reads it: `text` may be a partial fragment, `truncated` marks one that must not be parsed as complete structured output, and `spillPath` is optional and not a completeness guarantee. The typed output schema is unchanged: repeating the contract there would cost every PTC request without saying anything the tool text does not. Command semantics, exit codes, result values, limits, spill files, permissions and rendering are unchanged.
@@ -188,7 +208,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The Windows default shell is now the complete official Niubash v1.5.0 payload shipped inside the package: the archive, source tree and every per-call execution copy are verified, a missing payload never falls back implicitly to ambient Bash, and managed install, status, select and remove commands are provided.
 - Windows 默认 Shell 改为随主包携带的完整官方 Niubash v1.5.0 载荷：逐条校验归档、源树与每次调用的执行副本，缺少载荷时不隐式回退到环境 Bash，并提供托管安装、状态、选择与卸载命令。
 
-## [Unreleased]
+### Changes between 0.5.0-alpha3 and 0.5.0 / 0.5.0-alpha3 至 0.5.0 之间的变更
 
 - Run `prepack` through `bin/prepack.mjs`: a checkout still builds and checks the payload, while packing an installed package without the repository `scripts/` directory no longer fails with `MODULE_NOT_FOUND`.
 - `prepack` 改由 `bin/prepack.mjs` 执行：仓库检出仍会构建并校验载荷，而从已安装包（没有仓库 `scripts/`）重新打包不再以 `MODULE_NOT_FOUND` 失败。
@@ -508,39 +528,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - 新建会话时只规划新 Agent，不再重读所有存活会话的工具视图；`tools/change` 只核对它实际触达的
   Agent，宿主未标注归属的变更合并为一次处理。新建会话不再随已开会话数线性扫描工具视图。
 
-## [0.5.0] — 2026-10-27 — Preset-mode component roster
-
-### Breaking changes
-
-- Replace the seven-row component roster with eight rows: `dsh-ops/mode-minimal`,
-  `dsh-ops/mode-standard`, `dsh-ops/mode-ptc` and `dsh-ops/mode-cordis` for the built-in
-  presets, `dsh-ops/discovery` for dynamic tool loading, `dsh-ops/compat` for Compatibility
-  mode, `dsh-ops/panel` for data inspection and `dsh-ops/tui` for TUI integration. The former
-  `dsh-ops/shell`, `dsh-ops/file`, `dsh-ops/ptc` and `dsh-ops/hide-official` rows are gone
-  from the bundle; their modules remain as unsupported legacy exports for old profiles.
-- A mode row publishes OPS tools only for sessions composed from its preset. Standard and Cordis
-  replace the official `read`, `glob` and `grep`; every enabled mode replaces the official
-  Windows shell (`pwsh`/`pwsh_persistent` with `ops_bash` on Windows). A replaced tool is
-  hidden only while its OPS counterpart is visible in the same scope.
-- `dsh-ops/compat` inverts the removed per-tool `replaceTools` selection: enabling
-  Compatibility mode keeps every official tool visible while OPS tools stay available, and lifts
-  hiding without unloading any row. It is off by default; while it is on, token efficiency and
-  model ability are reduced.
-- Windows sessions route command execution through `ops_bash` instead of the official `pwsh`
-  when a mode row is enabled and the OPS counterpart is visible.
-- Restore the OPS icon on every component row.
-
-### Upgrade
-
-- Delete saved profile patch overrides for `dsh-ops-shell`, `dsh-ops-file`, `dsh-ops-ptc` and
-  `dsh-ops-hide-official`; a leftover override names no row in the new bundle and produces a
-  startup `patch: entry ... not found` warning. Set the mode switches you want afterwards.
-- The optional client carrier migration now only switches the profile bundle name. It preserves
-  every component row, switch and effective configuration; the nested client bundle renames only the
-  standard-mode row to the package root, so a name-qualified `dsh-ops/mode-standard` override is
-  refused for manual review instead of being rewritten.
-
-## [Unreleased]
+### Changes between the 0.5.0 preset-mode roster and 0.5.0-alpha1 / 0.5.0 预设模式组件清单至 0.5.0-alpha1 之间的变更
 
 - Unify Native/discovery/PTC file and result publication with typed Outcome values and separate compact Native rendering; preserve fresh-read evidence, CAS and authority. Result uses one put/page/release schema, rejects Native put before IO, and defaults root to live cwd in both projections. Real source/grant changes conservatively invalidate all old steps sharing that registration; resolve again, never automatically replay.
 - Native/发现/PTC 文件与 result 统一发布，执行值为类型化 Outcome，Native 文本独立紧凑渲染，保留新鲜读取证据、CAS 与权威检查。result 统一 put/page/release schema，Native put 在 IO 前拒绝，两投影 root 均默认实时 cwd；真实来源/grant 变化保守使共享注册旧步全部失效，须重新 resolve，禁止自动重放。

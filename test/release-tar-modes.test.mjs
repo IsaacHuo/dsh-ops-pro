@@ -70,7 +70,7 @@ await test('actual npm pack hashes, provenance and SHA256SUMS describe repaired 
     const dist = path.join(root, 'dist')
     fs.mkdirSync(stage)
     fs.mkdirSync(dist)
-    fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify({name:'dsh-ops',version:'0.0.0',type:'module',files:['runtime','lib']}))
+    fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify({name:'dsh-ops-pro',version:'0.0.0',type:'module',files:['runtime','lib']}))
     stageFixtureNiubash(path.join(stage, NIUBASH_PACKAGE_PATH))
     copyFixtureModules(stage)
     for (const name of names.slice(0, 4)) {

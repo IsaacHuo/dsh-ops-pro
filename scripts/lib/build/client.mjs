@@ -2,6 +2,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
+
+/** The browser module id the host loader keys on: the package name. */
+const PACKAGE_NAME = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8')).name
 const external = new Set(['react', 'react/jsx-runtime', '@deepseek-ai/dsh-client-ui-primitives'])
 export function bundleClient(root) {
   const output = path.join(root, 'lib'), entry = 'client/index.js'
@@ -37,7 +40,7 @@ export function bundleClient(root) {
   }
   collect(entry)
   const definitions = [...modules].map(([id, value]) => `${JSON.stringify(id)}:{imports:${JSON.stringify(value.imports)},run(module,exports,require){\n${value.compiled}\n}}`).join(',\n')
-  const code = `window.__ModuleLoader__.load({id:"dsh-ops",factory:(require)=>{\nconst modules={${definitions}};\nconst cache=Object.create(null);\nfunction load(id){if(cache[id])return cache[id].exports;const entry=modules[id];if(!entry)throw new Error("Unknown OPS browser module: "+id);const module={exports:{}};cache[id]=module;entry.run(module,module.exports,request=>Object.hasOwn(entry.imports,request)?load(entry.imports[request]):require(request));return module.exports;}\nreturn load(${JSON.stringify(entry)});\n}});\n`
+  const code = `window.__ModuleLoader__.load({id:${JSON.stringify(PACKAGE_NAME)},factory:(require)=>{\nconst modules={${definitions}};\nconst cache=Object.create(null);\nfunction load(id){if(cache[id])return cache[id].exports;const entry=modules[id];if(!entry)throw new Error("Unknown OPS browser module: "+id);const module={exports:{}};cache[id]=module;entry.run(module,module.exports,request=>Object.hasOwn(entry.imports,request)?load(entry.imports[request]):require(request));return module.exports;}\nreturn load(${JSON.stringify(entry)});\n}});\n`
   fs.writeFileSync(path.join(output, 'client.js'), code)
   console.log(`build: bundled ${modules.size} browser modules (${Buffer.byteLength(code)} bytes)`)
 }

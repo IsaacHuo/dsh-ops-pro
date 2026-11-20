@@ -12,6 +12,7 @@ import { checkNiubashTarball } from './niubash-tar.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fixUnixWorkerModes } from './tar-modes.js'
+import { PACKAGE_NAME } from '../../../lib/identity.js'
 import {
   gitRevision, log, mainManifest, npm, parseNpmPackReport, readJsonIfExists, sha256File, size, writeJson,
 } from './util.js'
@@ -24,11 +25,11 @@ import {
  */
 export async function packDirectory(directory, dist) {
   const manifest = readJsonIfExists(path.join(directory, 'package.json'))
-  if (manifest.name === 'dsh-ops') verifyNiubashTree(path.join(directory, NIUBASH_PACKAGE_PATH))
+  if (manifest.name === PACKAGE_NAME) verifyNiubashTree(path.join(directory, NIUBASH_PACKAGE_PATH))
   const result = npm(['pack', '--ignore-scripts', '--pack-destination', dist, '--json'], { cwd: directory })
   const reported = parseNpmPackReport(result.stdout, `npm pack in ${directory}`, manifest)
   const tarball = path.join(dist, reported.filename)
-  if (manifest.name === 'dsh-ops') {
+  if (manifest.name === PACKAGE_NAME) {
     await fixUnixWorkerModes(tarball)
     checkNiubashTarball(tarball)
   }

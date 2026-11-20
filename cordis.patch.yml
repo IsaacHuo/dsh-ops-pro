@@ -7,8 +7,8 @@
 # file, ptc, hide-official, background) remain exported: a saved override for one
 # of those specifiers still loads its legacy module, it just cannot match this row.
 - insert:
-    - id: dsh-ops
-      name: dsh-ops
+    - id: dsh-ops-pro
+      name: dsh-ops-pro
       config:
         # Four bundle switches that gate the same-named preset switch; then each
         # preset. All default on. The default preset has no key: it is a one-shot

@@ -1,6 +1,7 @@
 /** Frozen complete Niubash distribution. Receipts describe bytes; only this manifest authorizes them. */
 import { NIUBASH_FACES, NIUBASH_WINUXCMD, niubashFacePath } from '../niubash/faces.js'
 import { unsealDirectorySync } from '../niubash/seal.js'
+import { renameWithRetry } from '../rename-retry.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
@@ -22,9 +23,15 @@ export const niubashFileHash = (file: string) => digest(fs.readFileSync(file))
 const files: Readonly<Record<string, string>> = manifest.files
 const sizes: Readonly<Record<string, number>> = manifest.sizes
 
-/** Digest of the compiled inventory, also the version key of the prepared runtime. */
+/** Digest of the compiled inventory. */
 export const NIUBASH_MANIFEST_SHA256 = createHash('sha256')
   .update(JSON.stringify({ directories: manifest.directories, files, sizes })).digest('hex')
+
+/** Version key of the prepared runtime: pairs the frozen manifest digest with the generated argv0 command faces
+ * so changes to `NIUBASH_FACES` (including removals) retire stale prepared trees on the next launch.
+ */
+export const NIUBASH_PREPARED_SHA256 = createHash('sha256')
+  .update(JSON.stringify({ manifest: NIUBASH_MANIFEST_SHA256, faces: NIUBASH_FACES })).digest('hex')
 
 type TarEntry = { name: string; type: string; bytes: Buffer; link: string }
 const text = (bytes: Buffer) => bytes.toString('utf8').replace(/\0.*$/su, '')
@@ -196,9 +203,10 @@ export function stageNiubashArchive(archive: string, target: string) {
       executableSha256: manifest.executableSha256, files, sizes,
     }, null, 2)}\n`)
     verifyNiubashTree(scratch)
-    if (fs.existsSync(target)) { fs.renameSync(target, previous); moved = true }
-    try { fs.renameSync(scratch, target) } catch (error) {
-      if (moved) { fs.renameSync(previous, target); moved = false }
+    // Freshly written executables can be held briefly by Windows scanners; publication backs off.
+    if (fs.existsSync(target)) { renameWithRetry(target, previous); moved = true }
+    try { renameWithRetry(scratch, target) } catch (error) {
+      if (moved) { renameWithRetry(previous, target); moved = false }
       throw error
     }
   } finally {

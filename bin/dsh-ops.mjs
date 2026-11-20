@@ -43,6 +43,9 @@ Usage:
                                   Remove the profile plugin and its binary dependency references
   dsh-ops status --profile <desktop|web|tui>
                                   Report target-profile installation (tui maps to dsh-tui)
+  dsh-ops repair-default --profile <desktop|web|tui> [--dry-run]
+                                  After removing the plugin from the GUI, clear a profile
+                                  default that still names ops-ptc (uninstall does this itself)
   dsh-ops build-ptc [--target <rust-triple>]
                                   Build the independent native Rust worker (all platforms).
                                   --target stages a cross build from native/target/<rust-triple>/release,
@@ -155,7 +158,7 @@ async function main() {
   if (positionals.length > (['bash-runtime', 'panel', 'disk', 'cache', 'result-cache'].includes(command) ? 2 : 1)) throw new Error('Unexpected positional arguments.')
   // Declared globally so `panel --serve` parses, but it is meaningful for that command only.
   if (values.serve === true && command !== 'panel') throw new Error('--serve only applies to the panel command.')
-  if (command === 'install' || (['uninstall', 'status'].includes(command) && values.profile !== undefined)) {
+  if (command === 'install' || command === 'repair-default' || (['uninstall', 'status'].includes(command) && values.profile !== undefined)) {
     return profileCommand(command, { profile: values.profile, dshCli: values['dsh-cli'], dryRun: values['dry-run'] === true })
   }
   if (Object.hasOwn(REMOVED_COMMANDS, command)) {

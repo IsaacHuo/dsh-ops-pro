@@ -18,7 +18,7 @@ import FileSystem from '@deepseek-ai/dsh-fs-local'
 import * as OfficialTools from '@deepseek-ai/dsh-tool-fs'
 import * as OfficialSearch from '@deepseek-ai/dsh-tool-fs-search'
 import { REPO_ROOT } from '../lib/env.mjs'
-// The shipped bundle mounts one `dsh-ops` row and retires the legacy per-component rows
+// The shipped bundle mounts one `dsh-ops-pro` row and retires the legacy per-component rows
 // (`file`, `shell`, `ptc`). This harness mounts those rows directly, so it opts into the
 // plugin's documented verification path; otherwise the candidate arm publishes no tools and
 // every OPS call fails as `unknown tool "ops_<name>"`.

@@ -58,7 +58,81 @@ unsafe extern "system" {
         length: u32,
         class: u32,
     ) -> i32;
+    fn NtQueryEaFile(
+        handle: HANDLE,
+        status: *mut IoStatus,
+        buffer: *mut c_void,
+        length: u32,
+        single: u8,
+        list: *const c_void,
+        list_length: u32,
+        index: *const u32,
+        restart: u8,
+    ) -> i32;
     fn RtlNtStatusToDosError(status: i32) -> u32;
+}
+
+/// Kernel-owned EAs that the file system deletes on the next modification.
+/// User mode can neither write nor preserve them, so they are not metadata a
+/// replacement could lose (security/indexing products tag files with these).
+const PURGEABLE_KERNEL_EA: &[u8] = b"$KERNEL.PURGE.";
+
+/// Walk a FILE_FULL_EA_INFORMATION chain and report whether every entry is a
+/// purgeable kernel EA. Malformed chains are an error, never a pass.
+fn only_purgeable_kernel_eas(buffer: &[u8]) -> io::Result<bool> {
+    let malformed = || unsupported("Malformed Windows extended attribute list");
+    let mut offset = 0usize;
+    loop {
+        let header = buffer.get(offset..offset + 8).ok_or_else(malformed)?;
+        let next = u32::from_le_bytes(header[0..4].try_into().unwrap()) as usize;
+        let name_length = header[5] as usize;
+        let name = buffer
+            .get(offset + 8..offset + 8 + name_length)
+            .ok_or_else(malformed)?;
+        if !(name.len() > PURGEABLE_KERNEL_EA.len()
+            && name[..PURGEABLE_KERNEL_EA.len()].eq_ignore_ascii_case(PURGEABLE_KERNEL_EA))
+        {
+            return Ok(false);
+        }
+        if next == 0 {
+            return Ok(true);
+        }
+        if next < 8 || next % 4 != 0 {
+            return Err(malformed());
+        }
+        offset = offset.checked_add(next).ok_or_else(malformed)?;
+    }
+}
+
+fn only_purgeable_kernel_eas_on(file: &File) -> io::Result<bool> {
+    // An EA set is bounded at 64KiB; FILE_FULL_EA_INFORMATION padding fits in 2x.
+    let mut buffer = vec![0u32; 32 * 1024];
+    let mut status = IoStatus {
+        status: 0,
+        information: 0,
+    };
+    // SAFETY: the buffer is a live, 4-byte aligned 128KiB allocation; no EA
+    // name list or index is supplied, so the scan returns every entry.
+    let result = unsafe {
+        NtQueryEaFile(
+            file.as_raw_handle(),
+            &mut status,
+            buffer.as_mut_ptr().cast(),
+            (buffer.len() * 4) as u32,
+            0,
+            std::ptr::null(),
+            0,
+            std::ptr::null(),
+            1,
+        )
+    };
+    if result < 0 {
+        return Err(nt_error(result));
+    }
+    // SAFETY: reinterpreting the initialised u32 allocation as bytes.
+    let bytes =
+        unsafe { std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>(), buffer.len() * 4) };
+    only_purgeable_kernel_eas(&bytes[..status.information.min(bytes.len())])
 }
 fn unsupported(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Unsupported, message)
@@ -393,7 +467,7 @@ impl Metadata {
             if result < 0 {
                 return Err(nt_error(result));
             }
-            if ea_size != 0 {
+            if ea_size != 0 && !only_purgeable_kernel_eas_on(file)? {
                 return Err(unsupported("Windows extended attributes are not supported"));
             }
         }
@@ -586,6 +660,42 @@ mod tests {
         assert!(!streams_only.persistent_acls());
         assert!(!streams_only.extended_attributes());
         assert_eq!(streams_only.warnings().len(), 2);
+    }
+
+    fn ea_entry(name: &[u8], value: usize, last: bool) -> Vec<u8> {
+        let mut entry = vec![0u8; 8];
+        entry[5] = name.len() as u8;
+        entry[6..8].copy_from_slice(&(value as u16).to_le_bytes());
+        entry.extend_from_slice(name);
+        entry.push(0);
+        entry.extend(std::iter::repeat_n(0xAB, value));
+        while entry.len() % 4 != 0 {
+            entry.push(0);
+        }
+        if !last {
+            let next = entry.len() as u32;
+            entry[0..4].copy_from_slice(&next.to_le_bytes());
+        }
+        entry
+    }
+
+    #[test]
+    fn purgeable_kernel_eas_are_tolerated_and_user_eas_still_fail_closed() {
+        let kernel = ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, true);
+        assert!(only_purgeable_kernel_eas(&kernel).unwrap());
+        let mut two = ea_entry(b"$Kernel.Purge.ESBCACHE", 3, false);
+        two.extend(ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, true));
+        assert!(only_purgeable_kernel_eas(&two).unwrap());
+        let mut mixed = ea_entry(b"$KERNEL.PURGE.CSOOA0000", 20, false);
+        mixed.extend(ea_entry(b"USER.TAG", 4, true));
+        assert!(!only_purgeable_kernel_eas(&mixed).unwrap());
+        assert!(!only_purgeable_kernel_eas(&ea_entry(b"$KERNEL.SMARTLOCKER", 4, true)).unwrap());
+        assert!(!only_purgeable_kernel_eas(&ea_entry(b"$KERNEL.PURGE.", 1, true)).unwrap());
+        assert!(only_purgeable_kernel_eas(&kernel[..10]).is_err());
+        let mut looping = kernel.clone();
+        looping[0..4].copy_from_slice(&4u32.to_le_bytes());
+        assert!(only_purgeable_kernel_eas(&looping).is_err());
+        assert!(only_purgeable_kernel_eas(&[]).is_err());
     }
 
     #[test]

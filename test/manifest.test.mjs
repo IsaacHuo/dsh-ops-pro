@@ -121,7 +121,7 @@ await test('the declared prompt sections are the mode rows the policy registers'
   assert.equal(declared.some((name) => ['file', 'shell', 'ptc'].some((legacy) => name === `${TOOLING_SECTION}:${legacy}`)), false)
   assert.equal(declared.includes(`${TOOLING_SECTION}:mode-minimal`), false)
   // The background stub still loads for existing rows but is no longer a declared component.
-  assert.equal(raw.contributes['x-components'].some((component) => component.entry === 'dsh-ops/background'), false)
+  assert.equal(raw.contributes['x-components'].some((component) => component.entry === 'dsh-ops-pro/background'), false)
 })
 
 await test('the manifest license matches the package and is MIT', () => {
@@ -147,8 +147,8 @@ await test('the bundle patch inserts exactly the one row and no removed FastCtx 
   assert.ok(pkg.files.includes('prompts'), 'the batch-call guidance ships in the package')
   const patch = parse(fs.readFileSync(patchFile, 'utf8'))
   const rows = patch.flatMap((entry) => entry.insert ?? [])
-  assert.deepEqual(rows.map((row) => row.id), ['dsh-ops'])
-  assert.deepEqual(rows.map((row) => row.name), ['dsh-ops'])
+  assert.deepEqual(rows.map((row) => row.id), ['dsh-ops-pro'])
+  assert.deepEqual(rows.map((row) => row.name), ['dsh-ops-pro'])
   // The legacy rows remain exported modules; they are not inserted into new profiles.
   for (const legacy of ['shell', 'file', 'ptc', 'hide-official', 'background']) {
     assert.equal(rows.some((row) => row.id === `dsh-ops-${legacy}`), false, `${legacy} must not be inserted`)
@@ -209,8 +209,8 @@ await test('the icon and all component entries are shipped in the package whitel
 
 await test('the display manifest declares the one row, enabled by default', async () => {
   const components = raw.contributes['x-components']
-  assert.deepEqual(components.map((component) => component.id), ['dsh-ops'])
-  assert.equal(components[0].entry, 'dsh-ops')
+  assert.deepEqual(components.map((component) => component.id), ['dsh-ops-pro'])
+  assert.equal(components[0].entry, 'dsh-ops-pro')
   assert.equal(components[0].defaultEnabled, true)
   assert.ok(Array.isArray(components[0].tools) && components[0].tools.length > 0)
   for (const component of COMPONENTS) {
@@ -223,6 +223,15 @@ await test('the display manifest declares the one row, enabled by default', asyn
   const config = patch.flatMap((entry) => entry.insert ?? [])[0].config
   for (const feature of ['minimal', 'standard', 'ptc', 'ops-ptc', 'cordis', 'discovery']) assert.equal(config[feature].enabled, true, feature)
   for (const feature of ['panel', 'tui']) assert.equal(config[feature].enabled, false, feature)
+})
+
+await test('one package identity names the npm package, the row, its entry and the browser module', async () => {
+  const { PACKAGE_NAME } = await import('../lib/identity.js')
+  assert.equal(PACKAGE_NAME, pkg.name)
+  assert.equal(raw.name, pkg.name)
+  assert.deepEqual(raw.contributes['x-components'].map(c => [c.id, c.entry]), [[pkg.name, pkg.name]])
+  assert.match(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'), new RegExp(`- id: ${pkg.name}\\s+name: ${pkg.name}\\s`))
+  assert.ok(fs.readFileSync(path.join(PACKAGE_ROOT, 'lib', 'client.js'), 'utf8').startsWith(`window.__ModuleLoader__.load({id:${JSON.stringify(pkg.name)},`))
 })
 
 report('manifest')

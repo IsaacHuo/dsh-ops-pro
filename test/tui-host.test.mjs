@@ -10,7 +10,7 @@ import { Context, Loader, React, Terminal, hostRow, TuiPanelRuntime, armAdmissio
 
 const composition = join(TEST_HOME, 'composition')
 mkdirSync(join(composition, 'node_modules'), { recursive: true })
-symlinkSync(PACKAGE_ROOT, join(composition, 'node_modules', 'dsh-ops'), process.platform === 'win32' ? 'junction' : 'dir')
+symlinkSync(PACKAGE_ROOT, join(composition, 'node_modules', 'dsh-ops-pro'), process.platform === 'win32' ? 'junction' : 'dir')
 const root = new Context()
 root.logger.level = 0
 let entry
@@ -21,7 +21,7 @@ try {
   await root.plugin(TuiPanelRuntime)
   armAdmissionLoader(root)
   await test('real Loader admits the exported sidecar with stable identity, without OPS operation grants', async () => {
-    await root.loader.create({ id: 'ops-sidebar', name: 'dsh-ops/tui', config: { recentLimit: 3 } })
+    await root.loader.create({ id: 'ops-sidebar', name: 'dsh-ops-pro/tui', config: { recentLimit: 3 } })
     await root.loader.await()
     try { await waitFor(() => panelStore.get(id) !== undefined, { timeoutMs: 5000, what: 'admitted OPS sidebar' }) }
     catch (error) { throw new Error(error.message + '; actual panels: ' + JSON.stringify(panelStore.list().map(p => p.definition.id))) }

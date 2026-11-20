@@ -58,9 +58,9 @@ await test('the merged row declares per-preset replacement preferences without a
   const rows = document.flatMap(item => item.insert ?? [])
   // The legacy hide-official row is no longer inserted; Compatibility is one
   // switch, so the bundle must not carry a per-tool replacement selection.
-  assert.equal(rows.some(row => row.name === 'dsh-ops/hide-official'), false)
+  assert.equal(rows.some(row => row.name === 'dsh-ops-pro/hide-official'), false)
   assert.equal(rows.some(row => row.id === 'dsh-ops-compat'), false)
-  const merged = rows.find(row => row.id === 'dsh-ops')
+  const merged = rows.find(row => row.id === 'dsh-ops-pro')
   assert.ok(merged)
   assert.equal(merged.config.global.hideOfficialTools, true)
   assert.equal(Object.hasOwn(merged.config, 'replaceTools'), false, 'the bundle selects no blanket per-tool replacements')

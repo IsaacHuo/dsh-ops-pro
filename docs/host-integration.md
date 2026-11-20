@@ -96,14 +96,14 @@ Desktop uses its bundled CLI; the ordinary CLI does not manage the reserved
 Desktop profile. For a non-Desktop test profile:
 
 ```console
-dsh plugin --profile ops-test add dsh-ops@latest
+dsh plugin --profile ops-test add dsh-ops-pro@latest
 dsh --profile ops-test --dump-config
 dsh --profile ops-test --dump-config-schema
 ```
 
 Replace `@latest` with the intended version or packed checkout when testing an
 unpublished fix. Put `--profile` before `add` and package-manager arguments. The
-effective configuration should contain the enabled single `dsh-ops` row, with global and
+effective configuration should contain the enabled single `dsh-ops-pro` row, with global and
 matching preset dynamic switches on (or an explicit integration with discovery enabled). Inspect
 saved custom `presets`, overrides and duplicate bindings before adding another row. A stale profile missing discovery is a different
 case from an enabled row whose publication stalls.

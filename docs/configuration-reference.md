@@ -2,7 +2,7 @@
 
 English | [中文](配置参考.md)
 
-OPS ships **one `dsh-ops` row**, following the single-row plugin-page model. Built-in and explicitly
+OPS ships **one `dsh-ops-pro` row**, following the single-row plugin-page model. Built-in and explicitly
 configured custom presets share one consumer assembler. Installation does not opt unknown presets in.
 Plugin authors can also mount the [public integration API](integration-api.md) independently.
 
@@ -61,7 +61,7 @@ official `compaction-basic`; `dsh-compress-codex` is not introduced. It accepts 
 section; the only behavioral difference is `batchingGuidance`. The plugin registers this preset at apply
 time through the host `agentPresets.register`, using the shipped `presets/ops-ptc.patch.yml` fragment parsed by
 the host's `loadOverlayPatches`; there is no matching preset row in the plugin manager, and disabling the
-`dsh-ops` row removes the preset with it. In the host picker it is named `OPS (PTC)` and described as
+`dsh-ops-pro` row removes the preset with it. In the host picker it is named `OPS (PTC)` and described as
 "代码驱动的 PTC 工具面，由 dsh-ops 的 ops_* 工具扩展。"; whether it is the default is controlled by
 the row's status card, which sets it once when pressed. Generation and the manual default paths are covered in
 [Presets and the default mode](presets.md).
@@ -123,7 +123,7 @@ tool result.
 **Contrast-arm usage.** To compare the guidance on one shared PTC surface, keep `ptc` and `ops-ptc` on the same
 API configuration and set `batchingGuidance: true` only on the `ops-ptc` section (the packaged default), or
 set it on the `ptc` section as well to verify the guidance itself; set the `ops-ptc` section to false to return
-to the no-guidance baseline. Both keys are YAML-only: the plugin page has no switch, and a saved `dsh-ops` row
+to the no-guidance baseline. Both keys are YAML-only: the plugin page has no switch, and a saved `dsh-ops-pro` row
 override replaces the packaged config as a whole, so add them explicitly after upgrading (see
 [Presets and the default mode](presets.md#risks-and-rollback)).
 
@@ -234,7 +234,7 @@ choice for that consumer, not an authorization grant.
 Windows Niubash bytes are hashed against the frozen manifest only by the package build and
 `provision-shells --bash`. Selection checks that the pinned files are present with their pinned
 sizes and reads no contents. The first Bash call in a process prepares one copied runtime at
-`<DSH_HOME>/dsh-ops/shells/niubash-prepared/<manifest hash>`, including command faces and six
+`<DSH_HOME>/dsh-ops/shells/niubash-prepared/<prepared hash>` (combining the manifest digest and command face list), including command faces and six
 startup directories. Source files are never hardlinked into it. Later calls reuse that runtime without
 per-call cloning, hashing, seals or execution receipts, while every call follows the current host policy (`confine` in restricted modes).
 `DSH_HOME` must place the prepared runtime outside the session workspace; each call enforces this.

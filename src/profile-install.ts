@@ -6,6 +6,8 @@ import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
 import { PACKAGE_ROOT, dshHome } from './paths.js'
 import { PLATFORMS } from './execution/runtime.js'
+import { reportDefaultReset, resetStaleDefault } from './profile-default-reset.js'
+import { PACKAGE_NAME } from './identity.js'
 
 /**
  * Architectures this fork will run its profile commands on.
@@ -37,7 +39,7 @@ function desktopCliCandidates(platform = process.platform, env = process.env, ho
   return []
 }
 
-export type ProfileOperation = 'install' | 'uninstall' | 'status'
+export type ProfileOperation = 'install' | 'uninstall' | 'status' | 'repair-default'
 export interface ProfileCommandOptions { profile?: string; dshCli?: string; dryRun?: boolean }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -112,6 +114,16 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   const directory = path.join(dshHome(), 'profiles', target)
   if (!fs.existsSync(path.join(directory, 'package.json'))) throw new Error(`Initialize the target DSH application/profile first: ${directory}`)
   const version = readManifest(path.join(PACKAGE_ROOT, 'package.json')).version
+  const enabledIn = (manifest: Record<string, unknown>): boolean => {
+    const dsh = record(manifest.dsh) ? manifest.dsh : undefined
+    const bundles = record(dsh?.profile) ? dsh.profile.bundles : undefined
+    return (Array.isArray(bundles) || typeof bundles === 'string') && bundles.includes(PACKAGE_NAME)
+  }
+  if (operation === 'repair-default') {
+    // While the bundle is enabled, ops-ptc is a live preset and the operator's choice.
+    if (enabledIn(readManifest(path.join(directory, 'package.json')))) throw new Error(`dsh-ops is still enabled in ${target}; remove it first, or pick another default in Settings.`)
+    return reportDefaultReset(resetStaleDefault(directory, { dryRun }), dryRun)
+  }
   if (operation === 'status') {
     const manifest = readManifest(path.join(directory, 'package.json'))
     const dependencies = record(manifest.dependencies) ? manifest.dependencies : undefined
@@ -119,11 +131,11 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
     const profileManifest = record(dsh?.profile) ? dsh.profile : undefined
     const bundles = profileManifest?.bundles ?? []
     if (!Array.isArray(bundles) && typeof bundles !== 'string') throw new Error('Invalid profile bundles: expected an array.')
-    console.log(JSON.stringify({ profile: target, directory, dependency: dependencies?.['dsh-ops'] ?? null, enabled: bundles.includes('dsh-ops') }, null, 2))
+    console.log(JSON.stringify({ profile: target, directory, dependency: dependencies?.[PACKAGE_NAME] ?? null, enabled: bundles.includes(PACKAGE_NAME) }, null, 2))
     return 0
   }
   const args = ['plugin', '--profile', target, operation === 'install' ? 'add' : 'remove',
-    operation === 'install' ? (process.env.DSH_OPS_INSTALL_SPEC ?? `dsh-ops@${version}`) : 'dsh-ops']
+    operation === 'install' ? (process.env.DSH_OPS_INSTALL_SPEC ?? `${PACKAGE_NAME}@${version}`) : PACKAGE_NAME]
   let command = dshCli ?? process.env.DSH_OPS_DSH_CLI
   let prefix: string[] = []
   if (!command && target === 'desktop') {
@@ -173,6 +185,11 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   } else result = spawnSync(command, [...prefix, ...args], { stdio: 'inherit', windowsHide: true })
   if (result.error) throw result.error
   if (result.status !== 0) return result.status ?? 1
+  // The removed bundle can no longer publish ops-ptc; a default naming it would point nowhere (#881, #928).
+  if (operation === 'uninstall') {
+    const code = reportDefaultReset(resetStaleDefault(directory), false)
+    if (code !== 0) return code
+  }
   console.log(operation === 'install'
     ? 'Installed through the official profile manager. Reload/restart the target application if needed. On Windows the pinned Bash payload ships as an optional dependency; run dsh-ops bash-runtime install to repair a missing payload. No postinstall downloads.'
     : 'Removed through the official profile manager, including its runtime dependency references. Package-manager shared caches are not deleted.')

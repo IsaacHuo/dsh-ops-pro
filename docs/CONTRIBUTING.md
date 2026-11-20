@@ -34,7 +34,7 @@ conventions a pull request is reviewed against. 中文版：[贡献指南.md](�
    before starting. A claimed issue is how contributors see who is working on what and avoid
    duplicated work. A PR without a claimed issue will not be accepted.
 2. **Issues are PR workspaces.** Open-ended bug discussions and feature ideas belong in
-   [Discussions](https://github.com/T-Auto/dsh-ops/discussions); an issue should describe concrete
+   [Discussions](https://github.com/IsaacHuo/dsh-ops-pro/discussions); an issue should describe concrete
    work that a PR will close.
 3. **Features need approval.** Write the issue first and wait for a maintainer to approve it.
 4. **Large changes are split.** A big change (for example #151) is cut into issues that can be

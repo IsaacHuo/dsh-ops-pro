@@ -629,6 +629,38 @@ fn sweep_debris(parent: &cap_std::fs::Dir, name: &str) {
         }
     }
 }
+/// Backoff for the publishing rename. Endpoint-security and indexing products briefly
+/// open a freshly written file without `FILE_SHARE_DELETE`, and replacing it in that
+/// window fails with `ERROR_ACCESS_DENIED` or `ERROR_SHARING_VIOLATION` even though
+/// nothing is wrong with the request. The total budget (about 1.6 s) is small next to
+/// the cost of failing the edit; a denial that outlasts it is reported as before.
+const PUBLISH_RETRY_DELAYS_MS: [u64; 6] = [25, 50, 100, 200, 400, 800];
+
+/// Whether a failed publication rename may succeed when repeated unchanged.
+fn transient_publish_error(error: &std::io::Error) -> bool {
+    // ERROR_ACCESS_DENIED (5) and ERROR_SHARING_VIOLATION (32). Elsewhere a refused
+    // rename is a real answer, never a scanner's open handle.
+    cfg!(windows) && matches!(error.raw_os_error(), Some(5) | Some(32))
+}
+
+/// Run `publish` once, then again after each delay while it fails transiently.
+/// Nothing has been published while it fails, so repeating it cannot apply twice.
+fn retry_transient_publish(
+    mut publish: impl FnMut() -> std::io::Result<()>,
+    mut sleep: impl FnMut(std::time::Duration),
+) -> std::io::Result<()> {
+    let mut delays = PUBLISH_RETRY_DELAYS_MS.iter();
+    loop {
+        match publish() {
+            Err(error) if transient_publish_error(&error) => match delays.next() {
+                Some(delay) => sleep(std::time::Duration::from_millis(*delay)),
+                None => return Err(error),
+            },
+            other => return other,
+        }
+    }
+}
+
 pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<Option<(Value, Vec<String>)>> {
     let raw = path
         .to_str()
@@ -676,7 +708,10 @@ pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<Option<(Value, Vec<Stri
         return Err(failure);
     }
     // Publication stays handle-relative and does not traverse links.
-    let publish = parent.rename(&temporary, parent, name);
+    let publish = retry_transient_publish(
+        || parent.rename(&temporary, parent, name),
+        std::thread::sleep,
+    );
     if let Err(error) = publish {
         publication::discard_sibling(parent, &temporary, file)?;
         return Err(Failure::new(
@@ -755,6 +790,63 @@ mod tests {
                     .map(|text| text.lines().count())
             );
         }
+    }
+
+    #[test]
+    fn publication_rename_retries_only_transient_windows_denials_within_budget() {
+        use std::cell::Cell;
+        let denied = || std::io::Error::from_raw_os_error(5);
+        // Two transient denials, then success: published, with two backoffs.
+        let calls = Cell::new(0);
+        let mut slept = Vec::new();
+        let result = retry_transient_publish(
+            || {
+                calls.set(calls.get() + 1);
+                if calls.get() <= 2 {
+                    Err(denied())
+                } else {
+                    Ok(())
+                }
+            },
+            |delay| slept.push(delay.as_millis() as u64),
+        );
+        if cfg!(windows) {
+            assert!(result.is_ok());
+            assert_eq!(calls.get(), 3);
+            assert_eq!(slept, vec![25, 50]);
+        } else {
+            assert!(result.is_err());
+            assert_eq!(calls.get(), 1);
+            assert!(slept.is_empty());
+        }
+        // A denial that outlasts the budget is still reported.
+        let calls = Cell::new(0);
+        let mut slept = Vec::new();
+        let result = retry_transient_publish(
+            || {
+                calls.set(calls.get() + 1);
+                Err(denied())
+            },
+            |delay| slept.push(delay.as_millis() as u64),
+        );
+        assert_eq!(result.unwrap_err().raw_os_error(), Some(5));
+        let expected = if cfg!(windows) {
+            PUBLISH_RETRY_DELAYS_MS.len() + 1
+        } else {
+            1
+        };
+        assert_eq!(calls.get(), expected);
+        // Any other failure is never repeated.
+        let calls = Cell::new(0);
+        let result = retry_transient_publish(
+            || {
+                calls.set(calls.get() + 1);
+                Err(std::io::Error::from_raw_os_error(2))
+            },
+            |_| panic!("a permanent failure must not back off"),
+        );
+        assert!(result.is_err());
+        assert_eq!(calls.get(), 1);
     }
 
     #[test]

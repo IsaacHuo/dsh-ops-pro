@@ -1,6 +1,6 @@
 # Configured download alternatives
 
-The optional `download-guard` section of the single `dsh-ops` row refuses recognized
+The optional `download-guard` section of the single `dsh-ops-pro` row refuses recognized
 shell downloads to disk and returns the downloader configured by the operator.
 It is disabled by default. Enabling it with an empty template also registers no
 listener. There is no bundled downloader, automatic rewrite, background download,

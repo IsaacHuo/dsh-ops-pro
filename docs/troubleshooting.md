@@ -22,7 +22,7 @@ Measured on 2026-10-12: on `registry.npmmirror.com`, `@dsh-ops/bash-win32-x64` r
 **Preferred remedy**: `provision-shells` bypasses the registry, fetches the pinned asset from the upstream GitHub Release, checks its sha256, unpacks it and writes a `.provisioned.json` receipt.
 
 ```console
-npx --yes dsh-ops@latest provision-shells --bash
+npx --yes dsh-ops-pro@latest provision-shells --bash
 ```
 
 Behind a proxy (`HTTPS_PROXY` is handed to curl explicitly as `--proxy` and is inherited through the environment as well):
@@ -30,19 +30,19 @@ Behind a proxy (`HTTPS_PROXY` is handed to curl explicitly as `--proxy` and is i
 ```console
 :: cmd
 set HTTPS_PROXY=http://127.0.0.1:<clash-port>
-npx --yes dsh-ops@latest provision-shells --bash
+npx --yes dsh-ops-pro@latest provision-shells --bash
 ```
 
 ```console
 # PowerShell
 $env:HTTPS_PROXY = 'http://127.0.0.1:<clash-port>'
-npx --yes dsh-ops@latest provision-shells --bash
+npx --yes dsh-ops-pro@latest provision-shells --bash
 ```
 
 **To check the result, run the profile's own copy**: `ladder` reports the bundled rung of **the copy that runs it**, so `npx … ladder` inspects the npx cache copy and its answer has nothing to do with your profile.
 
 ```console
-node "%USERPROFILE%\.dsh\profiles\<profile>\node_modules\dsh-ops\bin\dsh-ops.mjs" ladder
+node "%USERPROFILE%\.dsh\profiles\<profile>\node_modules\dsh-ops-pro\bin\dsh-ops.mjs" ladder
 ```
 
 The provisioned copy lives in `<DSH_HOME>/dsh-ops/shells` (shared across profiles, so one provision covers every profile on the machine) and outranks the bundled copy when the shells are resolved; `ladder` reports `source: provisioned`.
@@ -105,9 +105,9 @@ Symptom, in a read-only or workspace-write session: `EXECUTOR_UNAVAILABLE: ops_b
 
 What to do:
 
-- Remove `bashPath` (and `allowSystemShellFallback`) from the mode row so the bundled pinned bash is used; if that payload is missing, run `npx --yes dsh-ops@latest provision-shells --bash`.
+- Remove `bashPath` (and `allowSystemShellFallback`) from the mode row so the bundled pinned bash is used; if that payload is missing, run `npx --yes dsh-ops-pro@latest provision-shells --bash`.
 - Or switch the session to `danger-full-access`, where `bashPath` runs directly.
-- Check with the profile's own copy: `node "<profile>\node_modules\dsh-ops\bin\dsh-ops.mjs" ladder --config <file>` reports `restricted: yes/no` for the resolved bash.
+- Check with the profile's own copy: `node "<profile>\node_modules\dsh-ops-pro\bin\dsh-ops.mjs" ladder --config <file>` reports `restricted: yes/no` for the resolved bash.
 
 ### Restricted Bash is still preparing, or its last preparation was interrupted
 
@@ -127,8 +127,8 @@ An interrupted staging leaves a `stage-*` directory in the cache. Confined calls
 Payload bytes are hashed against the frozen manifest once, where they enter the machine: the
 package build and `dsh-ops provision-shells --bash`. Selecting Niubash (mount, the settings page,
 `ops_status`) only checks that every pinned file is present with its pinned size; it reads no
-contents and writes nothing. The first Bash call in a process prepares one runtime per manifest
-hash at `<DSH_HOME>/dsh-ops/shells/niubash-prepared/<manifest hash>`, asynchronously: it copies the
+contents and writes nothing. The first Bash call in a process prepares one runtime per prepared
+hash (`NIUBASH_PREPARED_SHA256`, covering the manifest and face list) at `<DSH_HOME>/dsh-ops/shells/niubash-prepared/<prepared hash>`, asynchronously: it copies the
 payload without source hardlinks, materializes the command faces and six startup directories, and
 publishes the completed tree with an atomic sibling rename. Later calls check only that the
 prepared `niu.exe` still exists; they do not clone, hash, seal, write an execution receipt or
@@ -162,7 +162,7 @@ security boundary against the account or an administrator.
   cleaning up at once never split one tree across two names. On Windows an in-use version whose rename is refused stays for the next
   host start; cleanup does not retry or fail the selected runtime. Unrelated names and links are
   untouched. The same `cache status/reclaim --kind exec-tree` commands include these leftovers
-  while always excluding the current plain manifest hash.
+  while always excluding the current plain prepared hash.
 - Profiles sharing one `DSH_HOME` can run dsh-ops versions with different Niubash pins. Starting
   one can retire the other's prepared version between commands. The other profile's next call
   re-prepares its selected pin once from its selected payload and continues through normal host
@@ -315,7 +315,7 @@ It is state left by the removed background component and is kept by default; add
 
 ### Legacy provisioned files were not cleaned up
 
-Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files must be cleaned separately with `npx --yes dsh-ops@latest uninstall --yes`.
+Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files must be cleaned separately with `npx --yes dsh-ops-pro@latest uninstall --yes`.
 
 ---
 

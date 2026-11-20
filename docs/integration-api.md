@@ -2,14 +2,14 @@
 
 English | [中文](集成接口.md)
 
-This document describes the opt-in preset integration exported as `dsh-ops/integration`.
+This document describes the opt-in preset integration exported as `dsh-ops-pro/integration`.
 Installing OPS or importing the module publishes nothing. The preset owner must mount one
 integration inside its own composition, or provide an explicit preset id.
 
 ## Minimal Native integration
 
 ```js
-import { integration } from 'dsh-ops/integration'
+import { integration } from 'dsh-ops-pro/integration'
 export default integration({ preset: 'acme-chat' })
 ```
 
@@ -110,7 +110,7 @@ is no compatibility-mode component after the single-row migration.
 
 ## Single-row custom presets
 
-The same options can be saved under the single `dsh-ops` row's `presets` map. The map key is the
+The same options can be saved under the single `dsh-ops-pro` row's `presets` map. The map key is the
 exact preset id; omit the `preset` field inside it. Configured ids appear as native Switch cards
 on the row page. An explicit binding overrides a built-in id in either mount order. Unknown,
 unlisted presets remain unchanged.

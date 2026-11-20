@@ -14,6 +14,7 @@ import { errorMessage } from '../shells/types.js'
 import path from 'node:path'
 import { fastctxDataDir, managedDir } from './report.js'
 import { unsealDirectorySync } from '../niubash/seal.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 /**
  * Render a byte count for a human report.
@@ -98,7 +99,7 @@ export function reportDirectory(label: string, dir: string) {
  * outside the profile, and report the state it does not own.
  *
  * Removing the plugin itself is a profile operation — `dsh plugin --profile
- * <profile> remove dsh-ops`, or the `plugin_manager` `remove_bundle` tool — and
+ * <profile> remove dsh-ops-pro`, or the `plugin_manager` `remove_bundle` tool — and
  * stays outside this command. What is inside: `<DSH_HOME>/dsh-ops` (provisioned
  * shells, and the FastCtx runtime older versions provisioned), and, only on
  * request, the leftover `~/.fastctx` state of the removed background component.
@@ -151,7 +152,7 @@ export function commandUninstall({ yes, purgeFastctx, dryRun }: { yes: boolean; 
   }
 
   console.log('\nplugin installation (not handled by this command)')
-  console.log('  action:    remove the plugin itself with `dsh plugin --profile <profile> remove dsh-ops`,')
+  console.log(`  action:    remove the plugin itself with \`dsh plugin --profile <profile> remove ${PACKAGE_NAME}\`,`)
   console.log('             or the plugin_manager `remove_bundle` tool; this command only removes the')
   console.log('             runtime and state the plugin wrote outside the profile.')
 

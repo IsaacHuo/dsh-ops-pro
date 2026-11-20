@@ -61,8 +61,8 @@ await test('the host composes every shipped row and refuses a missing override t
   // The bundle patch is the single dsh-ops row: the ops-ptc preset is registered
   // at runtime, so no layer of this package may override the host preset registry.
   const rows = composeBundle([HOST_PRESET_LAYER, patch], boot.composeEntries)
-  assert.deepEqual(rows.map(row => row.id), ['agent-preset-registry', 'dsh-ops'])
-  assert.deepEqual(rows.find(row => row.id === 'dsh-ops').name, 'dsh-ops')
+  assert.deepEqual(rows.map(row => row.id), ['agent-preset-registry', 'dsh-ops-pro'])
+  assert.deepEqual(rows.find(row => row.id === 'dsh-ops-pro').name, 'dsh-ops-pro')
   assert.deepEqual(rows.find(row => row.id === 'agent-preset-registry').config,
     { default: 'standard', selectedDefault: 'standard' }, 'this bundle leaves the host default preset alone')
   const upstream = [{ insert: [{ id: 'upstream', name: 'cordis:fixture' }] }]

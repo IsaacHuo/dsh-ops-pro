@@ -327,6 +327,9 @@ export interface ProgramNotice {
   readonly text: string
 }
 
+/** Shape notices one agent session can receive before the latch goes quiet (#1027). */
+export const SESSION_NOTICE_LIMIT = 3
+
 /** Per-agent latch over the three categories. */
 export interface ProgramLatch {
   /** Start a host turn: every category re-arms. Repeating the same turn is a no-op. */
@@ -335,8 +338,8 @@ export interface ProgramLatch {
   observe(agent: Agent, code: unknown): ProgramNotice | undefined
   /** Whether a category may still deliver in this turn. */
   isArmed(agent: Agent, category: BatchingCategory): boolean
-  /** Deliveries so far this turn, for the optional telemetry line. */
-  stats(agent: Agent): { turn: number; plan: number; bypass: number; shape: number; total: number }
+  /** Deliveries so far this turn, plus the session total, for the optional telemetry line. */
+  stats(agent: Agent): { turn: number; plan: number; bypass: number; shape: number; total: number; session: number }
   /** Drop all state for one agent. */
   forget(agent: Agent): void
 }
@@ -378,13 +381,17 @@ export function noticeText(category: BatchingCategory, shape: ProgramShape): str
  *
  * Compliance re-arms its own category, so a model that fixes a category and then
  * regresses earns a fresh notice instead of staying silent for the rest of the turn.
- * There is deliberately no per-turn cap: the cost of an extra short notice is bounded
- * by the notice text, while a missed correction lasts the rest of the turn.
+ * There is no per-turn cap, but one agent session earns at most `sessionLimit` notices
+ * in total: every notice enters history and is re-sent on each later request, and an
+ * uncapped latch reached 80 notices in one session (#1027). A model that has not
+ * adopted the rule after that many corrections will not adopt it from the next one.
+ * @param options.sessionLimit - notices per agent session; defaults to {@link SESSION_NOTICE_LIMIT}.
  * @returns the latch; state is keyed by agent identity and never serialized.
  */
-export function createProgramLatch(): ProgramLatch {
-  const states = new WeakMap<Agent, { turn: number; armed: Record<BatchingCategory, boolean>; sent: Record<BatchingCategory, number> }>()
-  const fresh = (turn: number) => ({ turn, armed: { plan: true, bypass: true, shape: true }, sent: { plan: 0, bypass: 0, shape: 0 } })
+export function createProgramLatch(options: { sessionLimit?: number } = {}): ProgramLatch {
+  const limit = options.sessionLimit ?? SESSION_NOTICE_LIMIT
+  const states = new WeakMap<Agent, { turn: number; session: number; armed: Record<BatchingCategory, boolean>; sent: Record<BatchingCategory, number> }>()
+  const fresh = (turn: number, session = 0) => ({ turn, session, armed: { plan: true, bypass: true, shape: true }, sent: { plan: 0, bypass: 0, shape: 0 } })
   const stateFor = (agent: Agent) => {
     let state = states.get(agent)
     if (state === undefined) { state = fresh(0); states.set(agent, state) }
@@ -396,7 +403,8 @@ export function createProgramLatch(): ProgramLatch {
       const state = states.get(agent)
       // The host may announce one turn more than once; only a change starts a new turn.
       if (state !== undefined && state.turn === normalised) return
-      states.set(agent, fresh(normalised))
+      // A new turn re-arms the categories but keeps the session total.
+      states.set(agent, fresh(normalised, state?.session ?? 0))
     },
     observe(agent, code) {
       const state = stateFor(agent)
@@ -405,16 +413,17 @@ export function createProgramLatch(): ProgramLatch {
       // A compliant program in a category restores that category's right to speak.
       for (const entry of CATEGORY_PRIORITY) if (!violations[entry]) state.armed[entry] = true
       const category = CATEGORY_PRIORITY.find(entry => violations[entry] && state.armed[entry])
-      if (category === undefined) return undefined
+      if (category === undefined || state.session >= limit) return undefined
       state.armed[category] = false
       state.sent[category] += 1
+      state.session += 1
       return { category, turn: state.turn, text: noticeText(category, shape) }
     },
     isArmed(agent, category) { return stateFor(agent).armed[category] },
     stats(agent) {
       const state = stateFor(agent)
       const { plan, bypass, shape } = state.sent
-      return { turn: state.turn, plan, bypass, shape, total: plan + bypass + shape }
+      return { turn: state.turn, plan, bypass, shape, total: plan + bypass + shape, session: state.session }
     },
     forget(agent) { states.delete(agent) },
   }

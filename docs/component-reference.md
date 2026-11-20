@@ -1,10 +1,10 @@
 # Component reference
-What the single `dsh-ops` row publishes for built-in and explicit consumers, with parameters and permission requirements.
+What the single `dsh-ops-pro` row publishes for built-in and explicit consumers, with parameters and permission requirements.
 ---
 
 ## Components at a glance
 
-Third-party presets should use [`dsh-ops/integration`](integration-api.md) rather than mounting
+Third-party presets should use [`dsh-ops-pro/integration`](integration-api.md) rather than mounting
 one of the five built-in identities. It adds independently configured tools and `ops_status`
 diagnostics, while external Native plugins may use the [provider contract](external-provider.md).
 
@@ -15,7 +15,7 @@ diagnostics, while external Native plugins may use the [provider contract](exter
 | `dsh-ops/tui` | Legacy entry retained for old profiles; use `tui.enabled` in the merged row | Off | None; see the [sidebar guide](tui-panel.md) |
 | `dsh-ops/mode-ops-ptc` | Legacy mode row retained for old profiles; use the merged row's `ops-ptc` section | On (inert and warns under the merged bundle) | Typed PTC APIs for `ops-ptc` sessions only; publishes nothing under the merged bundle |
 
-The `dsh-ops` row owns built-in and explicitly configured consumer plans. Native discovery and the PTC SDK loader are independent publication choices; file replacement and host-shell hiding are independent masks. Legacy entries remain only so old profiles can load; new configuration belongs to the single row. The former
+The `dsh-ops-pro` row owns built-in and explicitly configured consumer plans. Native discovery and the PTC SDK loader are independent publication choices; file replacement and host-shell hiding are independent masks. Legacy entries remain only so old profiles can load; new configuration belongs to the single row. The former
 `dsh-ops/shell`, `dsh-ops/file`, `dsh-ops/ptc` and `dsh-ops/hide-official` modules remain as
 unsupported legacy exports for old profiles and are not part of the bundle.
 

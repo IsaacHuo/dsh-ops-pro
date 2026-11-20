@@ -5,6 +5,7 @@ import { CAPABILITIES } from '../../lib/capabilities/registry.js'
 import { publicToolName } from '../../lib/policy.js'
 import { platformSurface } from '../../lib/official-tool-catalog.js'
 import { residentTools } from '../../lib/modes/plan.js'
+import { PACKAGE_NAME } from '../../lib/identity.js'
 
 export function defaultChecks(component, config, resolve) {
   const defaults = resolve({})
@@ -33,7 +34,7 @@ export function componentChecks(components, platform = process.platform) {
   // per-feature surfaces this package still ships.
   check(components.length === 1, 'the manifest declares exactly one row')
   const row = components[0]
-  check(row?.id === 'dsh-ops' && row?.entry === 'dsh-ops', 'the declaration uses the package entry')
+  check(row?.id === PACKAGE_NAME && row?.entry === PACKAGE_NAME, 'the declaration uses the package entry')
   check(row?.defaultEnabled === true, 'the declaration ships enabled')
   const expected = [...new Set([...CAPABILITIES.map(entry => publicToolName(entry.rawName)), 'ops_load_sdk', 'ops_bash'])].sort()
   check(isDeepStrictEqual([...(row?.tools ?? [])].sort(), expected), 'tool declaration matches the catalogue projection')
