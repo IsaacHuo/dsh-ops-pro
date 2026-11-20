@@ -104,24 +104,27 @@ await test('a junction workspace that still needs the ACE fails closed and names
   await withTempDir('prepare-reparse-need', async (base) => {
     const root = junctionFixture(base)
     const backups = path.join(TEST_HOME, 'prepare-reparse-need-backups')
-    // Replace every inherited ACE with one caller-owned RX grant, so the
+    // Install an exact protected DACL holding one caller RX grant, so the
     // folder no longer holds WRITE_OWNER but stays listable and cleanable:
     // the decision must be needs-preparation, the one branch that writes and
-    // therefore the one branch allowed to look at tags. The owner is taken
-    // first because an elevated runner defaults new-object ownership to
-    // Administrators, which would make the decision foreign-owner instead.
+    // therefore the one branch allowed to look at tags. The owner is set to
+    // the caller because an elevated runner defaults new-object ownership to
+    // Administrators (foreign-owner instead), and the whole DACL is replaced
+    // because `icacls /inheritance:r` keeps explicit ACEs — on an elevated
+    // runner an explicit Administrators grant still carries WRITE_OWNER.
     const sid = psValue('[Security.Principal.WindowsIdentity]::GetCurrent().User.Value')
-    const owned = spawnSync('icacls.exe', [root, '/setowner', `*${sid}`], { encoding: 'utf8' })
-    assert.equal(owned.status, 0, owned.stdout + owned.stderr)
-    const strip = spawnSync('icacls.exe', [root, '/inheritance:r', '/grant', `*${sid}:(RX)`], { encoding: 'utf8' })
-    assert.equal(strip.status, 0, strip.stdout + strip.stderr)
+    psValue(`$ErrorActionPreference='Stop'
+$acl=Get-Acl -LiteralPath ${quote(root)}
+$acl.SetSecurityDescriptorSddlForm('O:${sid}D:P(A;;0x1200a9;;;${sid})')
+Set-Acl -LiteralPath ${quote(root)} -AclObject $acl`)
+    const sddl = psValue(`(Get-Acl -LiteralPath ${quote(root)}).Sddl`)
     const state = psValue(`$ErrorActionPreference='Stop'
 . ${quote(helper)}
 $acl=Get-Acl -LiteralPath ${quote(root)}
 $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
 $principal=[Security.Principal.WindowsPrincipal]::new($identity)
 (Get-DshOpsWorkspaceDecision -Acl $acl -Identity $identity -Principal $principal).State`)
-    assert.equal(state, 'needs-preparation')
+    assert.equal(state, 'needs-preparation', sddl)
     const value = runScript(root, backups)
     assert.notEqual(value.status, 0, JSON.stringify(value.stdout))
     // The refusal must name the actual tag, so the operator can tell a cloud
