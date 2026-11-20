@@ -19,6 +19,7 @@ import { errorMessage } from '../shells/types.js'
 import os from 'node:os'
 import path from 'node:path'
 import { dshHome } from '../paths.js'
+import { renameWithRetry } from '../rename-retry.js'
 import {
   PLATFORM_PACKAGES,
   SHELL_UPSTREAM_PINS,
@@ -509,15 +510,16 @@ export function provisionShell(pin: ShellPin, { force, dryRun }: { force: boolea
     let displaced = false
     try {
       if (fs.existsSync(target)) {
-        fs.renameSync(target, previous)
+        renameWithRetry(target, previous)
         displaced = true
       }
-      fs.renameSync(staged, target)
+      // A just-extracted shell can be held briefly by Windows scanners; publication backs off.
+      renameWithRetry(staged, target)
       installed = true
     } catch (error) {
       if (displaced) {
         try {
-          fs.renameSync(previous, target)
+          renameWithRetry(previous, target)
           displaced = false
         } catch (restoreError) {
           console.error(`${pin.name}: could not restore the previous version ${previous}: ${errorMessage(restoreError)}`)
