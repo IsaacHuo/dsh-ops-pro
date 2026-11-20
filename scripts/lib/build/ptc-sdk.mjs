@@ -7,7 +7,7 @@ import { jsonSchemaToTs } from './json-schema-to-ts.mjs'
 export async function writePtcDeclarations(root) {
   const load = relative => import(pathToFileURL(path.join(root, 'lib', relative)).href)
   const [{ CAPABILITIES, SDK_CAPABILITIES }, { definition }, { outcomeSchema }, { publicToolName }] = await Promise.all([
-    load('capabilities/registry.js'), load('ptc/contract.js'), load('ptc/projection/schema.js'), load('policy.js'),
+    load('capabilities/registry.js'), load('projections/ptc/contract.js'), load('projections/ptc/schema.js'), load('policy.js'),
   ])
   // The loader owns a different receipt shape from every data tool. Read its name from the
   // catalogue instead of a literal so the next rename cannot silently widen these declarations.

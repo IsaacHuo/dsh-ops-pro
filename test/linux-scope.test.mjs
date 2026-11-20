@@ -3,7 +3,7 @@
  * corrected ad-hoc `D-platform` / `D2-platform` probes in
  * `dsh-ops-boundary-report.md`.
  *
- * The suite drives this checkout's own resolver (`lib/ptc/runtime.js`) and the
+ * The suite drives this checkout's own resolver (`lib/execution/runtime.js`) and the
  * declarations beside it, not an installed copy, so it describes the tree that
  * is about to be published rather than whatever happens to be installed on the
  * machine running the gate.
@@ -40,7 +40,7 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { PLATFORMS, resolveWorker, workerName } from '../lib/ptc/runtime.js'
+import { PLATFORMS, resolveWorker, workerName } from '../lib/execution/runtime.js'
 import { PACKAGE_ROOT, assert, report, test, withTempDir } from './lib/harness.mjs'
 import { requireWorker } from './lib/boundary.mjs'
 
@@ -88,7 +88,7 @@ function stageRuntime(root, { target, bytes = Buffer.from('synthetic worker byte
 }
 
 await test('every foreign target is refused by name, naming the supported set', async () => {
-  for (const target of ['linux-arm64', 'win32-arm64', 'linux-riscv64', 'openharmony-arm64', 'darwin-riscv64']) {
+  for (const target of ['win32-arm64', 'linux-riscv64', 'openharmony-arm64', 'darwin-riscv64']) {
     const [platform, arch] = target.split('-')
     await withTempDir(`linux-scope-${target}`, async root => {
       let error = null
@@ -96,13 +96,29 @@ await test('every foreign target is refused by name, naming the supported set', 
       try { resolved = resolveWorker({}, { packageRoot: stagePackage(root), platform, arch, env: {} }) } catch (caught) { error = caught }
       assert.equal(resolved, null, `${target} resolved to ${resolved}`)
       assert.ok(error, `${target} was allowed`)
-      assert.match(error.message, /Windows x64, Linux x64 and macOS/)
+      assert.match(error.message, /Windows x64, Linux \(x64\/arm64\) and macOS/)
       assert.ok(error.message.includes(target), `the message must name ${target}: ${error.message}`)
     })
   }
-  assert.deepEqual([...PLATFORMS], ['win32-x64', 'linux-x64', 'darwin-arm64', 'darwin-x64'])
+  assert.deepEqual([...PLATFORMS], ['win32-x64', 'linux-x64', 'linux-arm64', 'darwin-arm64', 'darwin-x64'])
   assert.equal(workerName('win32'), 'dsh-ops-worker.exe')
   assert.equal(workerName('linux'), 'dsh-ops-worker')
+})
+
+await test('linux-arm64 resolves a staged arm64 worker without joining the release matrix', async () => {
+  await withTempDir('linux-scope-arm64', async root => {
+    const packageRoot = stagePackage(root)
+    const staged = stageRuntime(packageRoot, { target: 'linux-arm64' })
+    const resolve = () => resolveWorker({}, { packageRoot, platform: 'linux', arch: 'arm64', env: {} })
+    if (process.platform === 'win32') {
+      // A Windows file system carries no POSIX execute bit, so the staged worker
+      // reaches the executable check: the target was admitted, not refused by name.
+      assert.throws(resolve, error => /is not executable/.test(error.message) && !/unsupported runtime target/.test(error.message))
+    } else {
+      assert.equal(resolve(), staged.worker)
+    }
+    assert.equal(workerName('linux'), 'dsh-ops-worker')
+  })
 })
 
 await test('a tampered worker, a forged receipt and a missing receipt are all refused', async () => {
@@ -151,7 +167,7 @@ await test('package.json, the resolver and the plugin manifest declare the same 
   assert.deepEqual(components.map(component => component.id), ['dsh-ops-pro'])
   const merged = components[0]
   assert.equal(merged.entry, 'dsh-ops-pro')
-  assert.deepEqual([...PLATFORMS], ['win32-x64', 'linux-x64', 'darwin-arm64', 'darwin-x64'], 'only the approved target pairs are supported')
+  assert.deepEqual([...PLATFORMS], ['win32-x64', 'linux-x64', 'linux-arm64', 'darwin-arm64', 'darwin-x64'], 'only the approved target pairs are supported')
   assert.deepEqual(manifest.os, ['win32', 'linux', 'darwin'])
   assert.deepEqual(merged.platforms, ['win32', 'linux', 'darwin'])
   assert.deepEqual(manifest.cpu, ['x64', 'arm64'])

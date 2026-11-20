@@ -1,8 +1,8 @@
 import { setImmediate } from 'node:timers/promises'
 import { withCallBudget, MAX_ACTIVE_CALLS, MAX_WAITING_CALLS } from '../lib/kernel/call-budget.js'
-import { WORKER_TIMEOUT_MS } from '../lib/worker-protocol.js'
-import { invoke as fileCall } from '../lib/file/worker.js'
-import { invoke as ptcCall } from '../lib/ptc/worker.js'
+import { WORKER_TIMEOUT_MS } from '../lib/execution/protocol.js'
+import { invoke as fileCall } from '../lib/execution/files.js'
+import { invoke as ptcCall } from '../lib/execution/jobs.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 

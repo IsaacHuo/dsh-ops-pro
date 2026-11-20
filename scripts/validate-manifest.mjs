@@ -30,10 +30,10 @@ import {
   renderToolingPolicy,
 } from '../lib/policy.js'
 import { CAPABILITIES, NATIVE_FILE_TOOLS } from '../lib/capabilities/registry.js'
-import { resolvePtcConfig } from '../lib/ptc/index.js'
+import { resolvePtcConfig } from '../lib/publication/ptc.js'
 import { resolveTuiConfig } from '../lib/components/tui/index.js'
 import { resolvePanelConfig } from '../lib/components/panel/index.js'
-import { PTC_API_TOOLS, definition } from '../lib/ptc/contract.js'
+import { PTC_API_TOOLS, definition } from '../lib/projections/ptc/contract.js'
 import { resolveConfig, resolveDiscoveryConfig } from '../lib/config.js'
 import { resolveMergedConfig } from '../lib/settings/merged.js'
 import { COMPONENTS, componentEntry, componentEnabled } from '../lib/components/defaults.js'
@@ -509,8 +509,8 @@ check([...PTC_API_TOOLS, 'load_sdk'].map(publicToolName).every(tool => (single?.
 check(PTC_API_TOOLS.every(t => definition(t, () => {}).parameters.type === 'object'), 'PTC schemas remain structured')
 check(JSON.stringify(pkg.os) === '["win32","linux","darwin"]' && JSON.stringify(pkg.cpu) === '["x64","arm64"]' &&
   JSON.stringify(single?.platforms) === '["win32","linux","darwin"]' &&
-  JSON.stringify(single?.targets) === '["win32-x64","linux-x64","darwin-arm64","darwin-x64"]',
-  'Supported exact targets are Windows x64, Linux x64 and macOS arm64/x64; Intel Mac is supported')
+  JSON.stringify(single?.targets) === '["win32-x64","linux-x64","linux-arm64","darwin-arm64","darwin-x64"]',
+  'Supported exact targets are Windows x64, Linux x64/arm64 and macOS arm64/x64; Linux arm64 is a locally staged source target and Intel Mac is supported')
 /** One declaration states every platform the package serves; the row carries no per-feature claims. */
 const claims = JSON.stringify(single?.platforms)
 check(claims === '["win32","linux","darwin"]', 'the row serves the declared platform matrix')

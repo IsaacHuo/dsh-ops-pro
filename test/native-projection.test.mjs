@@ -2,7 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { createHash } from 'node:crypto'
-import { definition } from '../lib/file/contract.js'
+import { definition } from '../lib/projections/native/contract.js'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { callTool, envelopeOf, requireWorker } from './lib/boundary.mjs'
 requireWorker('native-projection')

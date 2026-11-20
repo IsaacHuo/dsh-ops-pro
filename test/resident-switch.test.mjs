@@ -7,8 +7,8 @@ import NodePtc from '@deepseek-ai/dsh-ptc-runtime-node'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { apply } from '../lib/index.js'
 import { Config, resolveMergedConfig, effectiveMode } from '../lib/settings/merged.js'
-import { modeFields, resolveModeConfig } from '../lib/modes/config.js'
-import { NATIVE_RESIDENT_RAW } from '../lib/modes/plan.js'
+import { modeFields, resolveModeConfig } from '../lib/presets/config.js'
+import { NATIVE_RESIDENT_RAW } from '../lib/presets/defaults.js'
 import { PTC_RESIDENT_TOOLS } from '../lib/ptc/config.js'
 import { publicToolName, BASH_TOOL } from '../lib/policy.js'
 import { bootHost, shutdown, scopedToolNames } from './lib/host.mjs'
@@ -183,32 +183,104 @@ const drivePreStep = async (agent, turn) => {
 }
 /** Plugin-authored contexts appended to the accepted user batch. */
 const stepTailMessages = decision => decision.messages.filter(message => message.source?.kind === 'dsh-ops:step-tail')
+/** Contexts a root result carries from one batching contributor. */
+const fromContributor = (result, contributor) => (result.additionalContexts ?? [])
+  .filter(context => context.source?.kind === 'dsh-ops:step-tail' && context.source?.contributor === contributor)
+const lessonOf = result => fromContributor(result, 'batching-guidance:lesson')
+const noticesOf = result => fromContributor(result, 'batching-guidance')
+/** Run one root program; a tool-free program is enough to carry the lesson. */
+const rootRun = (ctx, agent, code = '// plan: return a constant\nreturn 1') => executeCall(ctx, { agent, toolSet: agent.prepared.toolSet,
+  name: 'run_code', arguments: { description: 'lesson fixture', code }, callId: 'lesson-' + ++sequence, signal: new AbortController().signal })
 
-await test('ops-ptc batchingGuidance teaches until the lesson is committed to history', () => withTempDir('batching-teach', async cwd => {
+await test('ops-ptc batchingGuidance teaches once on the first root result, never in the user batch', () => withTempDir('batching-teach', async cwd => {
   const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: true,
     batchingGuidance: true, alwaysLoaded: ['stat'], allowedTools: ['stat'] })
   try {
     await waitFor(() => names(ctx, agent).includes(publicToolName('stat')))
-    const first = stepTailMessages(await drivePreStep(agent, 1))
-    assert.equal(first.length, 1, JSON.stringify(first))
-    assert.equal(first[0].source.contributor, 'batching-guidance')
-    assert.match(JSON.stringify(first), /Batch tool calls/)
-    assert.match(JSON.stringify(first), /not a user instruction or authorization/)
-    // The pre-step decision is not the commit point: a batch withdrawn before
-    // admission never becomes history, so the lesson must be offered again.
-    assert.equal(stepTailMessages(await drivePreStep(agent, 2)).length, 1, 'an uncommitted lesson is offered again')
-    // Once the host reports the durable message, the lesson is spent for the session.
-    await ctx.serial('session/event', agent.session, { type: 'user/message', data: { source: first[0].source } })
-    assert.equal(stepTailMessages(await drivePreStep(agent, 3)).length, 0, 'a committed lesson is never repeated')
+    // A user-role lesson enters logged history and reads as fresh input the model
+    // answers instead of the task (#929): the user batch must carry none of it.
+    assert.equal(stepTailMessages(await drivePreStep(agent, 1)).length, 0, 'the user batch carries no lesson')
+    const first = await rootRun(ctx, agent)
+    assert.equal(first.isError, false, JSON.stringify(first))
+    const taught = lessonOf(first)
+    assert.equal(taught.length, 1, JSON.stringify(first.additionalContexts))
+    assert.match(JSON.stringify(taught), /Batch tool calls/)
+    assert.match(JSON.stringify(taught), /not a user instruction or authorization/)
+    assert.equal(lessonOf(await rootRun(ctx, agent)).length, 0, 'the lesson is spent after its one delivery')
+    assert.equal(stepTailMessages(await drivePreStep(agent, 2)).length, 0, 'nothing re-enters the user batch afterwards')
   } finally { await shutdown(ctx) }
 }))
 
-await test('ops-ptc without batchingGuidance teaches nothing on the first turn', () => withTempDir('batching-teach-off', async cwd => {
+await test('a loader-less ops-ptc row teaches only what it publishes', () => withTempDir('batching-no-loader', async cwd => {
+  const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: false,
+    batchingGuidance: true, alwaysLoaded: ['stat'], allowedTools: ['stat'] })
+  try {
+    await waitFor(() => names(ctx, agent).includes(publicToolName('stat')))
+    // End to end through the delivery point: the scope publishes no loader, so the lesson
+    // must not name one. This is the assertion that fails when the surface is dropped.
+    const taught = lessonOf(await rootRun(ctx, agent))
+    assert.equal(taught.length, 1, JSON.stringify(taught))
+    const text = JSON.stringify(taught)
+    assert.equal(text.includes('ops_load_sdk'), false, 'the unreachable loader is gone')
+    assert.match(text, /call what is published/, 'the direct-call step replaces it')
+    assert.match(text, /ops_stat/, 'the published API is listed instead')
+    // The only file API this scope publishes is the resident reader, so the lesson must
+    // state its contract: directories are rejected, concrete paths are required.
+    assert.match(text, /rejects directories/, 'the inspect path requirement is taught')
+  } finally { await shutdown(ctx) }
+}))
+
+/** The replaced Step 3 section of a taught loader-less lesson, as flat JSON text. */
+const step3Of = taught => {
+  const lesson = JSON.stringify(taught)
+  return lesson.slice(lesson.indexOf('call what is published'), lesson.indexOf('Trajectory 1'))
+}
+
+await test('a read-only loader-less lesson and notice keep the mutating API out', () => withTempDir('batching-readonly-lesson', async cwd => {
+  const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: false,
+    batchingGuidance: true, alwaysLoaded: ['edit_file'], allowedTools: ['stat'] })
+  try {
+    await waitFor(() => names(ctx, agent).includes(publicToolName('inspect_local_file')))
+    // The row always loads the mutating API, so only the read-only policy can keep it
+    // out of the direct-call list: the surface is resolved at delivery time.
+    agent.session.mode = 'read-only'
+    // One bypass program carries both the lesson and the notice on the same result.
+    const result = await rootRun(ctx, agent, 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text')
+    const taught = lessonOf(result)
+    assert.equal(taught.length, 1, JSON.stringify(result.additionalContexts))
+    const step3 = step3Of(taught)
+    assert.ok(step3.length > 0, 'the direct-call section is present')
+    assert.equal(step3.includes('ops_edit_file'), false, 'the read-only surface drops the mutating API')
+    assert.match(step3, /ops_inspect_local_file/, 'the resident reader stays listed')
+    assert.match(step3, /rejects directories/, 'the exact-path note stays with the reader')
+    // The same surface narrows the bypass notice: no write API, the reader stays named.
+    const notice = JSON.stringify(noticesOf(result))
+    assert.ok(notice.length > 2, 'the bypass notice rides the same result')
+    assert.equal(notice.includes('ops_edit_file'), false, 'the notice keeps the mutating API out')
+    assert.match(notice, /ops_inspect_local_file/, 'the resident reader stays named')
+  } finally { await shutdown(ctx) }
+}))
+
+await test('a writable loader-less lesson lists what its row always loads', () => withTempDir('batching-writable-lesson', async cwd => {
+  const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: false,
+    batchingGuidance: true, alwaysLoaded: ['edit_file'], allowedTools: ['stat'] })
+  try {
+    await waitFor(() => names(ctx, agent).includes(publicToolName('edit_file')))
+    // Without the read-only policy the same row teaches its whole resident list, which
+    // is what keeps the narrowing keyed on the policy instead of always on.
+    const taught = lessonOf(await rootRun(ctx, agent))
+    assert.equal(taught.length, 1, JSON.stringify(taught))
+    assert.match(step3Of(taught), /ops_edit_file/, 'a writable scope teaches what its row always loads')
+  } finally { await shutdown(ctx) }
+}))
+
+await test('ops-ptc without batchingGuidance teaches nothing', () => withTempDir('batching-teach-off', async cwd => {
   const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: false,
     batchingGuidance: false, alwaysLoaded: ['stat'], allowedTools: ['stat'] })
   try {
     await waitFor(() => names(ctx, agent).includes(publicToolName('stat')))
     assert.equal(stepTailMessages(await drivePreStep(agent, 1)).length, 0)
+    assert.equal(lessonOf(await rootRun(ctx, agent)).length, 0)
   } finally { await shutdown(ctx) }
 }))
 
@@ -219,22 +291,40 @@ await test('the root run_code trigger answers on its own tool result', () => wit
     await waitFor(() => names(ctx, agent).includes(publicToolName('stat')))
     const run = code => executeCall(ctx, { agent, toolSet: agent.prepared.toolSet, name: 'run_code',
       arguments: { description: 'shape fixture', code }, callId: 'shape-' + ++sequence, signal: new AbortController().signal })
-    const contexts = result => result.additionalContexts ?? []
-    const text = result => JSON.stringify(contexts(result))
+    const text = result => JSON.stringify(noticesOf(result))
     // A compliant program earns nothing, which is what keeps the notice meaningful.
     const good = await run('// plan: stat one path; stat another\nconst [a, b] = await Promise.all([tools.ops_stat({ path: "a" }), tools.ops_stat({ path: "b" })])\nreturn { a, b }')
     assert.equal(good.isError, false, JSON.stringify(good))
-    assert.equal(contexts(good).length, 0, 'a compliant program earns no notice')
+    assert.equal(noticesOf(good).length, 0, 'a compliant program earns no notice')
     // No plan line: the plan category speaks, and it says only that the comment is missing.
     const thin = await run('const r = await tools.ops_stat({ path: "a" })\nreturn r.status')
     assert.equal(thin.isError, false, JSON.stringify(thin))
     assert.match(text(thin), /did not open with a plan line/, 'the plan notice rides the root result')
     assert.doesNotMatch(text(thin), /Promise\.all/, 'the plan notice stays about the comment')
-    // A shell listing is a bypass; the notice names the API that replaces it.
+    // A shell listing is a bypass; resident file APIs are reachable without loading,
+    // so the notice still names them even though this pool could not load them.
     const bypass = await run('const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text')
-    assert.match(text(bypass), /ops_glob/, 'the bypass notice names the listing tool')
+    assert.match(text(bypass), /ops_inspect_local_file/, 'the notice names the resident file API')
+    assert.doesNotMatch(text(bypass), /ops_bash/, 'the shell it just accused is not offered as the fix')
     // The trigger appends context and never rewrites the tool result itself.
     assert.equal(thin.value.result, 'completed', JSON.stringify(thin.value))
+  } finally { await shutdown(ctx) }
+}))
+
+await test('a read-only agent is never told to edit files through the notice', () => withTempDir('batching-readonly', async cwd => {
+  const { ctx, agent } = await setup(cwd, 'ops-ptc', { residentTools: true, dynamicTools: true,
+    batchingGuidance: true, alwaysLoaded: ['stat'], allowedTools: ['stat', 'edit_file'] })
+  try {
+    await waitFor(() => names(ctx, agent).includes(publicToolName('stat')))
+    // The policy is resolved per delivery, so a read-only session narrows the surface.
+    agent.session.mode = 'read-only'
+    const result = await executeCall(ctx, { agent, toolSet: agent.prepared.toolSet, name: 'run_code',
+      arguments: { description: 'shape fixture', code: 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text' },
+      callId: 'readonly-' + ++sequence, signal: new AbortController().signal })
+    const text = JSON.stringify(result.additionalContexts ?? [])
+    assert.ok(noticesOf(result).length > 0, 'the bypass notice is delivered')
+    assert.doesNotMatch(text, /ops_edit_file/, 'a read-only agent is not taught to mutate')
+    assert.match(text, /ops_inspect_local_file/, 'the reachable file API stays named')
   } finally { await shutdown(ctx) }
 }))
 

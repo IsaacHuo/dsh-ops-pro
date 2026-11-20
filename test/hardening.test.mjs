@@ -19,7 +19,7 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import { resolveWorker, workerName } from '../lib/ptc/runtime.js'
+import { resolveWorker, workerName } from '../lib/execution/runtime.js'
 import { assert, report, test, withTempDir } from './lib/harness.mjs'
 
 function stageWorker(root) {

@@ -1,7 +1,7 @@
 /** Shared real-host discovery admission fixtures, without eager-presentation assumptions. */
 import { bootDiscoveryHost, mintDiscoveryAgent } from './discovery.mjs'
 import { prepareStep, executeCall } from './executor.mjs'
-import { isPresentationProbe } from '../../lib/presentation.js'
+import { isPresentationProbe } from '../../lib/publication/presentation.js'
 export async function fixture(root, config = {}) {
   const { ctx, fiber } = await bootDiscoveryHost(config)
   const probes = new Map()

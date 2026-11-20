@@ -39,7 +39,7 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 
 import { REPO_ROOT, describeModulePath, poisonedModulePath } from '../lib/env.mjs'
-import { PLATFORMS, workerName } from '../../lib/ptc/runtime.js'
+import { PLATFORMS, workerName } from '../../lib/execution/runtime.js'
 import { bundledShell } from '../../lib/shells.js'
 import {
   APPROVAL_CONFIG_KEY, APPROVAL_ENTRY_ID, PERMISSION_CONFIG_KEY, PERMISSION_ENTRY_ID,

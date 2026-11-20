@@ -80,7 +80,7 @@ Native emits a file header, numbered escaped source lines and revision/continuat
 
 The discovered file-tool schemas include concise field-level help. `pattern` here is a JSON array of quoted strings, unlike the single regex string accepted by `ops_grep` or the literal strings accepted by `ops_replace`. Search defaults, output modes and preview flags are described on the corresponding fields; validation constraints are unchanged.
 
-Find regular files below `path`. `pattern` is an **array** of globs matched segment by segment against paths relative to `path` (ASCII case-insensitive), e.g. `["**/*.md","!vendor/**"]`: `*.md` matches the top level only and `**/*.md` any depth; a `!` prefix excludes, and at least one positive entry is required. A bare string is rejected; there is no `include` field.
+Find regular files below `path`. `pattern` is an **array** of globs matched segment by segment against paths relative to `path` (ASCII case-insensitive), e.g. `["**/*.md","!vendor/**"]`: `*.md` matches the top level only and `**/*.md` any depth; a `!` prefix excludes, at least one positive entry is required, and every entry must name a usable relative path segment: an empty or whitespace-only entry, or one with an empty, `.` or `..` segment, is `INVALID_ARGUMENT` rather than a silent zero-match scan (a directory needs `src/**`, not `src/`). The `glob` filter of `ops_grep` and `ops_replace` follows the same rule. A bare string is rejected; there is no `include` field.
 
 `outputMode: "details"` adds `bytes` (the on-disk size) and `modified`, a real modification time in **milliseconds since the Unix epoch** — the same quantity and unit `ops_stat` reports as `modifiedMs`, and `null` when the filesystem cannot report one. `sort: "modified"` orders newest first and is stable: equal timestamps keep the walk's path order. `sort: "path"` and an omitted `sort` both keep that walk order.
 
@@ -247,9 +247,14 @@ The plugin renders routing guidance from what it actually published. The excerpt
 
 Standard and Cordis replace the official `read`, `glob` and `grep` with these reviewed read/search
 workflows; every enabled mode replaces the Windows official shell. Their names, arguments and results
-differ from the host tools; calls are never translated or forwarded under an official name. A
-`run_code` presentation (PTC) is never masked: its transport is not gated, while the replaced
-official names stay refused in that scope. The replacement contract covers native presentation only.
+differ from the host tools; calls are never translated or forwarded under an official name. The
+`run_code` transport itself is never masked or gated. The replacement table covers `read`, `glob` and
+`grep` only — `write`, `edit` and `read_image` are never in it — and the replaced officials are hidden
+only after an explicit opt-in: `hideOfficialTools` for the built-in modes, `replaceOfficial` (default
+`false`) for explicit consumers; by default every official tool stays published. The same opt-in
+covers both presentations: under PTC an official name leaves the surface only while the projection can
+serve the matching `ops_*` API, and an unattached, probe-failing or narrowed projection keeps the
+official tool.
 
 <!-- hide-official-scope:start -->
 | Official tool | OPS alternative | Reviewed purpose |

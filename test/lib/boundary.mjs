@@ -2,7 +2,7 @@
  * One native-worker boundary call, shared by the `linux-*.test.mjs` suites.
  *
  * The boundary suites drive the shipped worker directly rather than through
- * `lib/file/worker.js`, because their subject is the worker's own edge
+ * `lib/execution/files.js`, because their subject is the worker's own edge
  * behaviour — the exact refusal code, the exact envelope fields, the exact
  * bytes on stdout — and the host bridge would rewrite several of those into
  * its own policy vocabulary. `test/permissions.test.mjs` covers the host lane.

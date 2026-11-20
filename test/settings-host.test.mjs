@@ -13,7 +13,7 @@ import { Config as DiscoveryConfig } from '../lib/components/discovery/index.js'
 import * as Shell from '../lib/components/shell/index.js'
 const ShellConfig = Shell.Config
 import { publicToolName } from '../lib/policy.js'
-import { registerNativeProvider } from '../lib/file/result-provider.js'
+import { registerNativeProvider } from '../lib/publication/providers.js'
 import { bootHost, shutdown, scopedToolNames } from './lib/host.mjs'
 import { assert, test, report, TEST_HOME } from './lib/harness.mjs'
 

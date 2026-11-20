@@ -2,8 +2,8 @@
 import fs from 'node:fs'
 import { assertSupportedJsonSchema } from '@deepseek-ai/dsh-tools'
 import { jsonSchemaToTs } from '@deepseek-ai/dsh-tool-executor-ptc'
-import { FILE_TOOLS, PARAMETERS, definition, DESCRIPTIONS } from '../lib/file/contract.js'
-import { capNativeText, NATIVE_OUTPUT_BYTES } from '../lib/file/native/render.js'
+import { FILE_TOOLS, PARAMETERS, definition, DESCRIPTIONS } from '../lib/projections/native/contract.js'
+import { capNativeText, NATIVE_OUTPUT_BYTES } from '../lib/projections/native/render.js'
 import { renderToolingPolicy, publicToolName } from '../lib/policy.js'
 import { assert, test, report } from './lib/harness.mjs'
 

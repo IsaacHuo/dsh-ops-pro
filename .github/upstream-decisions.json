@@ -1,0 +1,17 @@
+{
+  "$comment": "Upstream T-Auto/dsh-ops pull requests this fork decided not to cherry-pick as-is. scripts/upstream-sync.mjs reports them apart from pending work.",
+  "declined": {
+    "700": "panel field capture not planned",
+    "812": "PDF parser extension out of scope for the fork's roadmap",
+    "846": "superseded by the fork's ownership model (publication subscribes on scoped owners already)",
+    "861": "grouped major dev-dependency bumps: @types/node 26 exceeds the ^22.19 engine floor, React 19 must follow the host shell that renders the client modules, TypeScript 7 is a compiler rewrite to evaluate on its own",
+    "943": "superseded by absorbed #1003 (#744): the ready path inspects no tags and the writing branch walks the whole ancestry admitting the cloud-files family",
+    "1023": "+7922-line consolidated change; exceeds the PR size rule and overlaps slices already absorbed"
+  },
+  "reworked": {
+    "935": "zip =9.5.1 applied with cargo update on pro/next (lockfile regenerated, not cherry-picked)",
+    "936": "notify =8.2.2 applied with cargo update on pro/next (lockfile regenerated, not cherry-picked)",
+    "940": "d8e7342 + upstream 9c20d73: selectedDefault repair on activation and in the uninstall CLI",
+    "1008": "233b37d: first-result batching lesson rewritten on top of #930 surfaces and the #1027 session cap"
+  }
+}

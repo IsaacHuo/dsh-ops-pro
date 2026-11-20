@@ -3,7 +3,7 @@ import { createScope } from '@deepseek-ai/dsh-scope'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { prepareStep } from './lib/executor.mjs'
 import { assert, test, report } from './lib/harness.mjs'
-import { surfaceOf, surfaceNames, visibleNames } from '../lib/surface.js'
+import { surfaceOf, surfaceNames, visibleNames } from '../lib/publication/surface.js'
 const tool = name => ({ name, description: `fixture ${name}`, parameters: { type: 'object', properties: {} },
   output: { schema: { type: 'object' }, render: () => [] }, execute: async () => ({}) })
 

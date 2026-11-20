@@ -57,7 +57,7 @@ try {
   } else {
     bundleClient(root)
     const assets = copyAssets(source)
-    if (existsSync(path.join(source, 'ptc/contract.ts'))) {
+    if (existsSync(path.join(source, 'projections/ptc/contract.ts'))) {
       const { writePtcDeclarations } = await import('./lib/build/ptc-sdk.mjs')
       const sdk = await writePtcDeclarations(root)
       console.log(`build: generated PTC declarations for ${sdk.tools} capabilities (${sdk.bytes} bytes)`)

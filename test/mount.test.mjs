@@ -9,8 +9,8 @@ import { BASH_TOOL, FILE_TOOLS, TOOLING_SECTION, publicToolName } from '../lib/p
 import { NATIVE_RESIDENT_FILE_TOOLS } from '../lib/capabilities/registry.js'
 import * as discovery from '../lib/components/discovery/index.js'
 import { applyComponent } from '../lib/index.js'
-import * as ptc from '../lib/ptc/index.js'
-import { resolveWorker } from '../lib/ptc/runtime.js'
+import * as ptc from '../lib/publication/ptc.js'
+import { resolveWorker } from '../lib/execution/runtime.js'
 import { PACKAGE_ROOT, assert, report, skipSuite, test, waitFor, withTempDir } from './lib/harness.mjs'
 import { bootHost, callTool, mountPlugin, mountScopedToolPlugin, preExecute, publicToolNames,
   registryHasOwnRegister, registryNames, renderSections, scopedToolNames,

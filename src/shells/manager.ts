@@ -6,10 +6,11 @@ import { unsealDirectorySync } from '../niubash/seal.js'
 import { isNiubashExecutable, niubashCandidates, selectNiubash } from '../niubash/runtime.js'
 import { PACKAGE_ROOT, dshHome } from '../paths.js'
 import { provisionedShellStore } from './pins.js'
+import { registryGitBash, type RegistryQuery } from './git-registry.js'
 import { executableNames, isSpawnableFile, isWslBashLauncher, wellKnownCandidates } from './paths.js'
 import { restrictedCompatibility } from '../bash-ipc.js'
 
-export interface BashRuntimeOptions { env?: NodeJS.ProcessEnv; platform?: NodeJS.Platform; arch?: string }
+export interface BashRuntimeOptions { env?: NodeJS.ProcessEnv; platform?: NodeJS.Platform; arch?: string; registry?: RegistryQuery }
 export interface ManagedBashVersion { directory: string; version: string; owned: boolean; sha256?: string; backend?: 'niubash' }
 export interface BashRemovalOptions { env?: NodeJS.ProcessEnv; yes?: boolean; dryRun?: boolean }
 const missing = (error: unknown): boolean => typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
@@ -80,7 +81,7 @@ export function removeManagedBash({ env = process.env, yes = false, dryRun = fal
 }
 
 /** Only actual Git install layouts; no PATH launcher, WSL, shim or implicit shell switch. */
-export function gitBashCandidates({ env = process.env, platform = process.platform }: BashRuntimeOptions = {}): string[] {
+export function gitBashCandidates({ env = process.env, platform = process.platform, registry }: BashRuntimeOptions = {}): string[] {
   if (platform !== 'win32') return []
   return [...new Set([
     // PATH is a real installation the resolution ladder already honours, so the
@@ -92,6 +93,8 @@ export function gitBashCandidates({ env = process.env, platform = process.platfo
       .filter(file => isSpawnableFile(file) && !isWslBashLauncher(file, env, platform)),
     ...wellKnownCandidates({ kind: 'bash', env, platform })
       .filter(file => /[\\/]git[\\/]/i.test(file) && isSpawnableFile(file)),
+    // The installer's own record finds a Git on any drive (#803).
+    ...registryGitBash({ platform, env, ...(registry === undefined ? {} : { query: registry }) }).filter(isSpawnableFile),
     // A PortableGit copy an older provisioner wrote stays selectable; it is a
     // normal MSYS install, not a hidden second rung.
     ...legacyProvisionedBash({ env, platform }),

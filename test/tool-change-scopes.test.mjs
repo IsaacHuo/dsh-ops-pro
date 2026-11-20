@@ -6,7 +6,7 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import * as discoveryModule from '../lib/discovery/index.js'
 import { legacyComponent } from './lib/legacy-component.mjs'
 import { WORKER, requireWorker } from './lib/boundary.mjs'
-import { isPresentationProbe } from '../lib/presentation.js'
+import { isPresentationProbe } from '../lib/publication/presentation.js'
 import { assert, test, report, wait, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 

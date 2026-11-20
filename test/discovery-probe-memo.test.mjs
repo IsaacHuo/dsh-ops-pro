@@ -2,7 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fixture } from './lib/discovery-admission.mjs'
-import { withToolChange } from '../lib/tool-changes.js'
+import { withToolChange } from '../lib/publication/changes.js'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { shutdown } from './lib/host.mjs'
 await test('attributed and unknown changes are lazy, repeated resolves do not reuse stale mode verdicts', () => withTempDir('memo', async root => {

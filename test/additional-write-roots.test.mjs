@@ -5,7 +5,7 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { WORKER, requireWorker } from './lib/boundary.mjs'
-import { invoke } from '../lib/file/worker.js'
+import { invoke } from '../lib/execution/files.js'
 import { additionalWriteRoots, sameAuthority } from '../lib/authority-paths.js'
 requireWorker('additional-write-roots')
 await test('workspace-write accepts an explicit physical grant without changing workspace authority', () => withTempDir('extra-roots', async root => {

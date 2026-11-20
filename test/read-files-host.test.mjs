@@ -5,9 +5,9 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { WORKER, requireWorker } from './lib/boundary.mjs'
-import { invoke } from '../lib/file/worker.js'
-import { resolveReadFiles } from '../lib/file/read-files.js'
-import { definition } from '../lib/file/contract.js'
+import { invoke } from '../lib/execution/files.js'
+import { resolveReadFiles } from '../lib/execution/read-files.js'
+import { definition } from '../lib/projections/native/contract.js'
 import { publicToolName } from '../lib/policy.js'
 requireWorker('read-many-host')
 const execution = cwd => ({ agent: { session: { id: 'read-many-host', header: { cwd } } }, signal: new AbortController().signal })

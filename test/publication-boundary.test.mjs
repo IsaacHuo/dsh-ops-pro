@@ -8,7 +8,7 @@ await test('generic publication and file/PTC projections do not import modes', (
     const file = path.join(directory, entry.name)
     return entry.isDirectory() ? visit(file) : [file]
   })
-  for (const area of ['publication', 'file', 'ptc', 'consumer', 'projections', 'execution']) {
+  for (const area of ['publication', 'ptc', 'consumer', 'projections', 'execution']) {
     for (const file of visit(path.join(PACKAGE_ROOT, 'src', area)).filter(file => file.endsWith('.ts'))) {
       assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /from\s+['"][^'"]*\/(?:modes|presets)\//u, path.relative(PACKAGE_ROOT, file))
     }

@@ -7,7 +7,7 @@ import {
   withResultSession, expireResultSession, mountResultLifecycle,
 } from '../lib/kernel/result-lifecycle.js'
 import { listPendingCleanup, registerCleanupRoot, resetCleanupHostBoot, setCleanupRegistryDir } from '../lib/kernel/result-cleanup-registry.js'
-import { invoke as fileCall } from '../lib/file/worker.js'
+import { invoke as fileCall } from '../lib/execution/files.js'
 import { withTempDir } from './lib/harness.mjs'
 
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }

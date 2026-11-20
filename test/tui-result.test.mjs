@@ -2,8 +2,8 @@ import { createActivityStore } from '../lib/tui/activity.js'
 import { resultDetails } from '../lib/tui/result.js'
 import { activityLines } from '../lib/tui/panel.js'
 import { call, result, dispatch } from './lib/activity-events.mjs'
-import { definition } from '../lib/file/contract.js'
-import { resultDefinition } from '../lib/file/result.js'
+import { definition } from '../lib/projections/native/contract.js'
+import { resultDefinition } from '../lib/projections/native/result.js'
 import { assert, report, test } from './lib/harness.mjs'
 const inspect = value => resultDetails('ops_grep', result(2, 'a', value).data, false)
 

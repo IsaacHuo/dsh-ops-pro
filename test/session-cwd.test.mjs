@@ -5,8 +5,8 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { WORKER, requireWorker } from './lib/boundary.mjs'
-import { invoke } from '../lib/file/worker.js'
-import { definition } from '../lib/file/contract.js'
+import { invoke } from '../lib/execution/files.js'
+import { definition } from '../lib/projections/native/contract.js'
 
 requireWorker('session-cwd')
 

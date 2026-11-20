@@ -72,7 +72,7 @@ the row's status card, which sets it once when pressed. Generation and the manua
 | `residentTools` | true | Publish the startup APIs. The PTC resident surface is only `ops_inspect_local_file`; everything else loads on demand through `ops_load_sdk` |
 | `bash` | true | Allow publishing `ops_bash` on Windows; POSIX sessions keep the host bash |
 | `hidePwsh` | true | Hide the official Windows shell while Bash is available; disabled entirely when `global.hidePwsh` is false |
-| `hideOfficialTools` | true | Hide the official file tools this mode replaces; disabled entirely when `global.hideOfficialTools` is false |
+| `hideOfficialTools` | true | Hide the official file tools this mode replaces, including PTC presentation: when the projection can serve the matching `ops_*` API, official `read/glob/grep` leave the tool surface and the SDK declaration. `write`/`edit`/`read_image` stay; a name the projection cannot serve keeps its official tool (an unattached projection, `glob`/`grep` under `dynamicTools: false`, or a name excluded by a narrowed `allowedTools`). Disabled entirely when `global.hideOfficialTools` is false |
 | `dynamicTools` | true | Publish the progressive SDK loader `ops_load_sdk`; effective only while `global.dynamicTools` is also on (AND gate) |
 | `batchingGuidance` | true for `ops-ptc`, false otherwise | Teach once at session start (logged history, system prompt untouched), then correct the shape of root `run_code` programs: `bypass`, `plan` and `shape` each latch once per turn and re-arm when the program complies; the notice rides the triggering result as `additionalContexts` and never blocks or rewrites the program. Text lives in the editable `prompts/batching-guidance.md`. YAML-only; an omitted `ops-ptc` section in a legacy whole-row profile override retains true; explicit false disables it |
 | `spillRetentionDays` | 30 | Host subprocess spill retention window; `0` reports only and never deletes |
@@ -93,7 +93,8 @@ external English Markdown file:
 - **Once at session start**: one plugin-context message joins the session's first accepted non-empty
   user-message batch (step-tail, source `dsh-ops:step-tail` / `batching-guidance`). It enters logged history,
   so the model's first request already sees the whole procedure: the first-line `// plan:` comment, the
-  dependency split, the load-before-call step and four copyable trajectories.
+  dependency split, the load-before-call step (only while dynamic loading publishes the loader) and four
+  copyable trajectories.
 - **On a thin program**: when a **root** `run_code` program breaks one of three latched categories, a short
   notice is appended to that call's own result as `additionalContexts`. The tool result keeps its value, its
   content and its existing contexts; the program is never blocked or rewritten.
@@ -110,6 +111,20 @@ external English Markdown file:
 - Everything is plugin-context history and the tool schema is untouched, so the system prompt and its cache
   survive. The lesson counts as spent only once it appears as a durable `user/message`; a batch withdrawn
   before admission (cancellation, rejection) leaves the next accepted batch free to teach it again.
+- The text follows the published surface. While dynamic loading publishes `ops_load_sdk`, the lesson ships
+  byte for byte, load step included. With `dynamicTools: false` the scope publishes no loader, so that step and
+  its table row are replaced by a direct-call section that lists the APIs this scope actually publishes; a
+  scope that publishes nothing says so and points at the official tools. When the only file API a loader-less
+  scope publishes is `ops_inspect_local_file`, that section states its contract too: one file by exact path,
+  directories rejected, and with no `ops_glob` or `ops_grep` published nothing here lists or searches, so
+  file work needs concrete paths. The program-shape notices carry the same surface, so `bypass` names neither a
+  loader nor an API the scope cannot reach: its file-work line lists only the file APIs that are loadable (or
+  resident) here, and a shell tool that bypassed them is never offered as the replacement; the narrow-pool load
+  line keeps the lesson's order and loads the published names `for the next program`. Two limits are deliberate:
+  the shipped lesson itself is substituted only when the loader is absent (neither a narrow pool nor a read-only
+  policy rewrites the shipped trajectories; both narrow only the lists a scope composes), and the lists follow
+  the configured pool and the read-only policy, while the loadable list also passes the loader's own gate
+  (per-agent ownership and runtime availability), so it is only ever narrower, never wider.
 
 `batchingTelemetry` (same row, YAML-only, default `false`) emits one structured log line per delivered
 notice, for example `dsh-ops batching: turn=3 category=plan plan=1 bypass=0 shape=2 total=3`. It is
@@ -262,6 +277,7 @@ OPS does not bundle or override the host PowerShell executable.
 legacy false remains off. `textLimit` is 64–100000 (default 2000), `maxSessionBytes` is
 65536–268435456 (default 8388608). Capture writes only to the session workspace's `.dsh-ops/panel/`,
 never the real DSH home. Reports can contain conversation/tool text; ignore that directory in Git.
+An enabled collector logs a skipped-working-directory warning once per activation.
 Stopping cancels queued I/O and waits for issued work, retaining recoverable NDJSON rather than
 starting a final fold. `tui` accepts `maxSessions`, `maxActive`, `recentLimit` only; it grants no tool
 execution. See [sidebar limits](tui-panel.md#limits).

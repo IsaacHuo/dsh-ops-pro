@@ -6,7 +6,7 @@ import { parseRequest, search } from '../lib/discovery/search.js'
 import { DISCOVERY_PARAMETERS, DISCOVERY_DESCRIPTION } from '../lib/capabilities/discovery.js'
 import { publicToolName } from '../lib/policy.js'
 import { assert, test, report, withTempDir, waitFor } from './lib/harness.mjs'
-import { NativeFileTools } from '../lib/file/runtime.js'
+import { NativeFileTools } from '../lib/projections/native/runtime.js'
 import { discoveryMountChecks } from './lib/discovery.mjs'
 
 await test('discovery config validates its own keys and copies bounded operator selections', () => {

@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { Writable, PassThrough } from 'node:stream'
 import { assert, test, report, skipSuite, TEST_HOME, PACKAGE_ROOT, waitFor, tick } from './lib/harness.mjs'
-import { NativeFileTools } from '../lib/file/runtime.js'
+import { NativeFileTools } from '../lib/projections/native/runtime.js'
 import { createActivityStore } from '../lib/tui/activity.js'
 
 if (!process.env.DSH_OPS_TUI_ROOT || !process.env.DSH_OPS_TUI_WORKER) {
