@@ -211,7 +211,7 @@ export function mountPtc(root: Context, rawConfig: unknown, gate: PtcGate = { al
               if (gate.telemetry === true) {
                 const counts = shapeLatch.stats(agent)
                 ctx.logger.info('dsh-ops batching: turn=' + notice.turn + ' category=' + notice.category
-                  + ' plan=' + counts.plan + ' bypass=' + counts.bypass + ' shape=' + counts.shape + ' total=' + counts.total)
+                  + ' plan=' + counts.plan + ' bypass=' + counts.bypass + ' shape=' + counts.shape + ' total=' + counts.total + ' session=' + counts.session)
               }
               // Append only: the tool result keeps its own value, content and contexts.
               return { ...decision, additionalContexts: [...(decision.additionalContexts ?? []), message] }
