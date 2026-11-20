@@ -7,6 +7,8 @@
     "1023": "+7922-line consolidated change; exceeds the PR size rule and overlaps slices already absorbed"
   },
   "reworked": {
+    "935": "zip =9.5.1 applied with cargo update on pro/next (lockfile regenerated, not cherry-picked)",
+    "936": "notify =8.2.2 applied with cargo update on pro/next (lockfile regenerated, not cherry-picked)",
     "940": "d8e7342 + upstream 9c20d73: selectedDefault repair on activation and in the uninstall CLI",
     "1008": "233b37d: first-result batching lesson rewritten on top of #930 surfaces and the #1027 session cap"
   }
