@@ -138,6 +138,7 @@ if (!ci) {
   check(triggers?.merge_group !== undefined, 'ci.yml: runs on merge_group, so a merge queue can use it')
   for (const event of ['push']) {
     check(triggers?.[event]?.branches?.includes('release/0.4.0'), `ci.yml: ${event} includes the 0.4.0 staging branch`)
+    check(triggers?.[event]?.branches?.includes('pro/next'), `ci.yml: ${event} includes the pro/next integration branch`)
   }
   check(triggers?.pull_request?.branches === undefined && triggers?.pull_request?.['branches-ignore'] === undefined,
     'ci.yml: pull_request has no target-branch filter, including stacked PRs')

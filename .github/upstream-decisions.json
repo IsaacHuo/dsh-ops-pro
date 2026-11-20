@@ -1,0 +1,13 @@
+{
+  "$comment": "Upstream T-Auto/dsh-ops pull requests this fork decided not to cherry-pick as-is. scripts/upstream-sync.mjs reports them apart from pending work.",
+  "declined": {
+    "700": "panel field capture not planned",
+    "812": "PDF parser extension out of scope for the fork's roadmap",
+    "846": "superseded by the fork's ownership model (publication subscribes on scoped owners already)",
+    "1023": "+7922-line consolidated change; exceeds the PR size rule and overlaps slices already absorbed"
+  },
+  "reworked": {
+    "940": "d8e7342 + upstream 9c20d73: selectedDefault repair on activation and in the uninstall CLI",
+    "1008": "233b37d: first-result batching lesson rewritten on top of #930 surfaces and the #1027 session cap"
+  }
+}

@@ -302,3 +302,7 @@ provenance receipt records the actual output hashes; no generated runtime is
 committed. `node test/run.mjs bash-ipc-build` covers the pure batch builder and a
 real `cmd.exe` round trip under code page 936. POSIX explicitly reports that the
 Windows round-trip fixture is unavailable and does not count it as passing.
+
+## Tracking upstream
+
+This fork absorbs work from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops). `npm run sync:upstream` fetches the `upstream` remote and lists upstream commits and open pull requests that `pro/next` has not absorbed yet. Pick with `git cherry-pick -x` so the trailer records the source; record a pull request you decline or rewrite in `.github/upstream-decisions.json` with the reason.
