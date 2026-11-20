@@ -9,7 +9,7 @@ import { PACKAGE_ROOT, dshHome } from '../paths.js'
 import { resolveShells } from '../shells.js'
 import { bashEngine, gitBashCandidates, managedBashInventory, removeManagedBash, selectBashRuntime } from '../shells/manager.js'
 import { hostPwshUpgradePlan, upgradeHostPwsh, hostPwshVersion } from '../shells/pwsh-upgrade.js'
-import { companionVersion } from './companion.js'
+import { companionVersion, pwsh7Linked } from './companion.js'
 import { effectiveMode, resolveMergedConfig } from './merged.js'
 import type { UpgradeProcessResult } from '../shells/pwsh-upgrade.js'
 import { parseAction, parseSelection } from './runtime-contract.js'
@@ -69,8 +69,7 @@ export class RuntimeActions {
   private modeViews(): ModeBashView[] {
     let merged
     try { merged = resolveMergedConfig(this.options.config?.()) } catch { merged = resolveMergedConfig({}) }
-    const linked = typeof merged.other.raw?.pwsh7Link === 'boolean' ? merged.other.raw.pwsh7Link
-      : companionVersion({ sweep: false }) !== undefined
+    const linked = pwsh7Linked(merged.other)
     return MODE_IDS.map(id => {
       const state = merged[id]
       try {

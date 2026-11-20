@@ -121,3 +121,14 @@ export function companionVersion(options: { env?: NodeJS.ProcessEnv; now?: () =>
   cached = { at: now, value }
   return value
 }
+
+/**
+ * Whether the row runs linked to dsh-win-pwsh7: a saved explicit choice wins,
+ * otherwise an installed companion links it. Resolved once per apply.
+ * @param other - the row's `other` feature state.
+ * @param installed - probe for the installed companion (defaults to a non-sweeping lookup).
+ */
+export function pwsh7Linked(other: { raw?: { pwsh7Link?: unknown } }, installed: () => boolean = () => companionVersion({ sweep: false }) !== undefined): boolean {
+  const saved = other.raw?.pwsh7Link
+  return typeof saved === 'boolean' ? saved : installed()
+}

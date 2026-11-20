@@ -3,7 +3,7 @@ import { assert, test, report } from './lib/harness.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { companionVersion } from '../lib/settings/companion.js'
+import { companionVersion, pwsh7Linked } from '../lib/settings/companion.js'
 import { GROUPS, ROW_ID, groupsFor, bundleGates, changedFields, executorDiffers, executorOps, flatKey, readExecutor, readRowValues } from '../lib/client/row-schema.js'
 import { hasStatus, statusView } from '../lib/client/detail.js'
 import { en } from '../lib/client/locales.js'
@@ -243,4 +243,13 @@ await test('a linked development install still finds the profile that mounts it'
   assert.equal(companionVersion({ env: { DSH_HOME: other }, from, sweep: false, now: () => Date.now() + 7e9 }), undefined)
 })
 
+await test('a saved pwsh7 link choice wins over the installed companion', () => {
+  let probes = 0
+  const installed = () => { probes++; return true }
+  assert.equal(pwsh7Linked({ raw: { pwsh7Link: false } }, installed), false)
+  assert.equal(pwsh7Linked({ raw: { pwsh7Link: true } }, () => false), true)
+  assert.equal(probes, 0, 'an explicit choice never probes the profile tree')
+  assert.equal(pwsh7Linked({ raw: {} }, installed), true)
+  assert.equal(pwsh7Linked({}, () => false), false)
+})
 report('settings-rows')

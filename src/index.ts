@@ -9,7 +9,7 @@ import { mountIntegration } from './integration/index.js'
 import { gateConsumer } from './consumer/gates.js'
 import { resolveIntegrationConfig } from './consumer/options.js'
 import { mountRuntimeSettings } from './settings/runtime-host.js'
-import { companionVersion } from './settings/companion.js'
+import { pwsh7Linked } from './settings/companion.js'
 import * as panelModule from './components/panel/index.js'
 import * as tuiModule from './components/tui/index.js'
 import * as downloadGuardModule from './components/download-guard/index.js'
@@ -57,9 +57,10 @@ export async function apply(root: Context, rawConfig: unknown): Promise<void> {
     // to provide that seam, so the merged row owns it now.
     await host.plugin({ name: 'dsh-ops/runtime-settings',
       apply: (ctx: Context) => mountRuntimeSettings(ctx, { config: () => rawConfig, applyDefaultPreset: () => preset.applyDefault() }) })
+    const linked = pwsh7Linked(config.other)
     for (const mode of MODE_IDS) {
       const state = config[mode]
-      const effective = resolveModeConfig(effectiveMode(state, config.global, typeof config.other.raw?.pwsh7Link === 'boolean' ? config.other.raw.pwsh7Link : companionVersion({ sweep: false }) !== undefined), mode)
+      const effective = resolveModeConfig(effectiveMode(state, config.global, linked), mode)
       await host.plugin({ name: `dsh-ops/consumer-${mode}`, apply(ctx: Context) {
         applyResolvedMode(ctx, effective, mode, { enabled: state.enabled,
           discovery: { ...config.discovery.config, enabled: config.discovery.enabled },
@@ -69,7 +70,6 @@ export async function apply(root: Context, rawConfig: unknown): Promise<void> {
     for (const row of Object.values(config.presets)) {
       const options = row.options
       const resolved = resolveIntegrationConfig(options)
-      const linked = typeof config.other.raw?.pwsh7Link === 'boolean' ? config.other.raw.pwsh7Link : companionVersion({ sweep: false }) !== undefined
       const effective = gateConsumer(resolved, config.global, linked)
       await host.plugin({ name: `dsh-ops/custom-${resolved.preset}`, apply(ctx: Context) { return mountIntegration(ctx, effective) } })
     }
