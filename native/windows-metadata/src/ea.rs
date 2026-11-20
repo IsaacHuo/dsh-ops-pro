@@ -29,7 +29,8 @@ const KERNEL_EA_PREFIX: &[u8] = b"$kernel.";
 /// neither restorable entries nor warning evidence.
 const PURGEABLE_KERNEL_EA_PREFIX: &[u8] = b"$kernel.purge.";
 const FILE_EA_INFORMATION: u32 = 7;
-const NO_MORE_EAS: i32 = 0xC000_191u32 as i32;
+/// `STATUS_NO_MORE_EAS`: the warning that ends a resumed `NtQueryEaFile` scan.
+const NO_MORE_EAS: i32 = 0x8000_0012_u32 as i32;
 const BUFFER_OVERFLOW: i32 = 0x8000_0005u32 as i32;
 
 #[link(name = "ntdll")]
@@ -312,6 +313,14 @@ pub fn verify(file: &File, captured: &CapturedEas) -> io::Result<()> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn scan_status_codes_are_the_documented_ntstatus_values() {
+        // A wrong end-of-list code turns the normal end of a resumed scan into
+        // an error, so a file with more EAs than one buffer could never be read.
+        assert_eq!(NO_MORE_EAS as u32, 0x8000_0012);
+        assert_eq!(BUFFER_OVERFLOW as u32, 0x8000_0005);
+    }
+
     fn record(name: &[u8], value: &[u8], last: bool) -> Vec<u8> {
         let mut entry = vec![0u8; 8];
         entry[5] = name.len() as u8;
@@ -319,7 +328,7 @@ mod tests {
         entry.extend_from_slice(name);
         entry.push(0);
         entry.extend_from_slice(value);
-        while entry.len() % 4 != 0 {
+        while !entry.len().is_multiple_of(4) {
             entry.push(0);
         }
         if !last {
@@ -381,11 +390,11 @@ mod tests {
         let a = vec![entry(b"A.ONE", b"v1"), entry(b"B.TWO", b"v2")];
         let reordered = vec![entry(b"B.TWO", b"v2"), entry(b"A.ONE", b"v1")];
         assert!(same_restorable(&a, &reordered));
-        assert!(!same_restorable(&a, &vec![entry(b"A.ONE", b"different")]));
-        assert!(!same_restorable(&a, &vec![entry(b"A.ONE", b"v1")]));
+        assert!(!same_restorable(&a, &[entry(b"A.ONE", b"different")]));
+        assert!(!same_restorable(&a, &[entry(b"A.ONE", b"v1")]));
         assert!(!same_restorable(
             &a,
-            &vec![
+            &[
                 entry(b"A.ONE", b"v1"),
                 entry(b"B.TWO", b"v2"),
                 entry(b"C.NEW", b"v"),

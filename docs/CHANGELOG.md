@@ -7,6 +7,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Extended-attribute capture on Windows ends a resumed scan on `STATUS_NO_MORE_EAS` (0x80000012). The constant carried a mistyped value, so a file whose attributes needed more than one buffer failed instead of being preserved. / Windows 扩展属性捕获在续扫时以 `STATUS_NO_MORE_EAS`（0x80000012）结束；此前该常量数值写错，属性超过一个缓冲区的文件会失败而不是被保留。
 - When opening a restricted Bash runtime file fails with Windows' unknown error (how a file held or
   quarantined by Microsoft Defender or other endpoint security surfaces), `EXECUTOR_UNAVAILABLE` now
   says so and points to the protection history instead of suggesting a retry (#771). / 打开受限 Bash

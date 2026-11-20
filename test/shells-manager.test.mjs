@@ -170,7 +170,21 @@ await test('default distribution embeds Niubash and only explicit legacy assembl
   assert.equal(packages[0].version, '0.2.1')
 })
 
-await test('a Git for Windows install on another drive is offered from the installer registry record (#803)', async () => {
+await test('the installer registry record names bash under every recorded Git for Windows root (#803)', () => {
+  const asked = []
+  const registry = key => { asked.push(key); return key.startsWith('HKLM') && !key.includes('WOW6432Node')
+    ? '\r\nHKEY_LOCAL_MACHINE\\SOFTWARE\\GitForWindows\r\n    InstallPath    REG_SZ    D:\\Tools\\Git\r\n\r\n' : undefined }
+  assert.deepEqual(registryGitBash({ platform: 'win32', env: {}, query: registry }), ['D:\\Tools\\Git\\bin\\bash.exe', 'D:\\Tools\\Git\\usr\\bin\\bash.exe'])
+  assert.equal(asked.length, 3, 'machine, user and 32-bit keys are all consulted')
+  assert.deepEqual(registryGitBash({ platform: 'linux', env: {}, query: registry }), [])
+  assert.equal(parseInstallPath('    InstallPath    REG_SZ    relative\\Git'), undefined, 'a relative root is not a claim')
+  assert.equal(parseInstallPath(undefined), undefined)
+})
+
+// The candidate list stats real files, so this half needs a Windows filesystem path.
+const REGISTRY_CANDIDATES = 'a Git for Windows install on another drive is offered from the installer registry record (#803)'
+if (process.platform !== 'win32') console.log(`  skip ${REGISTRY_CANDIDATES} — the candidate list probes a Windows install path; this host is ${process.platform}`)
+else await test(REGISTRY_CANDIDATES, async () => {
   await withTempDir('manager-git-registry', root => {
     const install = path.join(root, 'D-drive', 'Git'), file = path.join(install, 'bin', 'bash.exe')
     fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture')
@@ -182,9 +196,6 @@ await test('a Git for Windows install on another drive is offered from the insta
     assert.deepEqual(gitBashCandidates({ env, platform: 'win32', registry }).filter(value => value.startsWith(root)), [path.resolve(file)])
     assert.equal(asked.length, 3, 'machine, user and 32-bit keys are all consulted')
     assert.deepEqual(gitBashCandidates({ env, platform: 'win32', registry: () => undefined }).filter(value => value.startsWith(root)), [])
-    assert.deepEqual(registryGitBash({ platform: 'linux', env, query: registry }), [])
-    assert.equal(parseInstallPath('    InstallPath    REG_SZ    relative\\Git'), undefined, 'a relative root is not a claim')
-    assert.equal(parseInstallPath(undefined), undefined)
   })
 })
 report('shells-manager')
