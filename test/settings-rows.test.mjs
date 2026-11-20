@@ -33,7 +33,7 @@ await test('the page matches the host descriptor, and the opt-in switches share 
   const other = GROUPS.find(group => group.id === 'other')
   assert.deepEqual(other.fields.map(spec => flatKey(spec.path)), ['panel.enabled', 'tui.enabled', 'other.pwsh7Link'])
   for (const section of ['panel', 'tui']) assert.deepEqual(Object.keys(Config.dict[section].dict), ['enabled'])
-  assert.equal(ROW_ID, 'dsh-ops')
+  assert.equal(ROW_ID, 'dsh-ops-pro')
 })
 
 await test('built-in presets hide PowerShell by default and preserve explicit opt-out', () => {
@@ -138,13 +138,13 @@ await test('the executor card reads the saved rows and writes exactly one choice
 })
 
 await test('the status section belongs to the bundle and to the one row', () => {
-  const pkg = { name: 'dsh-ops', installed: true, enabled: true, rows: [] }
+  const pkg = { name: 'dsh-ops-pro', installed: true, enabled: true, rows: [] }
   // Other plugins' pages mount the same slot; the section must stay off them.
   assert.equal(hasStatus({ kind: 'bundle', pkg: { ...pkg, name: 'dsh-win-pwsh7' } }), false)
-  assert.equal(hasStatus({ kind: 'row', pkg: { ...pkg, name: 'dsh-win-pwsh7' }, row: { rowId: 'dsh-ops', moduleName: 'dsh-ops', enabled: true } }), false)
+  assert.equal(hasStatus({ kind: 'row', pkg: { ...pkg, name: 'dsh-win-pwsh7' }, row: { rowId: 'dsh-ops-pro', moduleName: 'dsh-ops', enabled: true } }), false)
   assert.equal(hasStatus({ kind: 'bundle', pkg }), true)
-  assert.equal(hasStatus({ kind: 'row', pkg, row: { rowId: 'dsh-ops', moduleName: 'dsh-ops', enabled: true } }), true)
-  assert.equal(hasStatus({ kind: 'row', pkg, row: { rowId: 'dsh-ops-panel', moduleName: 'dsh-ops/panel', enabled: true } }), false)
+  assert.equal(hasStatus({ kind: 'row', pkg, row: { rowId: 'dsh-ops-pro', moduleName: 'dsh-ops', enabled: true } }), true)
+  assert.equal(hasStatus({ kind: 'row', pkg, row: { rowId: 'dsh-ops-panel', moduleName: 'dsh-ops-pro/panel', enabled: true } }), false)
   assert.equal(hasStatus({ kind: 'item', id: 'official' }), false)
 })
 
@@ -190,11 +190,11 @@ await test('the companion is detected from the profile that holds the loaded pac
   // The host process gets no DSH_PROFILE_DIR (only shell calls do), so the install
   // path is what has to answer there. A sweep would also find the developer's own
   // profiles, which is why the test pins sweep off.
-  const from = path.join(dir, 'node_modules', 'dsh-ops', 'lib', 'index.js')
+  const from = path.join(dir, 'node_modules', 'dsh-ops-pro', 'lib', 'index.js')
   assert.equal(companionVersion({ env: {}, from, sweep: false, now: () => Date.now() + 3e9 }), '9.9.8')
-  assert.equal(companionVersion({ env: {}, from: path.join(dir, 'node_modules', 'dsh-ops', 'lib', 'index.js'), sweep: false, now: () => Date.now() + 4e9 }), '9.9.8')
+  assert.equal(companionVersion({ env: {}, from: path.join(dir, 'node_modules', 'dsh-ops-pro', 'lib', 'index.js'), sweep: false, now: () => Date.now() + 4e9 }), '9.9.8')
   const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'companion-bare-'))
-  assert.equal(companionVersion({ env: {}, from: path.join(bare, 'node_modules', 'dsh-ops', 'lib', 'index.js'), sweep: false, now: () => Date.now() + 5e9 }), undefined)
+  assert.equal(companionVersion({ env: {}, from: path.join(bare, 'node_modules', 'dsh-ops-pro', 'lib', 'index.js'), sweep: false, now: () => Date.now() + 5e9 }), undefined)
 })
 
 await test('an unsaved companion link is never written by saving another switch', () => {
@@ -225,7 +225,7 @@ await test('a linked development install still finds the profile that mounts it'
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'companion-home-'))
   const pkg = path.join(home, 'checkout', 'dsh-ops')
   fs.mkdirSync(path.join(pkg, 'lib'), { recursive: true })
-  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name: 'dsh-ops', version: '0.0.0' }))
+  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version: '0.0.0' }))
   const profile = path.join(home, 'profiles', 'work')
   const modules = path.join(profile, 'node_modules')
   fs.mkdirSync(path.join(modules, 'dsh-win-pwsh7'), { recursive: true })
@@ -233,7 +233,7 @@ await test('a linked development install still finds the profile that mounts it'
   // A `link:` install is a junction from the profile to the checkout, so the module
   // URL sits outside every profile; matching the mounted package names it anyway.
   // A junction is the Windows spelling of a directory link.
-  fs.symlinkSync(pkg, path.join(modules, 'dsh-ops'), process.platform === 'win32' ? 'junction' : 'dir')
+  fs.symlinkSync(pkg, path.join(modules, 'dsh-ops-pro'), process.platform === 'win32' ? 'junction' : 'dir')
   const from = path.join(pkg, 'lib', 'index.js')
   assert.equal(companionVersion({ env: { DSH_HOME: home }, from, sweep: false, now: () => Date.now() + 6e9 }), '9.9.7')
   // A profile that mounts a different copy does not answer for this one.

@@ -19,9 +19,10 @@ import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Context } from '../../adapter/dsh/types.js'
 import { hostEntry, hostEntryAnchor, profileLayer, sameModule, service } from '../../adapter/dsh/host.js'
+import { PACKAGE_NAME } from '../../identity.js'
 
 /** Diagnostic prefix the host prints for this package's patch loads. */
-const BIN_NAME = 'dsh-ops'
+const BIN_NAME = PACKAGE_NAME
 
 /** The host package that owns the loader patch parser. */
 const APP_BOOT = '@deepseek-ai/dsh-app-boot'

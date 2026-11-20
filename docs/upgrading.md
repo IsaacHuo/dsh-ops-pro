@@ -16,7 +16,7 @@ This candidate embeds complete Niubash 1.5.0; `@latest` remains the published re
 | Legacy managed Git Bash / IPC | `<DSH_HOME>/dsh-ops/shells/bash/<version>`; `<DSH_HOME>/dsh-ops/bash-ipc/` | Old state is not silently deleted by npm upgrade. Inspect `bash-runtime status`; preview managed removal with `bash-runtime remove --dry-run`, then use `remove --yes` only when all listed managed copies are unwanted. This removes managed Niubash too, not just legacy Bash. IPC cleanup requires `bash-runtime clean-cache --yes --all-hosts-stopped` after stopping every host/job; that offline command also reclaims quarantined copies beyond the newest two, while an online sweep keeps them. `cache status` reports them. A successful install never deletes a staging sibling it could not verify. |
 | User-selected shell / shared stores | Explicit `bashPath`, system installations, npm/pnpm stores and npm `_npx` cache | Not OPS-owned: never automatically removed by OPS. `npx` may cache a separate full package; do not use it for every runtime invocation. Package-manager retention/pruning is separate from uninstalling the plugin. |
 
-Direct npm installs live under the selected project's `node_modules/dsh-ops`; global installs use `npm root -g`. DSH installs normally resolve under `<DSH_HOME>/profiles/<profile>/node_modules/dsh-ops`; follow the actual resolved package location, not a guessed store path. Each profile may intentionally own a separate package. `bash-runtime status` reports the selected executor and managed directories.
+Direct npm installs live under the selected project's `node_modules/dsh-ops-pro`; global installs use `npm root -g`. DSH installs normally resolve under `<DSH_HOME>/profiles/<profile>/node_modules/dsh-ops-pro`; follow the actual resolved package location, not a guessed store path. Each profile may intentionally own a separate package. `bash-runtime status` reports the selected executor and managed directories.
 
 There is **no automatic npm update/uninstall cleanup hook**: it cannot safely determine active jobs, shared stores or user-owned shells. Install-time hooks remain prohibited by the manifest gate. Fixed-directory provisioning replacement and version-level runtime reuse avoid per-call payload accumulation; explicit offline cleanup handles legacy state. Prepared-version retirement is limited to the exact manifest-hash namespace and first renames each real directory; unrelated names and links are never swept. Never run the broad legacy `uninstall --yes` merely to reclaim one shell: it can remove other explicitly provisioned OPS state.
 
@@ -44,9 +44,9 @@ Change the path for a custom installation. Choose one operation:
 ```powershell
 $desktopCli = Join-Path $env:LOCALAPPDATA 'Programs/DeepSeek Harness/resources/runtime/cli/bin/dsh.cmd'
 # Update to the version you have reviewed:
-& $desktopCli plugin --profile desktop add 'dsh-ops@<version>' --registry=https://registry.npmjs.org
+& $desktopCli plugin --profile desktop add 'dsh-ops-pro@<version>' --registry=https://registry.npmjs.org
 # Or remove the plugin:
-& $desktopCli plugin --profile desktop remove dsh-ops --registry=https://registry.npmjs.org
+& $desktopCli plugin --profile desktop remove dsh-ops-pro --registry=https://registry.npmjs.org
 ```
 
 Replace `<version>` with the chosen version. `web` and `dsh-tui` use their own
@@ -127,7 +127,7 @@ a passing bundle check does not validate a user's other YAML inputs.
 
 ## Installing from Git is not a supported channel
 
-Direct installation of `git+https://github.com/T-Auto/dsh-ops.git` or an unbuilt
+Direct installation of `git+https://github.com/IsaacHuo/dsh-ops-pro.git` or an unbuilt
 source checkout is unsupported. `.gitignore` excludes `lib/` and
 `runtime/`; `prepack` compiles `lib/` but never stages the native worker, and
 staging it (`npm run build:ptc`) needs cargo and the full toolchain. Adding a
@@ -139,7 +139,7 @@ nothing matching `(pre|post)?(prepare|install)` — `prepare`, `preprepare`,
 `scripts/validate-manifest.mjs` fails on any of them, including a hook unrelated to
 the build, because the gate cannot tell an innocent hook from one that tries to
 repair the unsupported channel. Install the published registry target
-(`add dsh-ops`), or build and `npm pack` a checkout yourself; see
+(`add dsh-ops-pro`), or build and `npm pack` a checkout yourself; see
 [contributing](CONTRIBUTING.md#building-the-plugin-and-installing-from-source).
 
 ## Moving from 0.4.x to 0.5.x

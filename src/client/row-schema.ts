@@ -7,6 +7,7 @@
  */
 import type { SettingsPathOpView } from '../adapter/dsh/types.js'
 import type { Translator } from './locales.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 /** A key of the OPS locale namespace. */
 export type LocaleKey = Parameters<Translator>[0]
@@ -37,7 +38,7 @@ export interface GroupSpec {
 }
 
 /** The row id the single bundle row declares. */
-export const ROW_ID = 'dsh-ops'
+export const ROW_ID = PACKAGE_NAME
 
 /** Draft values, keyed by `section.key`. */
 export type RowDraft = Record<string, boolean>

@@ -63,7 +63,7 @@ await test('rebuild removes retired modules and assets while preserving every as
       'components/panel/package.json': Buffer.from('{"type":"module"}\n'),
       'components/panel/locale/en-US.json': Buffer.from('{"name":"Panel"}\r\n'),
       'components/panel/icon.png': Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 255]),
-      'components/tui/dsh-plugin.json': Buffer.from('{"id":"dsh-ops/tui"}\n'),
+      'components/tui/dsh-plugin.json': Buffer.from('{"id":"dsh-ops-pro/tui"}\n'),
       'panel/panel.html': Buffer.from('<!doctype html>\r\n<p>面板</p>\r\n'),
     }
     for (const [name, bytes] of Object.entries(assets)) write(root, `src/${name}`, bytes)

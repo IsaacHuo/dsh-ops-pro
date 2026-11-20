@@ -1,5 +1,5 @@
 import type { Agent, Context } from '../../lib/adapter/dsh/types.js'
-import { registerSystemSection, registerStepTailProvider } from 'dsh-ops/prompt-injection'
+import { registerSystemSection, registerStepTailProvider } from 'dsh-ops-pro/prompt-injection'
 declare const ctx: Context, agent: Agent
 registerSystemSection(ctx, agent, { id: 'literal', revision: '1', text: '{{literal}}' })
 registerStepTailProvider(ctx, agent, { id: 'typed', revision: '2', provide(context) {

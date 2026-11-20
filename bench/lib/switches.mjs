@@ -1,9 +1,10 @@
 import { parse } from 'yaml'
+import { PACKAGE_NAME } from '../../lib/identity.js'
 
-// Feature switches live under named sections of the sole dsh-ops bundle row.
+// Feature switches live under named sections of the sole bundle row (PACKAGE_NAME).
 export const SWITCH_ROWS = Object.freeze(Object.fromEntries([
   'minimal', 'standard', 'ptc', 'cordis', 'discovery', 'panel', 'tui',
-].map(name => [name, 'dsh-ops'])))
+].map(name => [name, PACKAGE_NAME])))
 // Feature-specific activation flags must also permit an explicitly enabled section.
 export const ACTIVATION_KEYS = Object.freeze({ discovery: 'enabled', panel: 'capture' })
 export const SWITCH_SECTIONS = Object.freeze({ minimal: 'minimal', standard: 'standard', ptc: 'ptc', cordis: 'cordis', discovery: 'discovery', panel: 'panel', tui: 'tui' })

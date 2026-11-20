@@ -15,9 +15,10 @@ import * as tuiModule from './components/tui/index.js'
 import * as downloadGuardModule from './components/download-guard/index.js'
 import { configureResultCacheGc } from './kernel/result-cache-gc.js'
 import { registerOpsPtcPreset } from './presets/ops-ptc/register.js'
+import { PACKAGE_NAME } from './identity.js'
 export { Config } from './settings/merged.js'
 export { applyComponent } from './legacy/host.js'
-export const name = 'dsh-ops'
+export const name = PACKAGE_NAME
 
 /**
  * Package-root entry: the single row the bundle inserts.

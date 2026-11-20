@@ -12,7 +12,7 @@ const root = path.resolve(values.root ?? path.resolve(path.dirname(fileURLToPath
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'dsh-plugin.json'), 'utf8'))
 const components = manifest.contributes?.['x-components'] ?? []
-if (components.length !== 1 || components[0].id !== 'dsh-ops') throw Error('Release must declare exactly the merged dsh-ops component')
+if (components.length !== 1 || components[0].id !== pkg.name) throw Error(`Release must declare exactly the merged ${pkg.name} component`)
 const declared = components[0].targets ?? []
 const sameSet = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort())
 if (!sameSet(declared, PLATFORMS)) throw Error(`Declared scope ${JSON.stringify(declared)} and resolver PLATFORMS ${JSON.stringify(PLATFORMS)} disagree`)

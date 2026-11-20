@@ -12,12 +12,12 @@ const current = fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'ut
  * longer exist must be skipped, never fatal, and never rewritten in place.
  */
 const LEGACY_ROWS = [
-  { id: 'dsh-ops-mode-minimal', name: 'dsh-ops/mode-minimal', config: { promptPolicy: true } },
-  { id: 'dsh-ops-mode-standard', name: 'dsh-ops/mode-standard', config: { promptPolicy: true, required: false } },
-  { id: 'dsh-ops-discovery', name: 'dsh-ops/discovery', config: { enabled: true, maxResults: 3 } },
+  { id: 'dsh-ops-mode-minimal', name: 'dsh-ops-pro/mode-minimal', config: { promptPolicy: true } },
+  { id: 'dsh-ops-mode-standard', name: 'dsh-ops-pro/mode-standard', config: { promptPolicy: true, required: false } },
+  { id: 'dsh-ops-discovery', name: 'dsh-ops-pro/discovery', config: { enabled: true, maxResults: 3 } },
   { id: 'dsh-ops-compat', name: 'dsh-ops/compat', disabled: true },
-  { id: 'dsh-ops-panel', name: 'dsh-ops/panel', disabled: true, config: { capture: true, textLimit: 777 } },
-  { id: 'dsh-ops-tui', name: 'dsh-ops/tui', disabled: true, config: { maxSessions: 32 } },
+  { id: 'dsh-ops-panel', name: 'dsh-ops-pro/panel', disabled: true, config: { capture: true, textLimit: 777 } },
+  { id: 'dsh-ops-tui', name: 'dsh-ops-pro/tui', disabled: true, config: { maxSessions: 32 } },
 ]
 const previous = JSON.stringify([{ insert: LEGACY_ROWS }])
 
@@ -29,7 +29,7 @@ await test('a saved eight-row profile composes the one row and keeps its overrid
   const original = fs.readFileSync(fixture.profile.patchPath, 'utf8')
   const check = (host, expectMerged) => {
     const rows = host.entries()
-    const merged = rows.filter(entry => entry.options.id === 'dsh-ops')
+    const merged = rows.filter(entry => entry.options.id === 'dsh-ops-pro')
     assert.equal(merged.length, expectMerged ? 1 : 0, 'the merged row is composed exactly once the bundle ships it')
     // Saved overrides for retired rows are tolerated: they either compose as inert
     // rows or stay unapplied, but they never become fatal and never get rewritten.
@@ -53,7 +53,7 @@ await test('a fresh profile composes the one row with the bundle defaults', asyn
   const fixture = componentProfile('merge-fresh', current)
   const host = await fixture.boot('linux')
   try {
-    assert.deepEqual(host.entries().map(entry => entry.options.id), ['dsh-ops'])
+    assert.deepEqual(host.entries().map(entry => entry.options.id), ['dsh-ops-pro'])
     assert.equal(fs.readFileSync(fixture.profile.patchPath, 'utf8'), '[]', 'startup does not write a composed tree')
     const config = host.entries()[0].options.config
     for (const feature of ['minimal', 'standard', 'ptc', 'ops-ptc', 'cordis', 'discovery']) assert.equal(config[feature].enabled, true, feature)
@@ -74,11 +74,11 @@ await test('the panel feature starts collection only when its own switch and cap
     assert.equal(fs.existsSync(dir), false, 'the feature is off by default')
     // Disabled capture inside an enabled feature stays inert, exactly as the row
     // switch used to; enabling both starts collection.
-    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops', config: { panel: { enabled: true, capture: false } } }]))
+    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops-pro', config: { panel: { enabled: true, capture: false } } }]))
     await host.refresh(); emit('capture-off')
     await new Promise(resolve => setImmediate(resolve))
     assert.equal(fs.existsSync(dir), false)
-    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops', config: { panel: { enabled: true, capture: true } } }]))
+    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops-pro', config: { panel: { enabled: true, capture: true } } }]))
     await host.refresh(); emit('capture-on')
     await waitFor(() => fs.existsSync(path.join(dir, 'capture-on.ndjson')))
   } finally { await shutdown(host.ctx); fs.rmSync(cwd, { recursive: true, force: true }) }

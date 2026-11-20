@@ -11,8 +11,8 @@ const patch = fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8
 const rows = parse(patch).flatMap(entry => entry.insert ?? [])
 const manifest = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'dsh-plugin.json'), 'utf8'))
 await test('one merged row and manifest agree on every platform', () => {
-  assert.deepEqual(rows.map(row => [row.id, row.name]), [['dsh-ops', 'dsh-ops']])
-  assert.deepEqual(manifest.contributes['x-components'].map(row => [row.id, row.entry, row.defaultEnabled]), [['dsh-ops', 'dsh-ops', true]])
+  assert.deepEqual(rows.map(row => [row.id, row.name]), [['dsh-ops-pro', 'dsh-ops-pro']])
+  assert.deepEqual(manifest.contributes['x-components'].map(row => [row.id, row.entry, row.defaultEnabled]), [['dsh-ops-pro', 'dsh-ops-pro', true]])
   assert.equal(rows[0].disabled ?? false, false)
   const resolved = resolveMergedConfig(rows[0].config)
   for (const feature of [...MODES, 'discovery']) assert.equal(resolved[feature].enabled, true, feature)
@@ -29,7 +29,7 @@ for (const platform of ['win32', 'linux', 'darwin']) await test('real Loader app
   const { ctx, entries } = await fixture.boot(platform)
   try {
     assert.equal(entries().length, 1)
-    assert.equal(entries()[0].options.id, 'dsh-ops')
+    assert.equal(entries()[0].options.id, 'dsh-ops-pro')
     const config = resolveMergedConfig(entries()[0].options.config)
     assert.equal(config.panel.enabled, false, 'capture stays opt-in')
     assert.equal(config.tui.enabled, false, 'TUI stays opt-in')
@@ -41,7 +41,7 @@ for (const platform of ['win32', 'linux', 'darwin']) await test('real Loader app
   } finally { await shutdown(ctx) }
 })
 await test('saved explicit merged PTC pools survive bundle refresh and a fresh profile boot', async () => {
-  const choices = [{ id: 'dsh-ops', name: 'dsh-ops', config: { ptc: { enabled: true, allowedTools: ['stat'], alwaysLoaded: [] } } }]
+  const choices = [{ id: 'dsh-ops-pro', name: 'dsh-ops-pro', config: { ptc: { enabled: true, allowedTools: ['stat'], alwaysLoaded: [] } } }]
   const fixture = componentProfile('defaults-saved-ptc', patch, choices)
   const original = fs.readFileSync(fixture.profile.patchPath, 'utf8')
   let host = await fixture.boot('linux')

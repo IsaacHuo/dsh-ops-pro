@@ -13,13 +13,17 @@
 </div>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/dsh-ops"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops?style=flat-square&color=4b6fff"></a>
-  <a href="https://github.com/T-Auto/dsh-ops/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/T-Auto/dsh-ops?style=flat-square&color=eab308"></a>
-  <a href="https://upstar.dev/r/T-Auto/dsh-ops"><img alt="Upstar: #2 in JavaScript" src="https://upstar.dev/badge/T-Auto/dsh-ops.svg"></a>
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
+  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
+  <a href="https://upstar.dev/r/IsaacHuo/dsh-ops-pro"><img alt="Upstar: #2 in JavaScript" src="https://upstar.dev/badge/IsaacHuo/dsh-ops-pro.svg"></a>
 </p>
 
-# dsh-ops
+# dsh-ops-pro
+
+> A long-term independent fork of [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops), published on npm as **`dsh-ops-pro`**. It keeps fixing the upstream backlog and selectively absorbs upstream pull requests. Tool names (`ops_*`), the `dsh-ops` CLI and the managed state under `<DSH_HOME>/dsh-ops/` are unchanged.
+>
+> **Migrating from upstream `dsh-ops`**: both publish the same `ops_*` tools and cannot be enabled together — `remove dsh-ops` first, then `add dsh-ops-pro`. The plugin row is now named `dsh-ops-pro`, so settings saved on the old `dsh-ops` row are not carried over; review them on the settings page. Integrators change their import from `dsh-ops/integration` to `dsh-ops-pro/integration`.
 
 OPS adds bounded file and document tools to DSH. Native mode returns compact, line-numbered text;
 PTC code receives typed Outcome values from the same one-shot Rust worker. Host integration is
@@ -75,7 +79,7 @@ The name “ops” means general operations, not an operations/SRE product.
 
 ### Official plugin marketplace
 
-In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
+In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops-pro`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
 
 Of course, if you are sure you can reach the official npm registry, pick the official registry; if you are not sure, follow the steps above.
 
@@ -86,9 +90,9 @@ Of course, if you are sure you can reach the official npm registry, pick the off
 #### Installation
 
 ```console
-npx --yes dsh-ops@latest install --profile desktop
-npx --yes dsh-ops@latest install --profile web
-npx --yes dsh-ops@latest install --profile tui
+npx --yes dsh-ops-pro@latest install --profile desktop
+npx --yes dsh-ops-pro@latest install --profile web
+npx --yes dsh-ops-pro@latest install --profile tui
 ```
 
 An explicit target profile is required. `tui` maps to the **dsh-TUI product's `dsh-tui` profile**, not the old `tui` directory. Initialize the target application first. This entry point delegates installation to the official DSH CLI rather than implementing a separate profile lock and rollback logic.
@@ -100,9 +104,9 @@ Add `--dry-run` to an install or uninstall command to preview it. The preview re
 You can also use the official commands directly:
 
 ```console
-dsh plugin --profile web add dsh-ops
-dsh plugin --profile dsh-tui add dsh-ops
-"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops
+dsh plugin --profile web add dsh-ops-pro
+dsh plugin --profile dsh-tui add dsh-ops-pro
+"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops-pro
 ```
 
 A regular DSH CLI cannot manage the reserved `desktop` profile; do not confuse it with the desktop app's own entry point.
@@ -117,18 +121,18 @@ The 0.5 series supports DSH **from 0.2.2-rc.1**, not 0.2.0/0.2.1 or earlier 0.2.
 [host versions and display metadata](docs/usage.md#host-compatibility-and-display-metadata)
 for component icon exports, profile refresh and config/schema checks.
 
-Re-run the same `npx --yes dsh-ops@latest install --profile ...`, or use the official CLI `add dsh-ops@latest`. Reload when the app asks; restart the app when replacing code that is already loaded.
+Re-run the same `npx --yes dsh-ops-pro@latest install --profile ...`, or use the official CLI `add dsh-ops-pro@latest`. Reload when the app asks; restart the app when replacing code that is already loaded.
 
 #### Uninstall and status
 
 ```console
-npx --yes dsh-ops@latest status --profile desktop
-npx --yes dsh-ops@latest uninstall --profile desktop
+npx --yes dsh-ops-pro@latest status --profile desktop
+npx --yes dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
+Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
 
-Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes dsh-ops@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
+Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
 
 The former `dsh-ops/background` component (FastCtx background jobs) has been removed. A profile that still has its row keeps loading: the row publishes nothing and logs one warning, and can be deleted.
 
@@ -194,8 +198,8 @@ Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-du
 
 ## Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=T-Auto/dsh-ops)](https://github.com/T-Auto/dsh-ops)
+[![Contributors](https://contrib.rocks/image?repo=IsaacHuo/dsh-ops-pro)](https://github.com/IsaacHuo/dsh-ops-pro)
 
 ## Star trend
 
-[![Star trend chart](https://api.star-history.com/svg?repos=T-Auto/dsh-ops&type=Date)](https://star-history.com/#T-Auto/dsh-ops&Date)
+[![Star trend chart](https://api.star-history.com/svg?repos=IsaacHuo/dsh-ops-pro&type=Date)](https://star-history.com/#IsaacHuo/dsh-ops-pro&Date)

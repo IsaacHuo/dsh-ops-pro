@@ -36,7 +36,7 @@ await test('clean full-plugin pack consumer uses production prepare for repeated
     assert.equal(install.status, 0, `${install.error ?? ''}\n${install.stderr}`)
     // pnpm's public package entry is a link into its physical virtual store. The
     // verifier receives the real package root, never a relaxed no-link policy.
-    const installed = fs.realpathSync.native(path.join(consumer, 'node_modules/dsh-ops'))
+    const installed = fs.realpathSync.native(path.join(consumer, 'node_modules/dsh-ops-pro'))
     if (pnpm) assert.ok(fs.statSync(path.join(installed, 'runtime/win32-x64/niubash/niu.exe')).nlink > 1,
       'exercise actual pnpm store hardlink imports, not copy/reflink fallback')
     assert.equal(fs.lstatSync(installed).isSymbolicLink(), false, 'consumer is a real installed artifact, not a workspace link')

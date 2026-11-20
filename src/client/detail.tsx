@@ -10,12 +10,13 @@ import type { PluginDetailProps } from '../adapter/dsh/types.js'
 import type { DefaultPresetResult, RuntimeRemote, RuntimeSnapshot } from '../settings/runtime-contract.js'
 import { useEffect, useState } from 'react'
 import { useRuntime } from './runtime.js'
+import { PACKAGE_NAME } from '../identity.js'
 import { PLAN_KEYS } from './locales.js'
 import type { LocaleKey } from './row-schema.js'
 import type { Translator } from './locales.js'
 
 /** This plugin's package name; the detail slot is mounted for every plugin. */
-const PACKAGE = 'dsh-ops'
+const PACKAGE = PACKAGE_NAME
 /** The companion plugin this page can install; the only spec it is allowed to pass. */
 const PWSH7 = 'dsh-win-pwsh7'
 

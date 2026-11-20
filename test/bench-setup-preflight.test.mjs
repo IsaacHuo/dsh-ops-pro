@@ -63,7 +63,7 @@ function fixture(dir, { version = '0.3.1', built = true } = {}) {
   const overlay = path.join(dir, 'llm.patch.yml')
   const example = path.join(dir, 'llm.patch.example.yml')
   fs.mkdirSync(checkout, { recursive: true })
-  fs.writeFileSync(path.join(checkout, 'package.json'), JSON.stringify({ name: 'dsh-ops', version }), 'utf8')
+  fs.writeFileSync(path.join(checkout, 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version }), 'utf8')
   if (built) stageRuntime(checkout, 'linux-x64')
   fs.writeFileSync(example, EXAMPLE_TEMPLATE, 'utf8')
 
@@ -72,13 +72,13 @@ function fixture(dir, { version = '0.3.1', built = true } = {}) {
   const out = []
   const err = []
   const profileDir = (name) => path.join(home, 'profiles', name)
-  const pluginDir = (name) => path.join(profileDir(name), 'node_modules', 'dsh-ops')
+  const pluginDir = (name) => path.join(profileDir(name), 'node_modules', 'dsh-ops-pro')
   const install = (name, spec) => {
-    const resolved = /^dsh-ops@/.test(spec)
-      ? spec.slice('dsh-ops@'.length)
+    const resolved = /^dsh-ops-pro@/.test(spec)
+      ? spec.slice('dsh-ops-pro@'.length)
       : JSON.parse(fs.readFileSync(path.join(spec, 'package.json'), 'utf8')).version
     fs.mkdirSync(pluginDir(name), { recursive: true })
-    fs.writeFileSync(path.join(pluginDir(name), 'package.json'), JSON.stringify({ name: 'dsh-ops', version: resolved }), 'utf8')
+    fs.writeFileSync(path.join(pluginDir(name), 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version: resolved }), 'utf8')
   }
   const invoke = (args) => {
     calls.push([...args])
@@ -307,7 +307,7 @@ await test('the build check honors --plugin, --no-build-check and --dry-run and 
 
     // A published package means the checkout's build is not what runs; the operator's
     // --no-build-check is the other deliberate skip. Both say so.
-    assert.equal(checkLocalBuild({ plugin: 'dsh-ops@0.3.1' }, { root: dir, platform: 'linux', arch: 'x64', log }).status, 'skipped')
+    assert.equal(checkLocalBuild({ plugin: 'dsh-ops-pro@0.3.1' }, { root: dir, platform: 'linux', arch: 'x64', log }).status, 'skipped')
     assert.equal(checkLocalBuild({ plugin: 'local', noBuildCheck: true }, { root: dir, platform: 'linux', arch: 'x64', log }).status, 'skipped')
     assert.match(lines.join('\n'), /--no-build-check: skipped/)
 
@@ -400,7 +400,7 @@ await test('a failed preflight exits non-zero, names the fix and prepares nothin
     const skipped = fixture(path.join(dir, 'skipped'), { built: false })
     assert.equal(await main(['--dsh-home', skipped.home, '--no-pin', '--no-build-check'], skipped.io()), 0)
     const published = fixture(path.join(dir, 'published'), { built: false })
-    assert.equal(await main(['--dsh-home', published.home, '--no-pin', '--plugin', 'dsh-ops@0.3.1'], published.io()), 0)
+    assert.equal(await main(['--dsh-home', published.home, '--no-pin', '--plugin', 'dsh-ops-pro@0.3.1'], published.io()), 0)
   })
 })
 

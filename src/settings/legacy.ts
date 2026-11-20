@@ -10,6 +10,7 @@
  */
 import { readFileSync } from 'node:fs'
 import type { Context } from '../adapter/dsh/types.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 let merged: boolean | undefined
 let mounting = false
@@ -19,7 +20,7 @@ export function mergedBundle(): boolean {
   if (merged !== undefined) return merged
   try {
     const patch = readFileSync(new URL('../../cordis.patch.yml', import.meta.url), 'utf8')
-    merged = /- id: dsh-ops\s*\n\s+name: dsh-ops/.test(patch)
+    merged = new RegExp(`- id: ${PACKAGE_NAME}\\s*\\n\\s+name: ${PACKAGE_NAME}\\s`).test(patch)
   } catch { merged = false }
   return merged
 }
@@ -39,6 +40,6 @@ export function retired(ctx: Context | null | undefined, name: string): boolean 
   // `DSH_OPS_LEGACY_ROWS=1` keeps a retired module usable for verification of the
   // pre-merge behaviour; nothing in a normal profile sets it.
   if (ctx === null || ctx === undefined || mounting || !mergedBundle() || process.env.DSH_OPS_LEGACY_ROWS === '1') return false
-  ctx.logger?.warn?.(`dsh-ops: the saved "${name}" row is retired; the single dsh-ops row configures it. Remove that patch entry.`)
+  ctx.logger?.warn?.(`dsh-ops: the saved "${name}" row is retired; the single ${PACKAGE_NAME} row configures it. Remove that patch entry.`)
   return true
 }

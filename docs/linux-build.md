@@ -29,7 +29,7 @@ packages to fetch.
 ## 1. Get the source
 
 ```console
-$ git clone https://github.com/T-Auto/dsh-ops.git
+$ git clone https://github.com/IsaacHuo/dsh-ops-pro.git
 $ cd dsh-ops
 ```
 
@@ -43,7 +43,7 @@ added 45 packages in 499ms
 The root package declares `"os": ["win32", "linux"]`, so npm applies no platform
 veto here. On a tree whose `os` list is still Windows-only — the published 0.3.0
 tarball, for instance — the same command stops at `EBADPLATFORM`, and the
-published `npx dsh-ops@latest install` entry point is unusable on Linux for that
+published `npx dsh-ops-pro@latest install` entry point is unusable on Linux for that
 reason. See [Installing into a profile](#5-install-into-a-profile) for the path
 that works regardless of how the tarball was published.
 
@@ -147,7 +147,7 @@ $ npm run verify:release
 …
 dsh-ops test: 30 suite(s) passed in 15s
 linux-x64: 3665672 bytes, sha256 327420ad…
-Release closure OK: dsh-ops@0.3.1, linux-x64 worker (Bash IPC closure skipped: win32-x64 is not staged; DSH_OPS_REQUIRE_ALL_TARGETS=1 demands it).
+Release closure OK: dsh-ops-pro@0.3.1, linux-x64 worker (Bash IPC closure skipped: win32-x64 is not staged; DSH_OPS_REQUIRE_ALL_TARGETS=1 demands it).
 ```
 
 `npm run check:ptc-runtime` answers the narrower question — are the staged
@@ -166,7 +166,7 @@ cross-platform release and a missing platform must be a failure.
 
 ## 5. Install into a profile
 
-`npx dsh-ops@latest install` is the documented Windows path and requires a
+`npx dsh-ops-pro@latest install` is the documented Windows path and requires a
 Windows-only npm tarball. On Linux, install from the checkout through DSH's own
 plugin manager, which forwards to pnpm:
 

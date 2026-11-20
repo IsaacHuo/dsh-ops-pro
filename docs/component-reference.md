@@ -4,7 +4,7 @@ What the single `dsh-ops` row publishes for built-in and explicit consumers, wit
 
 ## Components at a glance
 
-Third-party presets should use [`dsh-ops/integration`](integration-api.md) rather than mounting
+Third-party presets should use [`dsh-ops-pro/integration`](integration-api.md) rather than mounting
 one of the five built-in identities. It adds independently configured tools and `ops_status`
 diagnostics, while external Native plugins may use the [provider contract](external-provider.md).
 
