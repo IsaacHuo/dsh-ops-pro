@@ -130,7 +130,8 @@ fn only_purgeable_kernel_eas_on(file: &File) -> io::Result<bool> {
         return Err(nt_error(result));
     }
     // SAFETY: reinterpreting the initialised u32 allocation as bytes.
-    let bytes = unsafe { std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>(), buffer.len() * 4) };
+    let bytes =
+        unsafe { std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>(), buffer.len() * 4) };
     only_purgeable_kernel_eas(&bytes[..status.information.min(bytes.len())])
 }
 fn unsupported(message: &str) -> io::Error {
