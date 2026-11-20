@@ -19,10 +19,10 @@ name: Release
 # packs, then stops at `publish` because the ref is not a tag.
 #
 # WHAT IT PUBLISHES: the GitHub Release for the tag — title, generated notes, the
-# installable tarballs and `SHA256SUMS`. npm is a separate channel and is deliberately
-# NOT published here: `npm publish` needs an `NPM_TOKEN` secret that this repository
-# does not grant to Actions, and docs/PROVENANCE.md records that GitHub publication
-# does not automatically publish npm.
+# installable tarballs and `SHA256SUMS`. The `npm` job then publishes the same main
+# tarball through npm Trusted Publishing (OIDC, no secret), but only once the
+# repository variable NPM_TRUSTED_PUBLISHING is 'true'; until then npm stays a manual
+# channel, as docs/PROVENANCE.md records.
 #
 # PROVENANCE: every runtime target is staged with its own `provenance.json` receipt
 # (version, target, executable name, sha256), and the assembled publish directory
@@ -374,3 +374,50 @@ jobs:
             cat dist-release/SHA256SUMS
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  npm:
+    name: Publish the main tarball to npm
+    needs: [gate, publish]
+    # npm Trusted Publishing (OIDC): no token or secret is read. It runs only on a tag
+    # and only once the repository variable NPM_TRUSTED_PUBLISHING is 'true', which a
+    # maintainer sets after registering this repository and release.yml as the
+    # package's trusted publisher on npmjs.com. The first version of a new package has
+    # to be published by hand, because npm attaches a trusted publisher to an existing
+    # package only.
+    if: github.ref_type == 'tag' && vars.NPM_TRUSTED_PUBLISHING == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-dist
+          path: dist-release
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Publish the exact tarball the gate checked
+        # The tarball is the one SHA256SUMS records; it is never re-packed here. A
+        # version that is already on npm is left alone, so a re-dispatched release
+        # finishes without trying to replace published bytes.
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g npm@11.17.0
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          tarball="dist-release/${name}-${version}.tgz"
+          [ -f "$tarball" ] || { echo "missing main tarball: $tarball" >&2; exit 1; }
+          (cd dist-release && grep -F " ${name}-${version}.tgz" SHA256SUMS | sha256sum -c -)
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "${name}@${version} is already on npm; nothing to publish"
+            exit 0
+          fi
+          case "$version" in *-*) tag=next ;; *) tag=latest ;; esac
+          npm publish "$tarball" --provenance --access public --tag "$tag"

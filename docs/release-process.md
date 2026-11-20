@@ -1,6 +1,6 @@
 # 发布流程
 
-对象是 `.github/workflows/release.yml`（workflow 名 `Release`）。发布目标只有一个：**GitHub Release**（tag + 自动 notes + 一个可安装主包 tarball + `SHA256SUMS`）。npm publish 不在这条流水线里，理由见下。
+对象是 `.github/workflows/release.yml`（workflow 名 `Release`）。发布目标是 **GitHub Release**（tag + 自动 notes + 一个可安装主包 tarball + `SHA256SUMS`），以及在维护者开启后经 npm Trusted Publishing 发布的同一个主包 tarball，见下。
 
 > 指纹口径：外部产物的字节以 `SHA256SUMS` 为准——the bytes of every external artifact are authoritative in `SHA256SUMS`; the Release body (notes) never defines a checksum, and a run summary is only a copy of that manifest. 因此本流程保证：`SHA256SUMS` 一旦发布就是该版本字节的权威记录，之后的发布只能补齐缺失资产，不能替换它（见下节）。凡公布的指纹都必须写明对象（哪一个文件的指纹），不得只手抄数值。
 
@@ -61,10 +61,12 @@
 4. `git tag v<package.json 版本>` → `git push origin v<version>`。
 5. 发布中断时：重新 dispatch 同一个 tag（同 commit），只补缺失资产；**不要**移动 tag。
 
-## npm 发布：不在本工作流内（要改需 admin）
+## npm 发布：Trusted Publishing（OIDC，无 secret）
 
-- GitHub Release 与 npm registry 是两个渠道；`docs/PROVENANCE.md` 记录「GitHub 发布不会自动发布 npm」。
-- 这条工作流不引用任何 secret。若将来要让 CI 发布 npm，需要 admin 添加 `NPM_TOKEN`，并新增一个 `needs: gate`、显式读取该 secret 的 job；这一半**没有实现**，属人为占位。
+- `npm` job 在 `publish` 之后运行，只在 tag 上、且仓库变量 `NPM_TRUSTED_PUBLISHING` 为 `true` 时执行；它不读取任何 secret，只申请 `id-token: write`。
+- 发布的是 gate 打出的 `dist-release/<name>-<version>.tgz`，先按 `SHA256SUMS` 校验，绝不重新打包；版本已在 npm 上时直接跳过，因此重发同一 tag 不会尝试替换已发布字节。带 `-` 的版本发到 `next`，其余发到 `latest`，并附 `--provenance`。
+- 首次发布（包尚不存在）必须手动：从该版本的 GitHub Release 下载主包 tarball，核对 `SHA256SUMS`，`npm login` 后 `npm publish <tarball> --access public`。之后在 npmjs.com 的包设置里把本仓库与 `.github/workflows/release.yml` 注册为 trusted publisher，再在仓库设置里把变量 `NPM_TRUSTED_PUBLISHING` 设为 `true`。
+- `scripts/check-workflows.mjs` 断言这三点（OIDC、tag + 变量开关、只发校验过的 gate tarball）。
 
 ## 规则集与 merge queue（admin 一次性动作）
 

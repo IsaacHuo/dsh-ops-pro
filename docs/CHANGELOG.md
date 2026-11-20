@@ -7,6 +7,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- A tagged release can publish its checked main tarball to npm through Trusted Publishing (OIDC, no secret, `--provenance`), opted in with the repository variable `NPM_TRUSTED_PUBLISHING`; the first version of the package is still published by hand. / 打 tag 的发布可经 npm Trusted Publishing（OIDC、无 secret、带 `--provenance`）发布 gate 校验过的主包 tarball，由仓库变量 `NPM_TRUSTED_PUBLISHING` 显式开启；包的首个版本仍需手动发布。
 - Extended-attribute capture on Windows ends a resumed scan on `STATUS_NO_MORE_EAS` (0x80000012). The constant carried a mistyped value, so a file whose attributes needed more than one buffer failed instead of being preserved. / Windows 扩展属性捕获在续扫时以 `STATUS_NO_MORE_EAS`（0x80000012）结束；此前该常量数值写错，属性超过一个缓冲区的文件会失败而不是被保留。
 - When opening a restricted Bash runtime file fails with Windows' unknown error (how a file held or
   quarantined by Microsoft Defender or other endpoint security surfaces), `EXECUTOR_UNAVAILABLE` now

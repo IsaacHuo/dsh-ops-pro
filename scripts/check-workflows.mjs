@@ -227,6 +227,15 @@ if (release) {
   const publishRuns = (release.doc.jobs?.publish?.steps ?? []).map(step => String(step.run ?? '')).join('\n')
   check(!/--clobber/.test(publishRuns), 'release.yml: publishing is append-only (no --clobber)')
   check(/checks:\s*read/.test(text), 'release.yml: the gate may read the tagged commit\'s check runs')
+  // npm is published by Trusted Publishing only: an OIDC token, the tarball the gate checked,
+  // and an explicit opt-in variable, so a fork without a registered publisher stays green.
+  const npmJob = release.doc.jobs?.npm
+  const npmRuns = (npmJob?.steps ?? []).map(step => String(step.run ?? '')).join('\n')
+  check(npmJob?.permissions?.['id-token'] === 'write', 'release.yml: npm publishes through an OIDC token (id-token: write)')
+  check(/vars\.NPM_TRUSTED_PUBLISHING == 'true'/.test(String(npmJob?.if ?? '')) && /github\.ref_type == 'tag'/.test(String(npmJob?.if ?? '')),
+    'release.yml: npm publishing runs only on a tag and only after the trusted publisher is opted in')
+  check(/npm publish "\$tarball" --provenance/.test(npmRuns) && !/npm pack/.test(npmRuns) && /sha256sum -c/.test(npmRuns),
+    'release.yml: npm publishes the checksummed gate tarball with provenance, never a re-pack')
 }
 
 // The bench smoke is a measurement, not a merge gate: it lives in the benchmark workflow and runs
