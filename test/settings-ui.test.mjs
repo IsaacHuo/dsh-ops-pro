@@ -55,7 +55,7 @@ const switchIn = (node, label) => node.querySelector(`button[role=switch][aria-l
 const disclosure = (node, label) => node.querySelector(`button[aria-label="${en.expandGroup} ${label}"], button[aria-label="${en.collapseGroup} ${label}"]`)
 async function click(node) { assert.ok(node, 'DOM target exists'); await act(async () => node.click()) }
 async function expand(container, label) { await click(disclosure(group(container, label), label)) }
-const bundleSubject = { kind: 'bundle', pkg: { name: 'dsh-ops', version: '0.5.0', installed: true, enabled: true, rows: [] } }
+const bundleSubject = { kind: 'bundle', pkg: { name: 'dsh-ops-pro', version: '0.5.0', installed: true, enabled: true, rows: [] } }
 
 await test('the page saves only changed switches with the host revision, then reloads with the next one', async () => {
   let observed, mounts = 0, revisions = [], writes = []
@@ -384,11 +384,11 @@ await test('the status section renders only for a live row or a live bundle', as
   const api = defaultApi()
   const cases = [
     [{ kind: 'item', id: 'official' }, false],
-    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops-panel', moduleName: 'dsh-ops/panel', enabled: true } }, false],
+    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops-panel', moduleName: 'dsh-ops-pro/panel', enabled: true } }, false],
     [{ kind: 'bundle', pkg: { ...bundleSubject.pkg, enabled: false } }, false],
-    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops', moduleName: 'dsh-ops', enabled: false } }, false],
+    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops-pro', moduleName: 'dsh-ops', enabled: false } }, false],
     [bundleSubject, true],
-    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops', moduleName: 'dsh-ops', enabled: true } }, true],
+    [{ kind: 'row', pkg: bundleSubject.pkg, row: { rowId: 'dsh-ops-pro', moduleName: 'dsh-ops', enabled: true } }, true],
   ]
   for (const [subject, rendered] of cases) {
     const view = await mount(DiagnosticsSection, { subject, t, api })

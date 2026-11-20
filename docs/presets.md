@@ -3,7 +3,7 @@
 English | [中文](预设与默认模式.md)
 
 `ops-ptc` is OPS's fifth enhanced built-in mode. The host composes sessions only from registered preset
-declarations, so OPS no longer inserts a preset row from a bundle patch: the `dsh-ops` plugin registers
+declarations, so OPS no longer inserts a preset row from a bundle patch: the `dsh-ops-pro` plugin registers
 `ops-ptc` at apply time through the host preset registry. This page covers the registration, the fragment and
 the sync script, how to make it the default, and the ordering required before disabling the plugin.
 
@@ -22,7 +22,7 @@ the sync script, how to make it the default, and the ordering required before di
   `config.id: 'ops-ptc'`, verifies that `plugins` is non-empty, and hands it to the registry. An unresolvable
   app-boot or fragment only warns and leaves the preset unavailable.
 - **Consequences**: there is no `ops-ptc` preset row in the plugin manager; the preset and the `ops_*` tool
-  surface belong to the same `dsh-ops` row. Enabling the row brings both; disabling or unloading it releases
+  surface belong to the same `dsh-ops-pro` row. Enabling the row brings both; disabling or unloading it releases
   the registration and removes both. A missing or malformed fragment, a host without the preset registry, or a
   rejected registration only warns once and leaves the preset unavailable; it never takes down the plugin row
   or its tools.
@@ -67,7 +67,7 @@ bundle:
   page writes. That click is the only thing that overrides a manual choice.
 - **Doing nothing**: nothing is written. Apply, a remount caused by saving another switch, and disabling the row
   all leave the current default alone, so a preset picked on the settings page survives restarts.
-- **Disabling or unloading the `dsh-ops` row**: releases the registration and leaves the default alone, even when
+- **Disabling or unloading the `dsh-ops-pro` row**: releases the registration and leaves the default alone, even when
   it names `ops-ptc`. Switch the default to another preset before removing the row, otherwise new sessions may
   try to resolve a preset that no longer exists.
 - The button answers with a status: `applied`, `no-update` (it is already the default), or `unavailable`/`failed`
@@ -123,7 +123,7 @@ default comes from that profile's own composition.
 | Item | Official PTC (`ptc`) | OPS PTC (`ops-ptc`) |
 | --- | --- | --- |
 | Preset declaration | `dsh-web-app` bundle's `presets/ptc.patch.yml` | registered at runtime by `dsh-ops` at apply time; definition from the shipped `presets/ops-ptc.patch.yml` fragment |
-| Plugin-manager row | a dedicated preset row | no preset row; lives and dies with the `dsh-ops` row |
+| Plugin-manager row | a dedicated preset row | no preset row; lives and dies with the `dsh-ops-pro` row |
 | Publication surface | official PTC tools | same as the `ptc` section: `run_code` under real PTC presentation plus the same-stack typed SDK file tools |
 | Compaction | official `compaction-basic` | official `compaction-basic` as well; no `dsh-compress-codex` |
 | Batch-call guidance | none | `batchingGuidance`: defaults true in code and the packaged `ops-ptc` section, including legacy whole-row overrides that omit the section; explicit false disables it; one lesson at session start, then shape notices for root `run_code` programs (`bypass`/`plan`/`shape`, each latched per turn and re-armed by compliance) appended as `additionalContexts`; text in the editable `prompts/batching-guidance.md` |

@@ -280,7 +280,7 @@ await test('a plugin with no manifest reports the package as not installed, and 
 
     const undeclared = path.join(dir, 'undeclared')
     fs.mkdirSync(undeclared, { recursive: true })
-    fs.writeFileSync(path.join(undeclared, 'package.json'), JSON.stringify({ name: 'dsh-ops', version: '0.1.0' }))
+    fs.writeFileSync(path.join(undeclared, 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version: '0.1.0' }))
     const other = bundledShell({ kind: 'pwsh', bundleRoot: undeclared, platform: process.platform, arch: process.arch })
     assert.equal(other.file, undefined)
     assert.match(other.detail, /is not installed$/)
@@ -360,7 +360,7 @@ await test('bundledShell names the machine-readable cause of every miss', async 
   })
 
   await withTempDir('shells-cause-undeclared', async (dir) => {
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'dsh-ops', version: '0.1.0' }))
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version: '0.1.0' }))
     assert.equal(causeOf(dir).cause, 'not-declared')
   })
 

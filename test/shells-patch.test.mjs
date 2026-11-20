@@ -34,8 +34,8 @@ await test('the bundle patch declares the single row, with no persistent pwsh ov
   // The preset moved to runtime registration: the patch holds exactly this row.
   const entries = patchEntries()
   assert.equal(entries.length, 1)
-  assert.deepEqual(entries[0].insert.map(row => row.id), ['dsh-ops'])
-  assert.deepEqual(entries[0].insert.map(row => row.name), ['dsh-ops'])
+  assert.deepEqual(entries[0].insert.map(row => row.id), ['dsh-ops-pro'])
+  assert.deepEqual(entries[0].insert.map(row => row.name), ['dsh-ops-pro'])
   const config = entries[0].insert[0].config
   for (const key of ['bash', 'hidePwsh', 'hideOfficialTools', 'dynamicTools']) assert.equal(config.global[key], true, key)
   for (const section of ['minimal', 'standard', 'ptc', 'ops-ptc', 'cordis', 'discovery']) assert.equal(config[section].enabled, true, section)

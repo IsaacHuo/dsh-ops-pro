@@ -1,16 +1,16 @@
 {
-  "name": "dsh-ops",
+  "name": "dsh-ops-pro",
   "version": "0.5.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/T-Auto/dsh-ops.git"
+    "url": "git+https://github.com/IsaacHuo/dsh-ops-pro.git"
   },
-  "homepage": "https://github.com/T-Auto/dsh-ops#readme",
+  "homepage": "https://github.com/IsaacHuo/dsh-ops-pro#readme",
   "bugs": {
-    "url": "https://github.com/T-Auto/dsh-ops/issues"
+    "url": "https://github.com/IsaacHuo/dsh-ops-pro/issues"
   },
   "os": [
     "win32",
@@ -144,7 +144,8 @@
     }
   },
   "bin": {
-    "dsh-ops": "bin/dsh-ops.mjs"
+    "dsh-ops": "bin/dsh-ops.mjs",
+    "dsh-ops-pro": "bin/dsh-ops.mjs"
   },
   "dsh": {
     "bundle": {

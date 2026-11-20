@@ -524,7 +524,7 @@ await test('main: a sweep is unsealed by default and --seal opts in', async () =
       resolveEntry: () => ENTRY,
       installSignals: false,
       now: NOW,
-      dumpProfileConfig: () => '- id: dsh-ops\n  disabled: false\n  config:\n    standard:\n      enabled: true\n',
+      dumpProfileConfig: () => '- id: dsh-ops-pro\n  disabled: false\n  config:\n    standard:\n      enabled: true\n',
       seal: () => { sealed += 1; return {} },
     })
     assert.equal(code, EXIT.ok)

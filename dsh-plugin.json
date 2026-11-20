@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/T-Auto/dsh-std/8a15541117cb3c13ddb8f2468308691b6051d162/packages/manifest/schema/dsh-plugin-0.15.schema.json",
   "manifestVersion": "0.15",
-  "id": "dsh-ops.native",
-  "name": "dsh-ops",
+  "id": "dsh-ops-pro.native",
+  "name": "dsh-ops-pro",
   "version": "0.5.5",
   "license": "MIT",
   "facets": {
@@ -40,7 +40,7 @@
     "x-display": [
       {
         "icon": "./docs/assets/icon.png",
-        "title": "dsh-ops",
+        "title": "dsh-ops-pro",
         "description": "Provides optional Bash and native Rust tools for DSH to improve token efficiency; PowerShell remains host-managed",
         "locales": [
           "locale/en.json",
@@ -125,8 +125,8 @@
     ],
     "x-components": [
       {
-        "id": "dsh-ops",
-        "entry": "dsh-ops",
+        "id": "dsh-ops-pro",
+        "entry": "dsh-ops-pro",
         "defaultEnabled": true,
         "platforms": [
           "win32",

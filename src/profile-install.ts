@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process'
 import { PACKAGE_ROOT, dshHome } from './paths.js'
 import { PLATFORMS } from './execution/runtime.js'
 import { reportDefaultReset, resetStaleDefault } from './profile-default-reset.js'
+import { PACKAGE_NAME } from './identity.js'
 
 /**
  * Architectures this fork will run its profile commands on.
@@ -116,7 +117,7 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   const enabledIn = (manifest: Record<string, unknown>): boolean => {
     const dsh = record(manifest.dsh) ? manifest.dsh : undefined
     const bundles = record(dsh?.profile) ? dsh.profile.bundles : undefined
-    return (Array.isArray(bundles) || typeof bundles === 'string') && bundles.includes('dsh-ops')
+    return (Array.isArray(bundles) || typeof bundles === 'string') && bundles.includes(PACKAGE_NAME)
   }
   if (operation === 'repair-default') {
     // While the bundle is enabled, ops-ptc is a live preset and the operator's choice.
@@ -130,11 +131,11 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
     const profileManifest = record(dsh?.profile) ? dsh.profile : undefined
     const bundles = profileManifest?.bundles ?? []
     if (!Array.isArray(bundles) && typeof bundles !== 'string') throw new Error('Invalid profile bundles: expected an array.')
-    console.log(JSON.stringify({ profile: target, directory, dependency: dependencies?.['dsh-ops'] ?? null, enabled: bundles.includes('dsh-ops') }, null, 2))
+    console.log(JSON.stringify({ profile: target, directory, dependency: dependencies?.[PACKAGE_NAME] ?? null, enabled: bundles.includes(PACKAGE_NAME) }, null, 2))
     return 0
   }
   const args = ['plugin', '--profile', target, operation === 'install' ? 'add' : 'remove',
-    operation === 'install' ? (process.env.DSH_OPS_INSTALL_SPEC ?? `dsh-ops@${version}`) : 'dsh-ops']
+    operation === 'install' ? (process.env.DSH_OPS_INSTALL_SPEC ?? `${PACKAGE_NAME}@${version}`) : PACKAGE_NAME]
   let command = dshCli ?? process.env.DSH_OPS_DSH_CLI
   let prefix: string[] = []
   if (!command && target === 'desktop') {

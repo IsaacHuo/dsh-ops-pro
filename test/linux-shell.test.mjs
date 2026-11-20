@@ -1,7 +1,7 @@
 /**
  * The shell component on a POSIX host: the machine's own bash, and nothing unrestricted.
  *
- * This is the POSIX rung of `dsh-ops/shell`. Windows uses its pinned Niubash payload;
+ * This is the POSIX rung of `dsh-ops-pro/shell`. Windows uses its pinned Niubash payload;
  * a Linux host has a distribution-maintained bash
  * whose ABI is tied to that distribution, so the plugin resolves that one instead of provisioning a
  * second copy (`lib/shells.js`, `POSIX_BASH_WELL_KNOWN`). The route was designed in WTStarMark's PR

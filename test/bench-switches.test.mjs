@@ -22,15 +22,15 @@ await test('switch parser validates repeatable roster names and boolean values',
 await test('planning is idempotent and preserves foreign rows plus inherited component settings', () => {
   const before = '# preserve me\n- id: unrelated\n  config:\n    value: 9\n'
   const switches = extractSwitches(['--switch', 'discovery', '--switch', 'cordis']).switches
-  const composed = [{ id: 'dsh-ops', config: { discovery: { maxResults: 7, required: true, enabled: false } } }]
+  const composed = [{ id: 'dsh-ops-pro', config: { discovery: { maxResults: 7, required: true, enabled: false } } }]
   const plan = planSwitchPatch(before, switches, { composed })
   assert.ok(plan.text.startsWith(before))
-  assert.deepEqual(parse(plan.text).find(row => row.id === 'dsh-ops').config.discovery, { maxResults: 7, required: true, enabled: true })
-  assert.equal(parse(plan.text).find(row => row.id === 'dsh-ops').config.cordis.enabled, true)
+  assert.deepEqual(parse(plan.text).find(row => row.id === 'dsh-ops-pro').config.discovery, { maxResults: 7, required: true, enabled: true })
+  assert.equal(parse(plan.text).find(row => row.id === 'dsh-ops-pro').config.cordis.enabled, true)
   assert.equal(planSwitchPatch(plan.text, switches, { composed }).changed, false)
-  assert.throws(() => planSwitchPatch('- id: dsh-ops\n  config:\n    ptc: {enabled: false}\n', { 'ptc': { enabled: true } }), /force/)
-  assert.equal(parse(planSwitchPatch('- id: dsh-ops\n  config:\n    ptc: {enabled: false}\n', { 'ptc': { enabled: true } }, { force: true }).text)[0].config.ptc.enabled, true)
-  assert.throws(() => planSwitchPatch('- id: dsh-ops\n- id: dsh-ops\n', { 'ptc': { enabled: true } }), /Duplicate/)
+  assert.throws(() => planSwitchPatch('- id: dsh-ops-pro\n  config:\n    ptc: {enabled: false}\n', { 'ptc': { enabled: true } }), /force/)
+  assert.equal(parse(planSwitchPatch('- id: dsh-ops-pro\n  config:\n    ptc: {enabled: false}\n', { 'ptc': { enabled: true } }, { force: true }).text)[0].config.ptc.enabled, true)
+  assert.throws(() => planSwitchPatch('- id: dsh-ops-pro\n- id: dsh-ops-pro\n', { 'ptc': { enabled: true } }), /Duplicate/)
 })
 
 await test('setup accepts switches in dry-run without launching a host or editing either profile', async () => {
@@ -82,14 +82,14 @@ await test('candidate switch conditions differ across sweeps, never across the t
 await test('dynamic and non-mapping configuration is refused before candidate planning', () => {
   for (const config of [{ expression: 'dynamic()' }, [true], 'unknown', 9]) {
     assert.throws(() => planSwitchPatch('[]\n', { panel: { enabled: true } }, {
-      force: true, composed: [{ id: 'dsh-ops', config }],
+      force: true, composed: [{ id: 'dsh-ops-pro', config }],
     }), /manual|mapping|dynamic/)
   }
 })
 
 await test('panel and discovery activation respect section flags and explicit overrides', () => {
   for (const [name, key] of [['panel', 'capture'], ['discovery', 'enabled']]) {
-    const before = '- id: dsh-ops\n  config:\n    ' + name + ': ' + JSON.stringify({ enabled: false, [key]: false, custom: 700 }) + '\n'
+    const before = '- id: dsh-ops-pro\n  config:\n    ' + name + ': ' + JSON.stringify({ enabled: false, [key]: false, custom: 700 }) + '\n'
     assert.equal(switchesFromDump(before)[name].enabled, false)
     assert.throws(() => planSwitchPatch(before, { [name]: { enabled: true } }), /force/)
     const plan = planSwitchPatch(before, { [name]: { enabled: true } }, { force: true })
@@ -102,9 +102,9 @@ await test('panel and discovery activation respect section flags and explicit ov
 await test('unevaluated and malformed activation config remains unknown in archived facts', () => {
   for (const name of ['panel', 'discovery']) {
     for (const config of ['!!js dynamic()', '[]', 'false']) {
-      assert.equal(switchesFromDump('- id: dsh-ops\n  config: { ' + name + ': ' + config + ' }\n')[name].enabled, null)
+      assert.equal(switchesFromDump('- id: dsh-ops-pro\n  config: { ' + name + ': ' + config + ' }\n')[name].enabled, null)
     }
-    assert.equal(switchesFromDump('- id: dsh-ops\n  disabled: true\n  config: !!js dynamic()\n')[name].enabled, false)
+    assert.equal(switchesFromDump('- id: dsh-ops-pro\n  disabled: true\n  config: !!js dynamic()\n')[name].enabled, false)
   }
 })
 
@@ -112,7 +112,7 @@ await test('official host composition retains inherited settings and applies onl
   await withTempDir('switch-compose-', async dir => {
     const baseConfig = path.join(dir, 'base.yml'), candidatePatch = path.join(dir, 'candidate.yml')
     fs.writeFileSync(baseConfig, JSON.stringify([
-      { id: 'dsh-ops', name: 'merged-fixture', config: { panel: { enabled: false, capture: false, maxFrames: 17 }, cordis: { enabled: true } } },
+      { id: 'dsh-ops-pro', name: 'merged-fixture', config: { panel: { enabled: false, capture: false, maxFrames: 17 }, cordis: { enabled: true } } },
     ]))
     const render = patches => renderConfigDump('dsh', baseConfig, patches, line => { throw new Error(line) })
     const baseline = render([]), wanted = extractSwitches(['--switch', 'panel']).switches

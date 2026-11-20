@@ -503,7 +503,7 @@ if (display !== undefined) {
 const components = manifestRaw.contributes?.['x-components'] ?? []
 const single = components[0]
 for (const fact of componentChecks(components)) check(...fact)
-check(single?.entry === 'dsh-ops' && single?.defaultEnabled === true, 'the single row is enabled by default and keeps its presentation')
+check(single?.entry === pkg.name && single?.defaultEnabled === true, 'the single row is enabled by default and keeps its presentation')
 check([...PTC_API_TOOLS, 'load_sdk'].map(publicToolName).every(tool => (single?.tools ?? []).includes(tool)),
   'the declaration covers the generated PTC tool contract')
 check(PTC_API_TOOLS.every(t => definition(t, () => {}).parameters.type === 'object'), 'PTC schemas remain structured')

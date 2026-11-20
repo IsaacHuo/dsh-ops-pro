@@ -2,7 +2,7 @@
 
 English | [中文](集成诊断.md)
 
-Mounting `dsh-ops/integration` also publishes the scoped `ops_status` read-only diagnostic tool.
+Mounting `dsh-ops-pro/integration` also publishes the scoped `ops_status` read-only diagnostic tool.
 It reports the current preset, visible tools, selected/degraded state, external provider states and
 operator-actionable issue codes. It does not execute a file/shell/provider action and does not
 activate discovery capabilities.

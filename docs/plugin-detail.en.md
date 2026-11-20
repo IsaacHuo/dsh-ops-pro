@@ -11,8 +11,8 @@ Scroll down, open the settings page through “dsh-ops>” inside “Included co
 
 ## Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=T-Auto/dsh-ops)](https://github.com/T-Auto/dsh-ops)
+[![Contributors](https://contrib.rocks/image?repo=IsaacHuo/dsh-ops-pro)](https://github.com/IsaacHuo/dsh-ops-pro)
 
 ## Star history
 
-[![Star history](https://api.star-history.com/svg?repos=T-Auto/dsh-ops&type=Date)](https://star-history.com/#T-Auto/dsh-ops&Date)
+[![Star history](https://api.star-history.com/svg?repos=IsaacHuo/dsh-ops-pro&type=Date)](https://star-history.com/#IsaacHuo/dsh-ops-pro&Date)

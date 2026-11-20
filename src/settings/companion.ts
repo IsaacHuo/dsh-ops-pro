@@ -3,9 +3,10 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PACKAGE_NAME } from '../identity.js'
 
 const NAME = 'dsh-win-pwsh7'
-const SELF = 'dsh-ops'
+const SELF = PACKAGE_NAME
 let cached: { at: number; value: string | undefined } | undefined
 
 /**

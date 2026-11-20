@@ -45,8 +45,8 @@ function fakeAppBoot(nodeModules, marker) {
  * @returns {string} the installed `register.js` path.
  */
 function installedDshOps(dir) {
-  const packageDir = path.join(dir, 'installation', 'node_modules', 'dsh-ops')
-  for (const relative of ['package.json', 'lib/adapter/dsh/host.js', 'lib/presets/ops-ptc/register.js']) {
+  const packageDir = path.join(dir, 'installation', 'node_modules', 'dsh-ops-pro')
+  for (const relative of ['package.json', 'lib/identity.js', 'lib/adapter/dsh/host.js', 'lib/presets/ops-ptc/register.js']) {
     fs.mkdirSync(path.join(packageDir, path.dirname(relative)), { recursive: true })
     fs.copyFileSync(path.join(PACKAGE_ROOT, relative), path.join(packageDir, relative))
   }
@@ -376,14 +376,14 @@ await test('a live Loader activation, remount and disable leave the default pres
     assert.equal(registry.state.updates.length, 0, 'an activation never writes the default preset')
 
     // Saving an ordinary row switch remounts the fiber from the same entry.
-    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops', config: { panel: { enabled: true } } }]))
+    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops-pro', config: { panel: { enabled: true } } }]))
     await host.refresh()
     await waitFor(() => registry.state.definitions.length === 2, { what: 'the replacement activation' })
     await new Promise(resolve => setTimeout(resolve, 100))
     assert.equal(registry.state.updates.length, 0, 'a remount never rewrites the default')
 
     // Disabling the row releases the registration and still leaves the default alone.
-    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops', config: { panel: { enabled: true } }, disabled: true }]))
+    fs.writeFileSync(fixture.profile.patchPath, JSON.stringify([{ id: 'dsh-ops-pro', config: { panel: { enabled: true } }, disabled: true }]))
     await host.refresh()
     await new Promise(resolve => setTimeout(resolve, 100))
     assert.equal(registry.state.updates.length, 0, 'a disable never rewrites the default')

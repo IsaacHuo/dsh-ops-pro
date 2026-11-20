@@ -16,7 +16,7 @@ async function profileFixture(body) {
     const directory = path.join(root, 'profiles', 'dsh-tui'), receipt = path.join(root, 'invoked.json')
     fs.mkdirSync(directory, { recursive: true })
     const manifest = path.join(directory, 'package.json')
-    fs.writeFileSync(manifest, JSON.stringify({ dependencies: { 'dsh-ops': '^0.3.1' }, dsh: { profile: { bundles: ['dsh-ops'] } } }))
+    fs.writeFileSync(manifest, JSON.stringify({ dependencies: { 'dsh-ops-pro': '^0.3.1' }, dsh: { profile: { bundles: ['dsh-ops-pro'] } } }))
     const cli = path.join(directory, 'node_modules', '@deepseek-ai', 'dsh'); fs.mkdirSync(cli, { recursive: true })
     fs.writeFileSync(path.join(cli, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', type: 'module', bin: { dsh: './cli.mjs' } }))
     const entry = path.join(cli, 'cli.mjs')
@@ -69,12 +69,12 @@ await test('profile status and dry-run preserve the tui alias and never execute 
 })
 await test('profile mutations delegate exact arguments and propagate official CLI failure without local rollback logic', async () => {
   await profileFixture(({ receipt, manifest }) => {
-    const before = fs.readFileSync(manifest, 'utf8'); process.env.DSH_OPS_INSTALL_SPEC = 'dsh-ops@0.4.0-test'
+    const before = fs.readFileSync(manifest, 'utf8'); process.env.DSH_OPS_INSTALL_SPEC = 'dsh-ops-pro@0.4.0-test'
     assert.equal(capture(() => profileCommand('install', { profile: 'tui' })).status, 0)
-    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'add', 'dsh-ops@0.4.0-test'])
+    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'add', 'dsh-ops-pro@0.4.0-test'])
     process.env.PROFILE_TEST_EXIT = '17'
     assert.equal(capture(() => profileCommand('uninstall', { profile: 'dsh-tui' })).status, 17)
-    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops'])
+    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops-pro'])
     assert.equal(fs.readFileSync(manifest, 'utf8'), before)
   })
 })
@@ -105,7 +105,7 @@ await test('absolute and relative script launchers with spaces survive preflight
       assert.equal(capture(() => profileCommand('install', { profile: 'tui', dshCli, dryRun: true })).status, 0)
       assert.equal(fs.existsSync(receipt), false)
       assert.equal(capture(() => profileCommand('uninstall', { profile: 'tui', dshCli })).status, 0)
-      assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops'])
+      assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops-pro'])
       fs.unlinkSync(receipt)
     }
   })
@@ -118,7 +118,7 @@ await test('bare CLI lookup preserves PATH launchers and never probes them by ex
       assert.equal(capture(() => profileCommand('install', { profile: 'tui', dshCli: 'profile-fixture', dryRun: true })).status, 0)
       assert.equal(fs.existsSync(receipt), false)
       assert.equal(capture(() => profileCommand('uninstall', { profile: 'tui', dshCli: 'profile-fixture' })).status, 0)
-      assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops'])
+      assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'remove', 'dsh-ops-pro'])
     })
   })
 })
@@ -205,7 +205,7 @@ await test('a launcher path carrying a caret is refused, while a caret in the sp
   // what makes that difference deliberate rather than a drift.
   await profileFixture(({ root, entry, receipt }) => {
     const caretPath = launcher(path.join(root, 'CLI with ^ caret', launcherName), entry)
-    process.env.DSH_OPS_INSTALL_SPEC = 'dsh-ops@^1.0.0'
+    process.env.DSH_OPS_INSTALL_SPEC = 'dsh-ops-pro@^1.0.0'
     if (process.platform === 'win32') {
       assert.throws(() => capture(() => profileCommand('install', { profile: 'tui', dshCli: caretPath })),
         /Unsafe CLI path/, 'a launcher path with ^ must be refused before anything runs')
@@ -215,7 +215,7 @@ await test('a launcher path carrying a caret is refused, while a caret in the sp
     }
     const plain = launcher(path.join(root, 'CLI plain', launcherName), entry)
     assert.equal(capture(() => profileCommand('install', { profile: 'tui', dshCli: plain })).status, 0)
-    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'add', 'dsh-ops@^1.0.0'],
+    assert.deepEqual(JSON.parse(fs.readFileSync(receipt, 'utf8')), ['plugin', '--profile', 'dsh-tui', 'add', 'dsh-ops-pro@^1.0.0'],
       'the same caret stays literal in the spec')
   })
 })
@@ -226,7 +226,7 @@ await test('the launcher receives an install spec verbatim, and the cmd line ref
   await profileFixture(({ root, entry, receipt }) => {
     const file = launcher(path.join(root, 'CLI with spaces', launcherName), entry)
     const localPaths = ['C:\\local', 'C:\\local path'].flatMap(root => [root + '\\', root + '\\\\\\'])
-    for (const spec of ['dsh-ops@^1.0.0', 'dsh-ops@~1.2', 'git+https://example.com/x#semver:^1.0.0', 'pkg name@1.0', ...localPaths]) {
+    for (const spec of ['dsh-ops-pro@^1.0.0', 'dsh-ops-pro@~1.2', 'git+https://example.com/x#semver:^1.0.0', 'pkg name@1.0', ...localPaths]) {
       process.env.DSH_OPS_INSTALL_SPEC = spec
       fs.rmSync(receipt, { force: true })
       assert.equal(capture(() => profileCommand('install', { profile: 'tui', dshCli: file })).status, 0)
@@ -235,7 +235,7 @@ await test('the launcher receives an install spec verbatim, and the cmd line ref
     }
     // `&`, `|`, `<` and `>` separate again inside the launcher's own `%*` expansion, and `%`
     // expands even inside quotes: none of them can be carried by this line.
-    for (const spec of ['dsh-ops@1.0.8 & echo INJECTED', 'a|b', 'pkg@%PATH%', 'a"b', 'a<b', 'a>b', 'a!b']) {
+    for (const spec of ['dsh-ops-pro@1.0.8 & echo INJECTED', 'a|b', 'pkg@%PATH%', 'a"b', 'a<b', 'a>b', 'a!b']) {
       process.env.DSH_OPS_INSTALL_SPEC = spec
       fs.rmSync(receipt, { force: true })
       if (process.platform === 'win32') {

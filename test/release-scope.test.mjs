@@ -83,7 +83,7 @@ await test('half-staged and unexpected targets are never silently skipped',async
 }))
 await test('manifest exact targets, npm platform filters and shell pins must agree',async()=>withTempDir('release-drift',root=>{
   fixture(root); const file=path.join(root,'dsh-plugin.json'), manifest=JSON.parse(fs.readFileSync(file,'utf8'))
-  manifest.contributes['x-components'].find(c=>c.id==='dsh-ops').targets.push('win32-arm64')
+  manifest.contributes['x-components'].find(c=>c.id==='dsh-ops-pro').targets.push('win32-arm64')
   fs.writeFileSync(file,JSON.stringify(manifest)); assert.match(run(root).out,/disagree/)
 }))
 await test('release closure embeds Niubash and refuses legacy shell dependencies', async () => withTempDir('release-shell-dep', root => {
@@ -115,7 +115,7 @@ await test('release rejects a missing, duplicated or legacy component roster', a
     fs.writeFileSync(file, JSON.stringify(manifest))
     const result = run(root)
     assert.notEqual(result.status, 0)
-    assert.match(result.out, /exactly the merged dsh-ops component/)
+    assert.match(result.out, /exactly the merged dsh-ops-pro component/)
   }
 }))
 await test('IPC binary and source tampering fail the release closure', async () => withTempDir('release-ipc-tamper', root => {

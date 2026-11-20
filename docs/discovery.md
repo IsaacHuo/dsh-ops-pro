@@ -6,7 +6,7 @@ allows all sessions to discover it. PTC provider SDK registration is not yet sup
 
 中文：[工具发现](工具发现.md).
 
-The merged `dsh-ops` row publishes `ops_discover_tools` for eligible Native consumers. The PTC SDK loader is a separate choice controlled by the PTC and global dynamic switches. Custom presets must explicitly opt in through the integration API or the row's `presets` map.
+The merged `dsh-ops-pro` row publishes `ops_discover_tools` for eligible Native consumers. The PTC SDK loader is a separate choice controlled by the PTC and global dynamic switches. Custom presets must explicitly opt in through the integration API or the row's `presets` map.
 
 Describe a capability (`metadata revision hash`) or select an exact public name (`select:ops_stat`).
 Discovery only chooses tools; it performs no action. Selection stays pending through the current

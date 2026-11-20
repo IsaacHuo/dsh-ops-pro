@@ -50,7 +50,7 @@ async function fixture(body) {
     const directory = path.join(root, 'profiles', 'dsh-tui')
     fs.mkdirSync(directory, { recursive: true })
     const manifest = path.join(directory, 'package.json'), file = path.join(directory, 'cordis.patch.yml')
-    const enable = on => fs.writeFileSync(manifest, JSON.stringify({ dependencies: {}, dsh: { profile: { bundles: on ? ['dsh-ops'] : [] } } }))
+    const enable = on => fs.writeFileSync(manifest, JSON.stringify({ dependencies: {}, dsh: { profile: { bundles: on ? ['dsh-ops-pro'] : [] } } }))
     enable(true)
     const cli = path.join(directory, 'node_modules', '@deepseek-ai', 'dsh'); fs.mkdirSync(cli, { recursive: true })
     fs.writeFileSync(path.join(cli, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', type: 'module', bin: { dsh: './cli.mjs' } }))

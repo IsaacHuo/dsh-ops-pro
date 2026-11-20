@@ -42,7 +42,7 @@ async function dshOpsInstalled(ctx) {
   try {
     const bundles = await manager.listBundles()
     const ops = Array.isArray(bundles)
-      ? bundles.find((bundle) => bundle?.name === 'dsh-ops' && bundle.installed !== false)
+      ? bundles.find((bundle) => bundle?.name === 'dsh-ops-pro' && bundle.installed !== false)
       : undefined
     return ops !== undefined && Array.isArray(ops.rows) && ops.rows.some((row) => row?.moduleName === 'dsh-ops/compat')
   } catch {

@@ -1,4 +1,4 @@
-import { integration, registerNativeCapability, diagnose } from 'dsh-ops/integration'
+import { integration, registerNativeCapability, diagnose } from 'dsh-ops-pro/integration'
 import path from 'node:path'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { bootHost, shutdown, scopedToolNames } from './lib/host.mjs'
