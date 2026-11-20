@@ -149,8 +149,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - 有界的经典 xref PDF 读取器现在可按任意对象顺序解析间接 `/Length`，同时保留循环、深度、类型、大小与不一致拒绝。直接长度及现有流/xref 预算不变（#788）。
 - Paths through an Electron `.asar` archive now fail with the explicit `ARCHIVE_MEMBER_UNSUPPORTED` diagnosis: only Electron's patched in-process filesystem presents the archive as a directory, so the standalone worker cannot read its members. This is an actionable diagnostic, not a virtual-filesystem fallback (#836).
 - 穿过 Electron `.asar` 的路径现在明确返回 `ARCHIVE_MEMBER_UNSUPPORTED`：只有 Electron 进程内经补丁的文件系统会把归档呈现为目录，独立 worker 无法读取成员。这是可操作的诊断，不是虚拟文件系统回退（#836）。
-- Windows mutations capture, restore and byte-verify every user-restorable extended attribute. `$KERNEL.*` names are reported individually in `metadataWarnings` because user mode cannot recreate them; every other capture/restore/verification failure still aborts publication instead of silently dropping metadata (#874).
-- Windows 写入现在捕获、恢复并逐字节核验所有用户态可恢复的扩展属性。`$KERNEL.*` 名称因用户态无法重建而逐名写入 `metadataWarnings`；其他任何捕获、恢复或核验失败仍会中止发布，不会静默丢弃元数据（#874）。
+- Windows mutations capture, restore and byte-verify every user-restorable extended attribute. `$KERNEL.*` names are reported individually in `metadataWarnings` because user mode cannot recreate them, except `$KERNEL.PURGE.*` names, which the file system deletes on the write itself and which security products attach to fresh files, so they are neither restored nor reported; every other capture/restore/verification failure still aborts publication instead of silently dropping metadata (#874).
+- Windows 写入现在捕获、恢复并逐字节核验所有用户态可恢复的扩展属性。`$KERNEL.*` 名称因用户态无法重建而逐名写入 `metadataWarnings`，但 `$KERNEL.PURGE.*` 除外：文件系统会在本次写入时自行删除它们，安全软件也常给新文件打上这类标记，因此既不恢复也不报告；其他任何捕获、恢复或核验失败仍会中止发布，不会静默丢弃元数据（#874）。
 
 ## [0.5.5] — 2026-11-13 — Patch release
 
