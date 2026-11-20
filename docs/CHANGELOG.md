@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Changelog: remove a duplicated copy of the 0.5.0 preset-mode roster section and turn two stray `## [Unreleased]` headings into subsections of the releases they shipped in. Bump the native core crate to 0.5.5 to match the package, and drop two empty type imports in `src/legacy/host.ts`.
+- CHANGELOG：删除重复的 0.5.0 预设模式组件清单一节，把两个误留的 `## [Unreleased]` 标题改为所属版本下的子节。native 核心 crate 版本升至 0.5.5 与包版本一致；删除 `src/legacy/host.ts` 中两条空的类型导入。
 - Native tool construction and the publication refusal queue no longer attach listeners or lifetime effects to the composition root. The evidence observer and result admission subscribe on the caller's context with global dispatch, and the refusal queue falls back to the caller lifetime when the root refuses an effect. dsh-tui 0.20 refuses `root.events.on` and `root.effect` from a plugin activation, and the native-tools row is one, so every `dsh-tui --resume` aborted with "cannot resume session" before the agent mounted.
 - 原生工具构造与发布拒绝队列不再向组合根挂监听或生命周期 effect：证据观察者与 result admission 改为在调用方上下文订阅并声明 global 分发，拒绝队列在 root 拒绝 effect 时回落到调用方生命周期。dsh-tui 0.20 会拒绝插件激活期内的 `root.events.on` 与 `root.effect`，而原生工具行正是插件激活，导致每次 `dsh-tui --resume` 都在 agent 挂载前报 "cannot resume session"。
 - The Bash tool description now states the parse contract of `stdout`/`stderr` where the model reads it: `text` may be a partial fragment, `truncated` marks one that must not be parsed as complete structured output, and `spillPath` is optional and not a completeness guarantee. The typed output schema is unchanged: repeating the contract there would cost every PTC request without saying anything the tool text does not. Command semantics, exit codes, result values, limits, spill files, permissions and rendering are unchanged.
@@ -188,7 +190,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The Windows default shell is now the complete official Niubash v1.5.0 payload shipped inside the package: the archive, source tree and every per-call execution copy are verified, a missing payload never falls back implicitly to ambient Bash, and managed install, status, select and remove commands are provided.
 - Windows 默认 Shell 改为随主包携带的完整官方 Niubash v1.5.0 载荷：逐条校验归档、源树与每次调用的执行副本，缺少载荷时不隐式回退到环境 Bash，并提供托管安装、状态、选择与卸载命令。
 
-## [Unreleased]
+### Changes between 0.5.0-alpha3 and 0.5.0 / 0.5.0-alpha3 至 0.5.0 之间的变更
 
 - Run `prepack` through `bin/prepack.mjs`: a checkout still builds and checks the payload, while packing an installed package without the repository `scripts/` directory no longer fails with `MODULE_NOT_FOUND`.
 - `prepack` 改由 `bin/prepack.mjs` 执行：仓库检出仍会构建并校验载荷，而从已安装包（没有仓库 `scripts/`）重新打包不再以 `MODULE_NOT_FOUND` 失败。
@@ -508,39 +510,7 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - 新建会话时只规划新 Agent，不再重读所有存活会话的工具视图；`tools/change` 只核对它实际触达的
   Agent，宿主未标注归属的变更合并为一次处理。新建会话不再随已开会话数线性扫描工具视图。
 
-## [0.5.0] — 2026-10-27 — Preset-mode component roster
-
-### Breaking changes
-
-- Replace the seven-row component roster with eight rows: `dsh-ops/mode-minimal`,
-  `dsh-ops/mode-standard`, `dsh-ops/mode-ptc` and `dsh-ops/mode-cordis` for the built-in
-  presets, `dsh-ops/discovery` for dynamic tool loading, `dsh-ops/compat` for Compatibility
-  mode, `dsh-ops/panel` for data inspection and `dsh-ops/tui` for TUI integration. The former
-  `dsh-ops/shell`, `dsh-ops/file`, `dsh-ops/ptc` and `dsh-ops/hide-official` rows are gone
-  from the bundle; their modules remain as unsupported legacy exports for old profiles.
-- A mode row publishes OPS tools only for sessions composed from its preset. Standard and Cordis
-  replace the official `read`, `glob` and `grep`; every enabled mode replaces the official
-  Windows shell (`pwsh`/`pwsh_persistent` with `ops_bash` on Windows). A replaced tool is
-  hidden only while its OPS counterpart is visible in the same scope.
-- `dsh-ops/compat` inverts the removed per-tool `replaceTools` selection: enabling
-  Compatibility mode keeps every official tool visible while OPS tools stay available, and lifts
-  hiding without unloading any row. It is off by default; while it is on, token efficiency and
-  model ability are reduced.
-- Windows sessions route command execution through `ops_bash` instead of the official `pwsh`
-  when a mode row is enabled and the OPS counterpart is visible.
-- Restore the OPS icon on every component row.
-
-### Upgrade
-
-- Delete saved profile patch overrides for `dsh-ops-shell`, `dsh-ops-file`, `dsh-ops-ptc` and
-  `dsh-ops-hide-official`; a leftover override names no row in the new bundle and produces a
-  startup `patch: entry ... not found` warning. Set the mode switches you want afterwards.
-- The optional client carrier migration now only switches the profile bundle name. It preserves
-  every component row, switch and effective configuration; the nested client bundle renames only the
-  standard-mode row to the package root, so a name-qualified `dsh-ops/mode-standard` override is
-  refused for manual review instead of being rewritten.
-
-## [Unreleased]
+### Changes between the 0.5.0 preset-mode roster and 0.5.0-alpha1 / 0.5.0 预设模式组件清单至 0.5.0-alpha1 之间的变更
 
 - Unify Native/discovery/PTC file and result publication with typed Outcome values and separate compact Native rendering; preserve fresh-read evidence, CAS and authority. Result uses one put/page/release schema, rejects Native put before IO, and defaults root to live cwd in both projections. Real source/grant changes conservatively invalidate all old steps sharing that registration; resolve again, never automatically replay.
 - Native/发现/PTC 文件与 result 统一发布，执行值为类型化 Outcome，Native 文本独立紧凑渲染，保留新鲜读取证据、CAS 与权威检查。result 统一 put/page/release schema，Native put 在 IO 前拒绝，两投影 root 均默认实时 cwd；真实来源/grant 变化保守使共享注册旧步全部失效，须重新 resolve，禁止自动重放。

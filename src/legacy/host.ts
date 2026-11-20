@@ -1,8 +1,6 @@
 /** Retained pre-single-row component behavior; never part of the current composition root. */
 import type { Context } from '../adapter/dsh/types.js'
 import type { Agent } from '../adapter/dsh/types.js'
-import type {} from '../adapter/dsh/types.js'
-import type {} from '../adapter/dsh/types.js'
 import { resolveConfig } from '../config.js'
 import { mountConfigUpdates, updatedConfig } from '../config-updates.js'
 import { SECTION_ORDERS, TOOLING_SECTION, BASH_TOOL, publicToolName, hostShellRefusal, renderToolingPolicy } from '../policy.js'

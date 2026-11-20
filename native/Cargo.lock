@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "dsh-ops-core"
-version = "0.5.4"
+version = "0.5.5"
 dependencies = [
  "cap-fs-ext",
  "cap-std",
