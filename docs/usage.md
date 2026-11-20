@@ -196,6 +196,8 @@ npx --yes dsh-ops@latest uninstall --profile desktop
 
 Replace `desktop` with `web` or `tui` as appropriate. You can also uninstall in the marketplace or run the official `dsh plugin --profile ... remove dsh-ops`. Binaries are managed as profile plugin dependencies; uninstalling removes dependency references without deleting system shells, copies in other profiles or shared package-manager caches.
 
+A successful `uninstall --profile` also clears a profile default that still names `ops-ptc` (`selectedDefault` under `agent-preset-registry`), so new sessions fall back to the registry default instead of a preset that no longer exists. Another default is left alone, and a file whose layout the command does not recognise is never rewritten; it prints the manual step instead. If you removed the plugin from the marketplace or with `dsh plugin ... remove`, run `npx --yes dsh-ops@latest repair-default --profile desktop` (add `--dry-run` to preview).
+
 Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files (provisioned shells, and the FastCtx runtime earlier versions could provision) must be cleaned separately with `npx --yes dsh-ops@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is kept by default; add `--purge-fastctx` explicitly to remove it as well.
 
 ---
@@ -221,6 +223,8 @@ dsh-ops install --profile <desktop|web|tui> [--dsh-cli <path>]
 dsh-ops uninstall --profile <desktop|web|tui> [--dsh-cli <path>]
 dsh-ops status --profile <desktop|web|tui>
                                 Report target-profile installation (tui maps to dsh-tui)
+dsh-ops repair-default --profile <desktop|web|tui> [--dry-run]
+                                Clear a default that still names ops-ptc after a GUI removal
 dsh-ops build-ptc              Build the independent native Rust worker (all platforms)
 dsh-ops uninstall [--yes] [--purge-fastctx]
 dsh-ops ladder [--json] [--config <file>]
