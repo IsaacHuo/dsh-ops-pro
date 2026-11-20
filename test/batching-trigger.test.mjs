@@ -9,7 +9,7 @@
  * never mistaken for raw file IO.
  */
 import { assert, test, report } from './lib/harness.mjs'
-import { analyzeProgram, parsePlan, violationsOf, createProgramLatch, noticeText, CATEGORY_PRIORITY, PLAN_DIRECTIVE, THIN_CODE_CHARS } from '../lib/ptc/batching-guidance.js'
+import { analyzeProgram, parsePlan, violationsOf, createProgramLatch, SESSION_NOTICE_LIMIT, noticeText, CATEGORY_PRIORITY, PLAN_DIRECTIVE, THIN_CODE_CHARS } from '../lib/ptc/batching-guidance.js'
 
 await test('the plan comment is read from the first physical line only', () => {
   assert.deepEqual(parsePlan('// plan: read the config; read the test'), ['read the config', 'read the test'])
@@ -126,7 +126,7 @@ await test('each of the three categories is decided independently', () => {
 })
 
 
-// ---- the per-turn latch (option 4a: re-armed by compliance, no per-turn cap) ----
+// ---- the per-turn latch (option 4a: re-armed by compliance, no per-turn cap, capped per session) ----
 
 /** One program that breaks every category: no plan line, shell listing, one dispatch. */
 const BYPASS = 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r'
@@ -186,13 +186,35 @@ await test('state never leaks between agents and forget drops it', () => {
 await test('the latch counts deliveries per turn for the optional telemetry line', () => {
   const latch = createProgramLatch(), agent = {}
   latch.noteTurn(agent, 4)
-  assert.deepEqual(latch.stats(agent), { turn: 4, plan: 0, bypass: 0, shape: 0, total: 0 })
+  assert.deepEqual(latch.stats(agent), { turn: 4, plan: 0, bypass: 0, shape: 0, total: 0, session: 0 })
   latch.observe(agent, THIN)
   latch.observe(agent, THIN)
-  assert.deepEqual(latch.stats(agent), { turn: 4, plan: 1, bypass: 0, shape: 1, total: 2 })
-  // A new turn resets the counters with the latch.
+  assert.deepEqual(latch.stats(agent), { turn: 4, plan: 1, bypass: 0, shape: 1, total: 2, session: 2 })
+  // A new turn resets the per-turn counters; the session total survives.
   latch.noteTurn(agent, 5)
-  assert.deepEqual(latch.stats(agent), { turn: 5, plan: 0, bypass: 0, shape: 0, total: 0 })
+  assert.deepEqual(latch.stats(agent), { turn: 5, plan: 0, bypass: 0, shape: 0, total: 0, session: 2 })
+})
+
+await test('one agent session earns at most SESSION_NOTICE_LIMIT notices across turns (#1027)', () => {
+  assert.equal(SESSION_NOTICE_LIMIT, 3)
+  const latch = createProgramLatch(), agent = {}
+  let delivered = 0
+  // Every turn re-arms all three categories, so an uncapped latch would keep speaking.
+  for (let turn = 1; turn <= 20; turn++) {
+    latch.noteTurn(agent, turn)
+    for (let i = 0; i < 3; i++) if (latch.observe(agent, BYPASS) !== undefined) delivered++
+  }
+  assert.equal(delivered, SESSION_NOTICE_LIMIT, 'the latch goes quiet after the session limit')
+  assert.equal(latch.stats(agent).session, SESSION_NOTICE_LIMIT)
+  // The cap is per agent: another session still gets its lessons.
+  assert.equal(latch.observe({}, BYPASS).category, 'bypass')
+  // forget starts the session over.
+  latch.forget(agent)
+  assert.equal(latch.observe(agent, BYPASS).category, 'bypass')
+  // The limit is configurable.
+  const one = createProgramLatch({ sessionLimit: 1 }), a = {}
+  assert.equal(one.observe(a, BYPASS).category, 'bypass')
+  assert.equal(one.observe(a, THIN), undefined, 'a second category is refused once the limit is spent')
 })
 
 await test('the notices name the fix and never claim a runtime dispatch count', () => {
