@@ -3,7 +3,7 @@
  * corrected ad-hoc `D-platform` / `D2-platform` probes in
  * `dsh-ops-boundary-report.md`.
  *
- * The suite drives this checkout's own resolver (`lib/ptc/runtime.js`) and the
+ * The suite drives this checkout's own resolver (`lib/execution/runtime.js`) and the
  * declarations beside it, not an installed copy, so it describes the tree that
  * is about to be published rather than whatever happens to be installed on the
  * machine running the gate.
@@ -40,7 +40,7 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { PLATFORMS, resolveWorker, workerName } from '../lib/ptc/runtime.js'
+import { PLATFORMS, resolveWorker, workerName } from '../lib/execution/runtime.js'
 import { PACKAGE_ROOT, assert, report, test, withTempDir } from './lib/harness.mjs'
 import { requireWorker } from './lib/boundary.mjs'
 

@@ -4,7 +4,7 @@ import { COMPONENTS, componentEntry, componentEnabled } from '../../lib/componen
 import { CAPABILITIES } from '../../lib/capabilities/registry.js'
 import { publicToolName } from '../../lib/policy.js'
 import { platformSurface } from '../../lib/official-tool-catalog.js'
-import { residentTools } from '../../lib/modes/plan.js'
+import { residentTools } from '../../lib/presets/defaults.js'
 import { PACKAGE_NAME } from '../../lib/identity.js'
 
 export function defaultChecks(component, config, resolve) {

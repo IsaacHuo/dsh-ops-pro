@@ -37,7 +37,7 @@ const { invoke } = await import('../lib/execution/files.js')
 const { invoke: invokeResult } = await import('../lib/execution/jobs.js')
 const { resolveWorker } = await import('../lib/execution/runtime.js')
 const { wslPath } = await import('../lib/execution/wsl-paths.js')
-const { definition } = await import('../lib/file/contract.js')
+const { definition } = await import('../lib/projections/native/contract.js')
 const { expireResultSession } = await import('../lib/kernel/result-lifecycle.js')
 const { ctx } = await bootHost(), file = resolveWorker()
 let mode = startingMode, hook = () => {}, afterWorker = false, afterWorkerRevoke = false

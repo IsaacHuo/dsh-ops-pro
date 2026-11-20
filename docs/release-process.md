@@ -31,7 +31,7 @@
 ## 流水线三段
 
 1. **`native`（矩阵：`windows-latest`/`win32-x64`、`ubuntu-24.04`/`linux-x64`、`macos-latest`/`darwin-arm64`、`macos-15-intel`/`darwin-x64`）**
-   - 只构建 `lib/ptc/runtime.js` 声明的四个目标；Windows ARM64 与 Linux ARM64 不在矩阵内。
+   - 只构建 `lib/execution/runtime.js` 声明的四个目标；Windows ARM64 与 Linux ARM64 不在矩阵内。
    - 固定 Rust 1.97.1（`native/rust-toolchain.toml`）与锁定的 `Cargo.lock`；npm 平台名与 Rust triple 分列。Linux x64 使用 musl 静态链接，stage 之后用 `file` 断言静态链接，回退到 gnu triple 会在这里失败。
    - `bin/native-runtime.mjs stage` 为目标写 `runtime/<target>/provenance.json`（version／target／executable／sha256）；缺二进制或不是常规文件都报错。
    - Windows 目标额外跑 `npm run build:bash-ipc` 与 `npm run stage:niubash`。

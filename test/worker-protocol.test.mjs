@@ -5,9 +5,9 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { WORKER, requireWorker, request, callWorker, envelopeOf } from './lib/boundary.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
-import { workerEnvelope, WORKER_OUTPUT_BYTES, WORKER_TIMEOUT_MS } from '../lib/worker-protocol.js'
-import { invoke as fileCall } from '../lib/file/worker.js'
-import { invoke as ptcCall } from '../lib/ptc/worker.js'
+import { workerEnvelope, WORKER_OUTPUT_BYTES, WORKER_TIMEOUT_MS } from '../lib/execution/protocol.js'
+import { invoke as fileCall } from '../lib/execution/files.js'
+import { invoke as ptcCall } from '../lib/execution/jobs.js'
 
 requireWorker('worker-protocol')
 const signal = () => new AbortController().signal

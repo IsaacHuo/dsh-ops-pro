@@ -30,10 +30,10 @@ import {
   renderToolingPolicy,
 } from '../lib/policy.js'
 import { CAPABILITIES, NATIVE_FILE_TOOLS } from '../lib/capabilities/registry.js'
-import { resolvePtcConfig } from '../lib/ptc/index.js'
+import { resolvePtcConfig } from '../lib/publication/ptc.js'
 import { resolveTuiConfig } from '../lib/components/tui/index.js'
 import { resolvePanelConfig } from '../lib/components/panel/index.js'
-import { PTC_API_TOOLS, definition } from '../lib/ptc/contract.js'
+import { PTC_API_TOOLS, definition } from '../lib/projections/ptc/contract.js'
 import { resolveConfig, resolveDiscoveryConfig } from '../lib/config.js'
 import { resolveMergedConfig } from '../lib/settings/merged.js'
 import { COMPONENTS, componentEntry, componentEnabled } from '../lib/components/defaults.js'

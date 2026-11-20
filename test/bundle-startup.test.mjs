@@ -13,7 +13,7 @@ import { createScope, scopeOf, scopeParentOf } from '@deepseek-ai/dsh-scope'
 import { evaluate, isJsExpr } from '@deepseek-ai/cordis-plugin-loader'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, waitFor, withTempDir, PACKAGE_ROOT } from './lib/harness.mjs'
-import { resolveWorker } from '../lib/ptc/runtime.js'
+import { resolveWorker } from '../lib/execution/runtime.js'
 import { modeSectionName, publicToolName } from '../lib/policy.js'
 
 const { parse } = YAML

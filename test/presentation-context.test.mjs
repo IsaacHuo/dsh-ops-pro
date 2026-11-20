@@ -1,7 +1,7 @@
 /** Presentation probes must resolve the same agent variables as a provider assembly. */
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import { activationIsPtc, inspectPresentation, isNativePresentation, isPresentationProbe } from '../lib/presentation.js'
+import { activationIsPtc, inspectPresentation, isNativePresentation, isPresentationProbe } from '../lib/publication/presentation.js'
 import { selectExecutor } from './lib/executor.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'

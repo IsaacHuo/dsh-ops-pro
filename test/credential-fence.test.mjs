@@ -35,7 +35,7 @@ import path from 'node:path'
 import { assert, report, test, withTempDir } from './lib/harness.mjs'
 import { callWorker, envelopeOf, request, requireWorker } from './lib/boundary.mjs'
 import { credentialPath, credentialRoots, credentialRefusal, DENY_ENV } from '../lib/credential-policy.js'
-import { invoke } from '../lib/file/worker.js'
+import { invoke } from '../lib/execution/files.js'
 import { sessionTempDir, SESSION_TEMP_PREFIX } from '../lib/session-temp.js'
 
 requireWorker('credential-fence')

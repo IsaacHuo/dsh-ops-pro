@@ -1,5 +1,5 @@
 /** Empty placeholders strict adapters send for optional file-tool fields. */
-import { normalizeArguments } from '../lib/file/contract.js'
+import { normalizeArguments } from '../lib/projections/native/contract.js'
 import { assert, report, test } from './lib/harness.mjs'
 
 await test('grep drops empty optional placeholders but keeps false and 0', () => {

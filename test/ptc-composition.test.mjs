@@ -12,7 +12,7 @@ import { assert, test, report, waitFor, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { WORKER, requireWorker } from './lib/boundary.mjs'
 import { legacyComponent } from './lib/legacy-component.mjs'
-import * as ptcModule from '../lib/ptc/index.js'
+import * as ptcModule from '../lib/publication/ptc.js'
 requireWorker('ptc-composition')
 const hash = text => createHash('sha256').update(text).digest('hex')
 let serial = 0

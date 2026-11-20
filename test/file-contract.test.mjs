@@ -1,7 +1,7 @@
 /** Native file-tool descriptions must describe the schemas the worker enforces (#44). */
 import fs from 'node:fs'
-import { DESCRIPTIONS, PARAMETERS } from '../lib/file/contract.js'
-import { DESCRIPTIONS as PTC_DESCRIPTIONS } from '../lib/ptc/contract.js'
+import { DESCRIPTIONS, PARAMETERS } from '../lib/projections/native/contract.js'
+import { DESCRIPTIONS as PTC_DESCRIPTIONS } from '../lib/projections/ptc/contract.js'
 import { NATIVE_RESULT_DESCRIPTION, RESULT_PAGE_PARAMETERS } from '../lib/capabilities/result.js'
 import { assert, report, test } from './lib/harness.mjs'
 

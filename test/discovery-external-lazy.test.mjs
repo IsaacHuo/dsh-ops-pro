@@ -1,7 +1,7 @@
 /** External-only discovery needs no sandbox policy, and probes only real admission. */
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { mountDiscovery } from '../lib/discovery/index.js'
-import { isPresentationProbe } from '../lib/presentation.js'
+import { isPresentationProbe } from '../lib/publication/presentation.js'
 import { prepareStep } from './lib/executor.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'

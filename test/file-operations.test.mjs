@@ -1,7 +1,7 @@
 /**
  * Full native file surface: the shipped worker, driven through the
  * `test/lib/boundary.mjs` request shape, plus the generated tool contract. The host
- * lane (`lib/file/worker.js`: authority modes, credential fence, observations)
+ * lane (`lib/execution/files.js`: authority modes, credential fence, observations)
  * belongs to the security/atomicity issue and is deliberately not exercised here.
  */
 import fs from 'node:fs'
@@ -9,7 +9,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
 import { FILE_TOOLS, FILE_MUTATIONS, publicToolName } from '../lib/policy.js'
-import { PARAMETERS, definition, normalizeArguments } from '../lib/file/contract.js'
+import { PARAMETERS, definition, normalizeArguments } from '../lib/projections/native/contract.js'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { callTool, callWorker, request, envelopeOf, requireWorker } from './lib/boundary.mjs'
 requireWorker('file-operations')

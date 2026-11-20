@@ -11,7 +11,7 @@
  *   readable, and one over the limit is a structured `IO_ERROR`, never a crash.
  * - `.` / `..` segments and a trailing separator are refused: the worker takes
  *   exactly one absolute host-resolved path, and normalizing a spelling is the
- *   host bridge's job (`lib/file/worker.js` does it before spawning).
+ *   host bridge's job (`lib/execution/files.js` does it before spawning).
  * - Symlinks are refused everywhere — an explicit path, a dangling one, and one
  *   that never leaves the root. Report section 5.1 records that the original
  *   probe expected the in-root symlink to resolve; that expectation was wrong,

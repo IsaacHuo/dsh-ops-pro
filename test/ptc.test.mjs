@@ -14,17 +14,17 @@ import { Context } from '@deepseek-ai/cordis'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { createScope } from '@deepseek-ai/dsh-scope'
-import * as ptcModule from '../lib/ptc/index.js'
-import { definition } from '../lib/ptc/contract.js'
-import { tryResolveWorker, resolveWorker } from '../lib/ptc/runtime.js'
+import * as ptcModule from '../lib/publication/ptc.js'
+import { definition } from '../lib/projections/ptc/contract.js'
+import { tryResolveWorker, resolveWorker } from '../lib/execution/runtime.js'
 import Sandbox from '@deepseek-ai/dsh-sandbox-local'
 import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import NodePtc from '@deepseek-ai/dsh-ptc-runtime-node'
 import FileSystem from '@deepseek-ai/dsh-fs-local'
-import { invoke } from '../lib/ptc/worker.js'
-import { invoke as invokeFile } from '../lib/file/worker.js'
+import { invoke } from '../lib/execution/jobs.js'
+import { invoke as invokeFile } from '../lib/execution/files.js'
 import { legacyComponent } from './lib/legacy-component.mjs'
-import { isPresentationProbe } from '../lib/presentation.js'
+import { isPresentationProbe } from '../lib/publication/presentation.js'
 const ptc = legacyComponent(ptcModule)
 /**
  * `npm run build:ptc` builds a host binary into `native/target/release`, but a
@@ -179,7 +179,7 @@ try {
   // `os.tmpdir()` sits under `/var`, a symlink to `/private/var`, so an absolute
   // path handed straight through carries an alias in its directory chain; the
   // worker opens every component with no-follow and refuses such a path before
-  // doing any work. `lib/file/worker.js` resolves the parent chain, so a request
+  // doing any work. `lib/execution/files.js` resolves the parent chain, so a request
   // must succeed from the caller's spelling while a link the caller *names* stays
   // refused. It has to go through the host bridge: at the worker level the alias
   // reaches the no-follow walk and is refused either way.

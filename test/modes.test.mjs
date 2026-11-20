@@ -19,13 +19,13 @@ import * as Standard from '../lib/components/mode-standard/index.js'
 import * as Cordis from '../lib/components/mode-cordis/index.js'
 import * as Ptc from '../lib/components/mode-ptc/index.js'
 import * as OpsPtc from '../lib/components/mode-ops-ptc/index.js'
-import { MODE_IDS, MODE_PRESET } from '../lib/modes/types.js'
+import { MODE_IDS, MODE_PRESET } from '../lib/presets/types.js'
 import { PTC_RESIDENT_TOOLS } from '../lib/ptc/config.js'
 process.env.DSH_OPS_LEGACY_ROWS = '1'
 import * as Discovery from '../lib/components/discovery/index.js'
 import { BASH_TOOL, modeSectionName, publicToolName } from '../lib/policy.js'
-import { MODE_PLANS, residentTools } from '../lib/modes/plan.js'
-import { replacementTargets } from '../lib/modes/apply.js'
+import { MODE_PLANS, residentTools } from '../lib/presets/defaults.js'
+import { replacementTargets } from '../lib/presets/builtin.js'
 import { mountReplacements } from '../lib/publication/replacements.js'
 import { WORKER } from './lib/boundary.mjs'
 import { bootHost, shutdown, scopedToolNames } from './lib/host.mjs'
@@ -346,7 +346,7 @@ await test('a preset selection change withdraws the old mode surface and the new
 
 await test('a mode row keeps one consumer state per Cordis root', async () => {
   const { Context } = await import('@deepseek-ai/cordis')
-  const { joinMode, enabledModes } = await import('../lib/modes/registry.js')
+  const { joinMode, enabledModes } = await import('../lib/presets/registry.js')
   const ctx = new Context(); ctx.logger.level = 0
   try {
     const firstConfig = { residentTools: true }, secondConfig = { residentTools: false }

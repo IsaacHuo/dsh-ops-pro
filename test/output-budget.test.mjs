@@ -50,7 +50,7 @@ import { callTool, envelopeOf, requireWorker } from './lib/boundary.mjs'
 
 requireWorker('output-budget')
 
-/** The host collects worker stdout with this ceiling (`lib/file/worker.js`). */
+/** The host collects worker stdout with this ceiling (`lib/execution/files.js`). */
 const HOST_CAP = 128 * 1024
 
 /** Raw bytes the worker actually wrote. */

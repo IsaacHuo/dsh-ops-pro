@@ -2,7 +2,7 @@
 import { assertSupportedJsonSchema } from '@deepseek-ai/dsh-tools'
 import { jsonSchemaToTs } from '@deepseek-ai/dsh-tool-executor-ptc'
 import { assert, test, report } from './lib/harness.mjs'
-import { PTC_TOOLS, PARAMETERS, OUTPUT } from '../lib/ptc/contract.js'
+import { PTC_TOOLS, PARAMETERS, OUTPUT } from '../lib/projections/ptc/contract.js'
 
 await test('both PTC arguments and outputs render real SDK shapes, never unknown', () => {
   for (const tool of PTC_TOOLS) {

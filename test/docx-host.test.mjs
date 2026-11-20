@@ -10,9 +10,9 @@ import { docx, paragraph } from './lib/document-fixture.mjs'
 import { documentHost, documentNames, documentCall, documentCode, activateDocument } from './lib/document-host.mjs'
 import { capability } from '../lib/capabilities/registry.js'
 import { publicToolName } from '../lib/policy.js'
-import { canonicalOutput } from '../lib/ptc/projection/canonical-schema.js'
-import { decodeContinuation } from '../lib/ptc/projection/continuation.js'
-import { definition } from '../lib/file/contract.js'
+import { canonicalOutput } from '../lib/projections/ptc/canonical-schema.js'
+import { decodeContinuation } from '../lib/projections/ptc/continuation.js'
+import { definition } from '../lib/projections/native/contract.js'
 requireWorker('docx-host')
 const TOOL = publicToolName('read_docx')
 const render = value => definition('read_docx', async () => value).output.render({ path: 'body.docx' }, value)[0].text

@@ -41,7 +41,7 @@ await test('an unreadable guidance file degrades to an empty string without thro
 await test('the ops-ptc row is the one row configured to deliver the guidance', async () => {
   const { parse } = await import('yaml')
   const { resolveMergedConfig } = await import('../lib/settings/merged.js')
-  const { resolveModeConfig } = await import('../lib/modes/config.js')
+  const { resolveModeConfig } = await import('../lib/presets/config.js')
   const { modeGate } = await import('../lib/presets/builtin.js')
   // Only ops-ptc defaults on; the row-level switch remains an explicit override.
   const defaults = resolveMergedConfig()

@@ -7,6 +7,16 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Removed 36 internal compatibility re-export modules left over from the
+  responsibility-based layout (`lib/file/*`, `lib/modes/*`, `lib/ptc/{contract,index,invoke,runtime,worker}`,
+  `lib/ptc/projection/*`, `lib/presentation.js`, `lib/surface.js`, `lib/tool-changes.js`,
+  `lib/worker-*.js`, `lib/scoped-*.js`, `lib/integration/registry.js`). Every caller now imports
+  the owning module under `lib/projections/`, `lib/execution/`, `lib/publication/`,
+  `lib/presets/` or `lib/consumer/`. Exported subpaths (`./ptc-sdk`, `./integration`, …) are
+  unchanged; only undocumented deep imports stop resolving. / 删除 36 个职责化重构后遗留的内部
+  兼容转发模块；所有调用方改为直接导入所属模块。`package.json` 导出的子路径不变，仅未公开的深层
+  导入路径失效。
+
 - Absorbed the upstream OPS-PTC measurement slices: the isolated entry with routing
   counter-examples (#1011), the four-account cost ledger (#1013) and the scripted
   behavior tracks with a trajectory verifier (#1014). The ledger is re-pinned to this

@@ -17,7 +17,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { bootHost, shutdown } from '../../test/lib/host.mjs'
-import { surfaceOf } from '../../lib/surface.js'
+import { surfaceOf } from '../../lib/publication/surface.js'
 
 const TOOLS = Number(process.env.PROBE_TOOLS ?? 150)
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'probe-490-surface-'))

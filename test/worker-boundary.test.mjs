@@ -1,8 +1,8 @@
 /** Host worker boundaries treat arguments and process output as untrusted values. */
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
-import { invoke as fileCall } from '../lib/file/worker.js'
-import { invoke as ptcCall } from '../lib/ptc/worker.js'
+import { invoke as fileCall } from '../lib/execution/files.js'
+import { invoke as ptcCall } from '../lib/execution/jobs.js'
 import { InvocationDeadlineError } from '../lib/lifecycle/invocations.js'
 
 async function fixture(body) {

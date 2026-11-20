@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { basename, join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -112,7 +113,10 @@ export async function boot({ root, worker, baselineSource, projection = 'candida
     // Every shipped bundle sets this to `false` (the deployment default we measure).
     if (officialSearch) await ctx.plugin(OfficialSearch, { sampleOverCapGlobResults: false })
   } else if (projection === 'baseline') {
-    const { NativeFileTools } = await import(pathToFileURL(join(baselineSource, 'lib/file/runtime.js')).href)
+    // Older baselines ship the runtime at its pre-0.5.5 path; newer ones only at the projection.
+    const runtimeModule = ['lib/projections/native/runtime.js', 'lib/file/runtime.js']
+      .map(file => join(baselineSource, file)).find(file => existsSync(file)) ?? join(baselineSource, 'lib/projections/native/runtime.js')
+    const { NativeFileTools } = await import(pathToFileURL(runtimeModule).href)
     await ctx.plugin({ inject: ['tools'], async apply(inner) {
       const runtime = new NativeFileTools({ ctx: inner, config: { workerPath: worker, required: true, denyCredentialReads: true } })
       await runtime.start(); inner.effect(() => () => runtime.stop())

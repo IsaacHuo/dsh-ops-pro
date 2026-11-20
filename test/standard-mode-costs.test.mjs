@@ -16,7 +16,7 @@ import { createScope } from '@deepseek-ai/dsh-scope'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, waitFor } from './lib/harness.mjs'
 import { applyComponent } from '../lib/index.js'
-import { visibleNames } from '../lib/surface.js'
+import { visibleNames } from '../lib/publication/surface.js'
 
 /** A registered tool whose schema is big enough that a deep copy is measurable. */
 const tool = name => ({

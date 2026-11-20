@@ -8,9 +8,9 @@ import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { assert, test, report, skipSuite, withTempDir, ownWindowsFixture } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { prepareWorkspace, mountWorkspacePreparation, runPreparation, preparationEnvironment, preparationSpawnSpec } from '../lib/workspace-preparation.js'
-import { invoke as fileCall } from '../lib/file/worker.js'
-import { invoke as ptcCall } from '../lib/ptc/worker.js'
-import { tryResolveWorker } from '../lib/ptc/runtime.js'
+import { invoke as fileCall } from '../lib/execution/files.js'
+import { invoke as ptcCall } from '../lib/execution/jobs.js'
+import { tryResolveWorker } from '../lib/execution/runtime.js'
 import { mountSessionBash } from '../lib/session-shells.js'
 import { resolveShells } from '../lib/shells.js'
 import { confinedBash } from '../lib/bash-ipc.js'
@@ -22,7 +22,7 @@ import * as ObservationPolicy from '@deepseek-ai/dsh-fs-observation-policy'
  * The worker this suite drives, or a visible skip.
  *
  * `resolveWorker()` throws when the host is outside the support matrix
- * (`lib/ptc/runtime.js`), and that exception used to be raised while this module
+ * (`lib/execution/runtime.js`), and that exception used to be raised while this module
  * was still loading: such a host died with an uncaught error before a single
  * check was named. Resolve it through `tryResolveWorker` and exit through the
  * repository's skip convention, so a host that cannot answer says so and

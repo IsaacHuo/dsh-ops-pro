@@ -1,6 +1,6 @@
 import { selectExecutor, executeCall, prepareStep } from './executor.mjs'
 /** Real host mount checks, also run before the legacy mount suite's runtime gate. */
-import { registerNativeProvider } from '../../lib/file/result-provider.js'
+import { registerNativeProvider } from '../../lib/publication/providers.js'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import * as hiding from '../../lib/official-tool-hiding.js'
 import { legacyComponent } from './legacy-component.mjs'

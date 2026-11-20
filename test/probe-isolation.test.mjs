@@ -1,8 +1,8 @@
 /** Conditional admission is read-only and independent across concurrent host resolves. */
 import { createScope, scopeChainOf } from '@deepseek-ai/dsh-scope'
-import * as ptcModule from '../lib/ptc/index.js'
+import * as ptcModule from '../lib/publication/ptc.js'
 import * as discoveryModule from '../lib/discovery/index.js'
-import { isPresentationProbe } from '../lib/presentation.js'
+import { isPresentationProbe } from '../lib/publication/presentation.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { selectExecutor, prepareStep } from './lib/executor.mjs'
 import { assert, test, report, TEST_HOME, waitFor } from './lib/harness.mjs'

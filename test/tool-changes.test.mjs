@@ -1,5 +1,5 @@
 import { assert, test, report } from './lib/harness.mjs'
-import { toolChangeScopes, withToolChange } from '../lib/tool-changes.js'
+import { toolChangeScopes, withToolChange } from '../lib/publication/changes.js'
 await test('scope attribution is synchronous, nested global changes stay conservative, and throws restore the outer scope', () => {
   const a={}, b={}
   assert.equal(toolChangeScopes(),undefined)

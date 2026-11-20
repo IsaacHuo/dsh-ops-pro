@@ -205,7 +205,7 @@ the verification above did — or run the gate on a normal Windows host.
 ## W2 — the release gate must actually *run* on Windows, not skip
 
 `bin/check-release.mjs` now derives its scope from `package.json` `os` x `cpu`,
-asserts that scope equals `lib/ptc/runtime.js` `PLATFORMS`, and closes the
+asserts that scope equals `lib/execution/runtime.js` `PLATFORMS`, and closes the
 Windows Bash IPC payload **only when `win32-x64` is staged**. On Linux only the
 *skip* branch could be exercised, so the Windows branch is unverified.
 

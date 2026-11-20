@@ -1,7 +1,7 @@
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type { Context } from '@deepseek-ai/cordis'
-import { NativeFileTools } from '../../src/file/runtime.js'
-import { resolveWorker, tryResolveWorker } from '../../src/ptc/runtime.js'
+import { NativeFileTools } from '../../src/projections/native/runtime.js'
+import { resolveWorker, tryResolveWorker } from '../../src/execution/runtime.js'
 declare const ctx: Context
 const runtime = new NativeFileTools({ ctx, config: { workerPath: '/worker', toolCallTimeoutMs: 30000 } })
 void runtime.definition('read_table')
@@ -26,7 +26,7 @@ if (selected.ok) {
 }
 
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
-import { invoke as fileCall, failure as fileFailure } from '../../src/file/worker.js'
+import { invoke as fileCall, failure as fileFailure } from '../../src/execution/files.js'
 declare const exec: ToolRunContext
 const nativeValue: unknown = await fileCall(ctx, '/worker', 'stat', { path: 'safe' }, exec, undefined, { denyCredentialReads: true })
 // @ts-expect-error The transport result must be narrowed before accessing canonical fields.
@@ -38,7 +38,7 @@ void fileCall(ctx, '/worker', 'stat', {}, exec, undefined, { denyCredentialReads
 // @ts-expect-error Effect state must be an explicit kernel fact.
 void fileFailure('RESULT_UNKNOWN', 'lost output', 'execute', 'success')
 
-import { invoke as ptcCall, failure as ptcFailure } from '../../src/ptc/worker.js'
+import { invoke as ptcCall, failure as ptcFailure } from '../../src/execution/jobs.js'
 const ptcValue: unknown = await ptcCall(ctx, '/worker', 'result', { action: 'page' }, exec)
 // @ts-expect-error A transport receipt is narrowed before caller-specific projection.
 void ptcValue.status

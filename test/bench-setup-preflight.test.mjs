@@ -20,7 +20,7 @@ import {
 } from '../bench/setup/preflight.mjs'
 import { parseArgs } from '../bench/setup/profile.mjs'
 import { main } from '../bench/setup.mjs'
-import { workerName } from '../lib/ptc/runtime.js'
+import { workerName } from '../lib/execution/runtime.js'
 
 const IN_BOX = 'C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules'
 const CORE = 'C:\\Program Files\\PowerShell\\7\\Modules'

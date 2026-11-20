@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { PACKAGE_ROOT, assert, report, test, withTempDir } from './lib/harness.mjs'
 import { NIUBASH_PACKAGE_PATH } from '../lib/cli/niubash-payload.js'
-import { PLATFORMS, workerName } from '../lib/ptc/runtime.js'
+import { PLATFORMS, workerName } from '../lib/execution/runtime.js'
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
 function header(target) {
   const bytes = Buffer.alloc(80)
