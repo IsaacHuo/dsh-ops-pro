@@ -7,6 +7,14 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Absorbed the upstream OPS-PTC measurement slices: the isolated entry with routing
+  counter-examples (#1011), the four-account cost ledger (#1013) and the scripted
+  behavior tracks with a trajectory verifier (#1014). The ledger is re-pinned to this
+  fork: the official read/glob/grep stay out of the SDK (#961) and the lesson arrives
+  with the first program result. / 吸收上游 OPS-PTC 计量切片：隔离入口与路由反例（#1011）、
+  四本账成本分账（#1013）、带轨迹判定的脚本化行为任务（#1014）。分账按本分叉重新钉住：
+  官方 read/glob/grep 不再进入 SDK（#961），教学随首个程序结果到达。
+
 - Native discovery keeps its system-prompt section byte-identical when the model selects a tool. The tooling table and the on-demand directory were rendered from the currently callable set, so every `ops_discover_tools` selection rewrote the system prefix together with the tool declarations and the next request missed the prompt cache almost entirely (#975). The table now lists only tools that are callable without selection, usage notes for loadable tools (for example the `expectedRevision` rule for writers) apply from the first step, and the directory line stays while the scope has a discoverable pool. Only an authority change, such as switching to read-only, rewrites the section; the declarations still grow as tools load.
 - Native 发现在模型选择工具时保持其系统提示段字节不变。工具表与按需目录此前按「当前可调用集」渲染，每次 `ops_discover_tools` 选择都会连同工具声明一起改写系统前缀，下一次请求几乎全量缓存 miss（#975）。现在工具表只列不经选择即可调用的工具，可加载工具的用法说明（例如写入工具的 `expectedRevision` 规则）从第一步起就生效，只要作用域还有可发现的工具池，目录行就保持不变。只有权限变化（例如切到只读）才会改写该段；工具声明仍随加载增长。
 - The one-time batching lesson no longer rides the accepted user batch. A user-role lesson entered logged history, where the model read it as fresh input and answered the lesson instead of the task (#929). It now rides the first accepted root `run_code` result through `additionalContexts`, the same-step ephemeral inbox, under contributor `batching-guidance:lesson`; per-violation notices keep `batching-guidance`. The lesson is still rendered for the surface the scope publishes, latches at delivery, and the `session/event` `user/message` latch is gone. Because the lesson and a notice can now share one result, the lesson's file-work rule names only the file APIs the scope publishes, and a scope without `ops_edit_file` (for example a read-only session) no longer sees the edit example. Direction from upstream PR #1008, rewritten on top of the surface-aware lesson (#930) and the per-session notice cap (#1027).
