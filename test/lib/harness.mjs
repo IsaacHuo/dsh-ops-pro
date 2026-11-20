@@ -100,7 +100,8 @@ export function ownWindowsFixture(directory) {
   const system32 = path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32')
   if (!fixtureOwner) {
     const probe = spawnSync(path.join(system32, 'whoami.exe'), ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8' })
-    fixtureOwner = probe.stdout?.match(/S-1-5-[0-9-]+/)?.[0]
+    // Any authority: Entra ID (Azure AD) accounts carry S-1-12-1-… SIDs, not S-1-5-….
+    fixtureOwner = probe.stdout?.match(/S-1-\d+(?:-\d+)+/)?.[0]
     if (!fixtureOwner) throw new Error(`Cannot identify fixture owner: ${probe.stderr}`)
   }
   // Elevated hosted runners default to Administrators as owner. Change only the
