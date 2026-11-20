@@ -14,6 +14,8 @@ import { literalShellFileWork } from './shell-file-work.js'
 
 /** Identity of the guidance in the host message source. */
 export const BATCHING_GUIDANCE_ID = 'batching-guidance'
+/** Contributor of the one-time full lesson; the per-violation notices keep the base id. */
+export const BATCHING_GUIDANCE_LESSON_ID = `${BATCHING_GUIDANCE_ID}:lesson`
 /** Revision of the guidance text; bump it when the wording or the file format changes. */
 export const BATCHING_GUIDANCE_REVISION = '6'
 
@@ -100,6 +102,57 @@ function fileWorkHint(names: readonly string[]): string {
     return 'List with `ops_glob`, search with `ops_grep`, read with `ops_read_files` or `ops_inspect_local_file`, edit with `ops_edit_file`.'
   }
   return 'Do file work with the APIs this scope publishes: `' + usable.join('`, `') + '`.'
+}
+
+/** The shipped rule-6 clause that names every file-work API, whitespace-tolerant. */
+const FILE_RULE = /(\*\*OPS first for file work\*\*: )list with ops_glob,\s+search with ops_grep,\s+read with\s+ops_read_files or ops_inspect_local_file,\s+edit with ops_edit_file\./u
+
+/**
+ * Name only the file-work APIs the scope publishes in the lesson's file-work rule.
+ *
+ * The lesson rides the same result as a bypass notice, so a read-only scope must not
+ * be told to edit through the lesson while the notice keeps the mutating API out.
+ * The shipped clause stays byte for byte when every API it names is available.
+ * @param text - guidance text.
+ * @param surface - what the scope publishes.
+ * @returns the text with the file-work clause narrowed to the published APIs.
+ */
+function narrowFileRule(text: string, surface: GuidanceSurface): string {
+  const names = [...surface.resident, ...(surface.loadable ?? [])]
+  const usable = FILE_APIS.filter(name => names.includes(name))
+  if (usable.length === FILE_APIS.length) return text
+  const has = (name: string) => usable.includes(name)
+  const readers = ['ops_read_files', 'ops_inspect_local_file'].filter(has)
+  const clauses = [
+    ...(has('ops_glob') ? ['list with ops_glob'] : []),
+    ...(has('ops_grep') ? ['search with ops_grep'] : []),
+    ...(readers.length > 0 ? ['read with ' + readers.join(' or ')] : []),
+    ...(has('ops_edit_file') ? ['edit with ops_edit_file'] : []),
+  ]
+  const clause = clauses.length > 0 ? clauses.join(', ') + '.' : 'no OPS file API is published here, so do file work with the official tools.'
+  const narrowed = text.replace(FILE_RULE, (_match, lead: string) => lead + clause)
+  return has('ops_edit_file') ? narrowed : dropEditExamples(narrowed)
+}
+
+/**
+ * Drop every section whose example program calls the editor.
+ *
+ * A scope without `ops_edit_file` would otherwise be shown a write it cannot make.
+ * @param text - guidance text.
+ * @returns the text without sections that call `ops_edit_file`.
+ */
+function dropEditExamples(text: string): string {
+  const lines = text.split('\n')
+  const kept: string[] = []
+  let at = nextHeading(lines, 0)
+  kept.push(...lines.slice(0, at))
+  while (at < lines.length) {
+    const end = sectionEnd(lines, at)
+    const section = lines.slice(at, end)
+    if (!section.some(row => row.includes('tools.ops_edit_file('))) kept.push(...section)
+    at = end
+  }
+  return kept.join('\n')
 }
 
 /**
@@ -296,16 +349,19 @@ function sectionEnd(lines: readonly string[], start: number): number {
 /**
  * Render the guidance for one published surface.
  *
- * A scope with the loader receives the file byte for byte, so the default path is
- * unchanged. A loader-less scope receives the same lesson with the load step
+ * A scope with the loader receives the file byte for byte when it can reach every
+ * file-work API, so the default path is unchanged; the file-work rule otherwise names
+ * only what the scope publishes. A loader-less scope receives the same lesson with the load step
  * replaced: the prose that tells the model to load cannot be true there.
  * @param text - the loaded guidance file.
  * @param surface - what the scope publishes.
  * @returns the model-facing guidance text.
  */
 export function renderBatchingGuidance(text: string, surface: GuidanceSurface): string {
-  if (text === '' || surface.loader) return text
-  const lines = text.split('\n')
+  if (text === '') return text
+  const narrowed = narrowFileRule(text, surface)
+  if (surface.loader) return narrowed
+  const lines = narrowed.split('\n')
   const start = anchorIndex(lines)
   // Lines that teach loading, and the table row that points at it, never reach a
   // scope without a loader. The replacement is inserted after this filter, so the

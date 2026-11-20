@@ -109,9 +109,26 @@ await test('the teacher trajectory pins the first-line plan and a runnable load 
 await test('a scope with the loader receives the shipped file unchanged', () => {
   // The default path must not pay for a branch it never needs: byte identity is the contract.
   const text = loadBatchingGuidance()
-  assert.equal(renderBatchingGuidance(text, { loader: true, resident: [] }), text)
+  const every = ['ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file', 'ops_edit_file']
+  assert.equal(renderBatchingGuidance(text, { loader: true, resident: [], loadable: every }), text)
   // An unreadable file stays empty, so delivery is skipped instead of failing a tool result.
   assert.equal(renderBatchingGuidance('', { loader: false, resident: ['ops_glob'], loadable: [] }), '')
+})
+
+await test('the file-work rule names only the file APIs the scope publishes', () => {
+  // A read-only loader scope cannot reach the editor: the lesson rides the same result
+  // as the bypass notice, so it must not teach the mutation the notice keeps out.
+  const readOnly = renderBatchingGuidance(loadBatchingGuidance(), { loader: true, resident: [], loadable: ['ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file'] })
+  const rule = readOnly.slice(readOnly.indexOf('**OPS first for file work**'), readOnly.indexOf('The shell starts'))
+  assert.ok(rule.length > 0, 'the rule is still present')
+  assert.equal(rule.includes('ops_edit_file'), false, rule)
+  assert.match(rule, /list with ops_glob, search with ops_grep, read with ops_read_files or ops_inspect_local_file\./)
+  assert.equal(readOnly.includes('ops_edit_file'), false, 'no example shows a write the scope cannot make')
+  assert.match(readOnly, /Trajectory 4/, 'the other examples stay')
+  // A scope with no OPS file API is sent to the official tools instead of an unreachable name.
+  const none = renderBatchingGuidance(loadBatchingGuidance(), { loader: true, resident: [], loadable: ['ops_stat'] })
+  assert.match(none, /no OPS file API is published here/)
+  assert.equal(/ops_edit_file|ops_glob/.test(none.slice(none.indexOf('**OPS first for file work**'), none.indexOf('The shell starts'))), false)
 })
 
 await test('a loader-less scope is never taught to load', () => {
