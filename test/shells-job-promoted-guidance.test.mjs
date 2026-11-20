@@ -26,6 +26,11 @@ await test('the promoted render states that job_kill terminates the whole proces
   // ... and which victims that implies, plus how to avoid them next time.
   assert.match(text, /daemon/)
   assert.match(text, /run_in_background/)
+  // #798: under Niubash shell-level backgrounding never detaches; the render names
+  // a launch that leaves the call and the job tree.
+  assert.match(text, /`&`, `nohup`, `disown` and subshells do not detach/)
+  assert.match(text, /Start-Process/)
+  assert.doesNotMatch(text, /start them detached/, 'the vague advice is gone: under Niubash it does not work')
 })
 
 await test('the background render keeps its exact one-line shape', () => {

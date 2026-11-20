@@ -45,8 +45,10 @@ export function renderHostBash(value: HostBashResult): string {
   // render can only be honest about it: killing the job terminates the whole process
   // tree, including daemons the command started and left attached to its pipes, and
   // the model has to know that before job_kill takes out an adb server or a dev
-  // watcher that was supposed to survive (#814).
-  if (value.kind === 'promoted') return directory + `${value.output || '(no output)'}\n[still running after ${value.timeoutMs}ms; moved to background job ${value.jobId} (${JSON.stringify(value.label)})]\nCollect output with job_output, or stop the command with job_kill. job_kill terminates the whole process tree, including daemons this command started and left attached to it (an adb server, a dev-server watcher); stop such daemons on their own channel first, or start them detached, so a job kill cannot reach them. Daemon-like or long-lived work belongs in run_in_background from the start.`
+  // watcher that was supposed to survive (#814). Niubash also keeps the call open
+  // until every child it started exits — `&`, nohup, disown and subshells do not
+  // detach there (#798) — so the render names the launch that does.
+  if (value.kind === 'promoted') return directory + `${value.output || '(no output)'}\n[still running after ${value.timeoutMs}ms; moved to background job ${value.jobId} (${JSON.stringify(value.label)})]\nCollect output with job_output, or stop the command with job_kill. job_kill terminates the whole process tree, including daemons this command started and left attached to it (an adb server, a dev-server watcher). Under Niubash the call returns only after every child it started exits: \`&\`, \`nohup\`, \`disown\` and subshells do not detach. A daemon that must outlive this call is launched outside the shell, e.g. \`powershell -NoProfile -Command "Start-Process <exe> -ArgumentList '<args>' -WindowStyle Hidden"\`, and stopped on its own channel. Other long-lived work belongs in run_in_background from the start.`
   const { exitCode, signal, ...rest } = value
   const body = renderBashResult(rest)
   const markers = []

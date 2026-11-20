@@ -7,6 +7,14 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- The promoted `ops_bash` render no longer advises starting daemons "detached" in the shell. Measured on
+  Niubash 1.5.0: `niu.exe` stays alive until every child it started exits, so `&`, `nohup`, `disown`
+  and subshells all keep the call open until the timeout, while a `powershell Start-Process` launch
+  returns and the daemon survives. The render and the usage docs now say so and name that launch
+  (#798, #814). / `ops_bash` 的 promoted 渲染不再建议在 shell 内「以分离方式」启动守护进程。实测
+  Niubash 1.5.0 的 `niu.exe` 会等它启动的全部子进程退出，`&`、`nohup`、`disown`、子 shell 都会让调用
+  挂到超时；`powershell Start-Process` 启动则立即返回且守护进程存活。渲染与使用文档据此改写并给出该启动方式（#798、#814）。
+
 - The Bash executor page now offers a Git for Windows installed on any drive. The candidate
   list also reads the installer's `InstallPath` (`HKLM`/`HKCU\SOFTWARE\GitForWindows`, plus the
   32-bit key), so `D:\Git\bin\bash.exe` is listed even though PATH only carries `D:\Git\cmd`
