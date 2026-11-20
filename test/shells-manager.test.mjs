@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { managedBashInventory, removeManagedBash, selectBashRuntime, gitBashCandidates } from '../lib/shells/manager.js'
+import { parseInstallPath, registryGitBash } from '../lib/shells/git-registry.js'
 import { pinnedBashExecutable } from '../lib/shells/pinned.js'
 import { assert, report, test, withTempDir, PACKAGE_ROOT } from './lib/harness.mjs'
 
@@ -169,4 +170,21 @@ await test('default distribution embeds Niubash and only explicit legacy assembl
   assert.equal(packages[0].version, '0.2.1')
 })
 
+await test('a Git for Windows install on another drive is offered from the installer registry record (#803)', async () => {
+  await withTempDir('manager-git-registry', root => {
+    const install = path.join(root, 'D-drive', 'Git'), file = path.join(install, 'bin', 'bash.exe')
+    fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture')
+    const asked = []
+    const registry = key => { asked.push(key); return key.startsWith('HKLM') && !key.includes('WOW6432Node')
+      ? `\r\nHKEY_LOCAL_MACHINE\\SOFTWARE\\GitForWindows\r\n    InstallPath    REG_SZ    ${install}\r\n\r\n` : undefined }
+    // PATH only names <root>\\cmd, exactly what the installer adds; no well-known location matches.
+    const env = { PATH: path.join(install, 'cmd'), ProgramFiles: path.join(root, 'none'), DSH_HOME: root }
+    assert.deepEqual(gitBashCandidates({ env, platform: 'win32', registry }).filter(value => value.startsWith(root)), [path.resolve(file)])
+    assert.equal(asked.length, 3, 'machine, user and 32-bit keys are all consulted')
+    assert.deepEqual(gitBashCandidates({ env, platform: 'win32', registry: () => undefined }).filter(value => value.startsWith(root)), [])
+    assert.deepEqual(registryGitBash({ platform: 'linux', env, query: registry }), [])
+    assert.equal(parseInstallPath('    InstallPath    REG_SZ    relative\\Git'), undefined, 'a relative root is not a claim')
+    assert.equal(parseInstallPath(undefined), undefined)
+  })
+})
 report('shells-manager')

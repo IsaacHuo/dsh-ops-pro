@@ -7,6 +7,13 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- The Bash executor page now offers a Git for Windows installed on any drive. The candidate
+  list also reads the installer's `InstallPath` (`HKLM`/`HKCU\SOFTWARE\GitForWindows`, plus the
+  32-bit key), so `D:\Git\bin\bash.exe` is listed even though PATH only carries `D:\Git\cmd`
+  (#803). Resolution still never selects a system Git implicitly. / Bash 执行器页面现可列出装在任意
+  盘符的 Git for Windows：候选列表额外读取安装器写入的 `InstallPath`（`HKLM`/`HKCU\SOFTWARE\GitForWindows`
+  及 32 位键），PATH 只含 `D:\Git\cmd` 时也能列出 `D:\Git\bin\bash.exe`（#803）。解析仍不会隐式选用系统 Git。
+
 - Removed 36 internal compatibility re-export modules left over from the
   responsibility-based layout (`lib/file/*`, `lib/modes/*`, `lib/ptc/{contract,index,invoke,runtime,worker}`,
   `lib/ptc/projection/*`, `lib/presentation.js`, `lib/surface.js`, `lib/tool-changes.js`,
