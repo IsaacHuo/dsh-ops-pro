@@ -196,4 +196,16 @@ await test('unclassified failures keep their reason without obsolete concurrency
   }
 })
 
+await test('an unknown open error on a runtime file names endpoint-security quarantine instead of a retry (#771)', () => {
+  const flattened = executorUnavailableMessage(new Error("UNKNOWN: unknown error, open 'C:\\\\p\\\\runtime\\\\win32-x64\\\\niubash\\\\niu.exe'"))
+  assert.match(flattened, /^EXECUTOR_UNAVAILABLE: the restricted Bash runtime could not be prepared: UNKNOWN/)
+  assert.match(flattened, /quarantined/)
+  assert.match(flattened, /a retry cannot restore it/)
+  assert.doesNotMatch(flattened, /one retry may complete/)
+  const coded = Object.assign(new Error('open failed'), { code: 'UNKNOWN', syscall: 'open' })
+  assert.match(executorUnavailableMessage(coded), /protection history/)
+  // Any other unclassified failure keeps the transient-refusal advice.
+  assert.match(executorUnavailableMessage(new Error('EACCES: permission denied, mkdir stage-x')), /one retry may complete/)
+})
+
 report('bash-runtime-diagnostics')

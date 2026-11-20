@@ -164,9 +164,28 @@ export function executorUnavailableMessage(error: unknown): string {
     return `EXECUTOR_UNAVAILABLE: ${code}: ${reason} ${REMEDIES[code].remedy}`
   }
   if (reason.startsWith('EXECUTOR_UNAVAILABLE:')) return reason
-  return 'EXECUTOR_UNAVAILABLE: the restricted Bash runtime could not be prepared: '
-    + `${reason}. No command was executed. If this was a transient filesystem refusal, one retry may complete the `
+  const prefix = 'EXECUTOR_UNAVAILABLE: the restricted Bash runtime could not be prepared: ' + `${reason}. No command was executed. `
+  if (suspectedQuarantine(error, reason)) {
+    return prefix + 'Windows answers an unknown error when endpoint security (for example Microsoft Defender) holds or '
+      + 'has quarantined a runtime file, and a retry cannot restore it (#771). Check the security software\'s protection '
+      + 'history, restore or allow the named file, then run `dsh-ops bash-runtime status`; do not switch shells to bypass confinement.'
+  }
+  return prefix + 'If this was a transient filesystem refusal, one retry may complete the '
     + 'private copy; do not switch shells to bypass confinement.'
+}
+
+/**
+ * Whether an unclassified failure is the libuv `UNKNOWN` open error Windows returns for a
+ * file endpoint security blocked or quarantined (ERROR_VIRUS_INFECTED / ERROR_VIRUS_DELETED).
+ * The message is checked as well as `code`, because the error may arrive already flattened.
+ * @param error - the thrown value.
+ * @param reason - its message.
+ * @returns whether the quarantine remedy applies.
+ */
+function suspectedQuarantine(error: unknown, reason: string): boolean {
+  const fields = typeof error === 'object' && error !== null ? error as { code?: unknown; syscall?: unknown } : {}
+  return (fields.code === 'UNKNOWN' && (fields.syscall === undefined || fields.syscall === 'open'))
+    || /\bUNKNOWN: unknown error, open\b/.test(reason)
 }
 
 /**

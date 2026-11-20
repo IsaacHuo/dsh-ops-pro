@@ -7,6 +7,12 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- When opening a restricted Bash runtime file fails with Windows' unknown error (how a file held or
+  quarantined by Microsoft Defender or other endpoint security surfaces), `EXECUTOR_UNAVAILABLE` now
+  says so and points to the protection history instead of suggesting a retry (#771). / 打开受限 Bash
+  运行时文件时若 Windows 返回 unknown error（Defender 等终端安全软件占用或隔离文件时的表现），
+  `EXECUTOR_UNAVAILABLE` 现会指明这一点并引导查看防护历史，而不是建议重试（#771）。
+
 - The promoted `ops_bash` render no longer advises starting daemons "detached" in the shell. Measured on
   Niubash 1.5.0: `niu.exe` stays alive until every child it started exits, so `&`, `nohup`, `disown`
   and subshells all keep the call open until the timeout, while a `powershell Start-Process` launch
