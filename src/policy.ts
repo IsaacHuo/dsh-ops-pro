@@ -37,18 +37,23 @@ interface ToolingPolicyOptions {
   levels?: { files?: boolean, bash?: boolean, pwsh?: boolean }
   shellComponent?: boolean
   extraGuidance?: string
+  /** Names that may join the table later; their usage notes apply now so the prompt stays stable (#975). */
+  deferred?: Iterable<string>
 }
 
 /** A single compact table; absent tools never get advertised. */
-export function renderToolingPolicy({ published, mounted, levels, shellComponent = true, extraGuidance = '' }: ToolingPolicyOptions) {
+export function renderToolingPolicy({ published, mounted, levels, shellComponent = true, extraGuidance = '', deferred = [] }: ToolingPolicyOptions) {
   const names = new Set(published ?? (mounted || levels?.files
     ? [...NATIVE_FILE_TOOLS, ...(levels?.bash ? IN_PROCESS_TOOLS : [])].map(publicToolName) : []))
   if (levels?.pwsh) names.add('pwsh')
   if (!shellComponent) names.delete('pwsh')
-  const hasDiscovery = names.has(publicToolName(DISCOVERY_TOOL_NAME))
-  const hasFiles = NATIVE_FILE_TOOLS.some(name => names.has(publicToolName(name)))
-  const hasBash = names.has(BASH_TOOL)
-  const hasPwsh = shellComponent && names.has('pwsh')
+  // Rows name only callable tools; notes also cover tools the scope may load later,
+  // so loading one adds a declaration without rewriting this prompt section (#975).
+  const notes = new Set([...names, ...[...deferred].filter(name => shellComponent || name !== 'pwsh')])
+  const hasDiscovery = notes.has(publicToolName(DISCOVERY_TOOL_NAME))
+  const hasFiles = NATIVE_FILE_TOOLS.some(name => notes.has(publicToolName(name)))
+  const hasBash = notes.has(BASH_TOOL)
+  const hasPwsh = shellComponent && notes.has('pwsh')
   if (!hasFiles && !hasBash && !hasPwsh && !hasDiscovery) return ''
   const heading = hasBash ? `# Bash command execution: ${BASH_TOOL}`
     : hasFiles || hasDiscovery ? '# Repository file tools' : '# Windows-native shell'
@@ -86,10 +91,10 @@ export function renderToolingPolicy({ published, mounted, levels, shellComponent
     '- Single-file tools use `path`, resolved relative to the current DSH session cwd. Use `/` separators; do not pass workspace, cwd, or file_path aliases.',
     '- Native file tools are UTF-8 first and bounded.',
   )
-  if (names.has(publicToolName('copy')) || names.has(publicToolName('move'))) lines.push('- The destination `to` uses the same session cwd base as `path`.')
-  if (names.has(publicToolName('write_file')) || names.has(publicToolName('edit_file'))) lines.push('- Read the current file state first and reuse its `revision` as `expectedRevision`. Unsupported metadata is not a permission escalation.')
+  if (notes.has(publicToolName('copy')) || notes.has(publicToolName('move'))) lines.push('- The destination `to` uses the same session cwd base as `path`.')
+  if (notes.has(publicToolName('write_file')) || notes.has(publicToolName('edit_file'))) lines.push('- Read the current file state first and reuse its `revision` as `expectedRevision`. Unsupported metadata is not a permission escalation.')
   if (hasFiles) lines.push('- Follow error.nextAction; authorization denials require the user to change mode, not retries. After applied/unknown effects inspect postconditions; do not switch to a shell workaround.')
-  if (names.has(BASH_TOOL)) {
+  if (notes.has(BASH_TOOL)) {
     const fallback = hasPwsh
       ? 'Use host pwsh only when Windows-native functionality is necessary.'
       : 'No host pwsh tool is visible in this session; keep command execution in Bash.'

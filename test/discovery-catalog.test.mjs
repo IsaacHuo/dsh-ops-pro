@@ -113,7 +113,8 @@ await test('actual assembly advertises eligible unloaded tools and real dispatch
     const schemasOf = tools.schemas
     tools.schemas = function (...args) { ++projected; return schemasOf.apply(this, args) }
     try {
-      assert.ok(!(await assemble(owner)).text.includes('Find on-demand tools'), 'loaded tool no longer needs loading')
+      // Selection adds a declaration; it must not rewrite the system prefix (#975).
+      assert.equal((await assemble(owner)).text, first.text, 'selection leaves the discovery section byte-identical')
     } finally { tools.schemas = schemasOf }
     assert.equal(projected, 0, 'assembling the discovery guidance must not project schemas')
     assert.ok((await assemble(other)).text.includes('Find on-demand tools'), 'other agent retains its own unselected directory')
@@ -123,6 +124,27 @@ await test('actual assembly advertises eligible unloaded tools and real dispatch
     assert.equal((await assemble(owner)).text, '')
     assert.ok(!tools.get(DISCOVER, owner)); assert.ok(!tools.get('acme_lookup', owner))
     assert.equal((await assemble(owner)).assembly.sections.find(section => section.name === 'acme:own-guidance').text, 'Provider-owned usage {{literal}}')
+  } finally { await shutdown(ctx) }
+}))
+
+await test('selecting built-in tools keeps the discovery section byte-identical (#975)', () => withTempDir('catalog-stable', async dir => {
+  const { ctx, mint, assemble } = await setup(dir, { allowed: [], builtins: ['grep', 'glob', 'write_file'], resident: ['ops_inspect_local_file'] })
+  try {
+    const owner = await mint()
+    const before = (await assemble(owner)).text
+    assert.match(before, /ops_discover_tools/)
+    assert.match(before, /expectedRevision/, 'notes for loadable writers apply before they load')
+    assert.doesNotMatch(before, /\| ops_grep \|/, 'an unloaded tool gets no table row')
+    for (const name of ['ops_grep', 'ops_write_file']) {
+      const selection = await call(ctx, owner, DISCOVER, { query: 'select:' + name })
+      assert.deepEqual(selection.value.activated, [name], JSON.stringify(selection.value))
+    }
+    await step(ctx, owner)
+    const after = await assemble(owner)
+    assert.ok(after.assembly.tools.some(tool => tool.name === 'ops_grep'), 'the selected tool is declared')
+    assert.equal(after.text, before, 'selection rewrites declarations only, never the discovery section')
+    const readOnly = await mint('read-only')
+    assert.doesNotMatch((await assemble(readOnly)).text, /expectedRevision/, 'an authority change may rewrite it')
   } finally { await shutdown(ctx) }
 }))
 

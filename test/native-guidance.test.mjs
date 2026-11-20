@@ -93,7 +93,10 @@ await test('Native guidance follows readiness, dynamic publication, hiding and m
     cancelled.dispose()
     await ctx.serial('session/event', agent.session, { type: 'step/end', turn: 1, step: 2 })
     const after = await capture()
-    assert.ok(after.names.includes(publicToolName('glob'))); assert.match(after.own, /Find paths \| ops_glob/)
+    assert.ok(after.names.includes(publicToolName('glob')))
+    // Selection declares the tool; the guidance section stays byte-identical (#975).
+    assert.equal(after.own, cancelled.own, 'selection does not rewrite the guidance section')
+    assert.doesNotMatch(after.own, /Find paths \| ops_glob/)
     after.dispose()
     ctx.provide('ptcRuntime', { language: 'typescript' })
     const restore = selectExecutor(agent.ctx, 'ptc')

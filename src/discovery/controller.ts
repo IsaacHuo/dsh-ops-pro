@@ -294,8 +294,18 @@ export function mountDiscovery(root: Context, raw: unknown, gate: DiscoveryGate)
       const callable = new Set(visibleNames(tools, agent, context.toolSet))
       const published = [...entry.registrations.keys(), ...[...entry.files.keys()].map(publicToolName)].filter(name => callable.has(name))
       if (!published.length) return ''
-      const directory = callable.has(DISCOVER) ? renderNativeDirectory(nativeCatalog(config.allowedTools.filter(api => selectable(agent, api)), externalDiscoverable(agent), callable)) : ''
-      const policy = renderToolingPolicy({ published, shellComponent: false, extraGuidance: gate.extraGuidanceOwner?.(agent) ? '' : gate.extraGuidance })
+      // Selection changes the declarations, never this section: a selected tool keeps its
+      // discoverable row out of the table and the directory, so the system prefix stays
+      // byte-stable across loads and only an authority change rewrites it (#975).
+      const pool = config.allowedTools.filter(api => selectable(agent, api))
+      const discoverable = externalDiscoverable(agent)
+      const chosen = new Set([...pool.filter(api => !config.alwaysLoaded.includes(api)).map(publicToolName),
+        ...discoverable.filter(provider => !gate.external?.alwaysLoaded.includes(provider.capability.definition.name)
+          && provider.capability.disclosure !== 'resident').map(provider => provider.capability.definition.name)])
+      const stable = new Set(published.filter(name => !chosen.has(name)))
+      const directory = callable.has(DISCOVER) ? renderNativeDirectory(nativeCatalog(pool, discoverable, stable)) : ''
+      const policy = renderToolingPolicy({ published: stable, deferred: pool.map(publicToolName), shellComponent: false,
+        extraGuidance: gate.extraGuidanceOwner?.(agent) ? '' : gate.extraGuidance })
       return [policy, directory].filter(Boolean).join('\n\n')
     } }), 'dsh-ops: discovered capability guidance')
     ctx.effect(() => async () => { stopped = true; await Promise.allSettled([...entries.keys()].map(detach)); ownership?.dispose() }, 'dsh-ops: discovery lifecycle')
