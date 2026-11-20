@@ -58,8 +58,9 @@ await test('real worker Native text and run_code share the canonical file outcom
       name: h.definition.name, arguments: { path: dir } })
     assert.equal(refused.value.status, 'error', JSON.stringify(refused))
     assert.equal(refused.value.error.code, 'INVALID_ARGUMENT')
-    assert.match(refused.value.error.nextAction, new RegExp('ops_glob \\{"path":' + JSON.stringify(dir) + ',"pattern":\\["\\*"\\]\\}'),
-      'the step surface resolves, so the recommendation names the registered listing API')
+    // A literal match: a Windows path's backslashes would be regex escapes.
+    assert.ok(refused.value.error.nextAction.includes(`${publicToolName('glob')} ${JSON.stringify({ path: dir, pattern: ['*'] })}`),
+      `the step surface resolves, so the recommendation names the registered listing API: ${refused.value.error.nextAction}`)
     assert.match(refused.value.error.nextAction, /concrete file path/)
   } finally {
     try { await h.dispose() } finally { fs.rmSync(dir, { recursive: true, force: true }) }
