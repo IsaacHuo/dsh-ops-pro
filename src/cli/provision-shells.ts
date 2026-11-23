@@ -1,5 +1,5 @@
 /**
- * `dsh-ops provision-shells`: turn the pinned upstream shell releases into the
+ * `dsh-ops-pro provision-shells`: turn the pinned upstream shell releases into the
  * local copies the shell rungs prefer — download, digest verification, unpacking,
  * and the receipt that records which pin produced each copy.
  *
@@ -418,7 +418,7 @@ export function shellReceiptText(pin: ShellPin) {
     extractTo: pin.extractTo,
     executable: pin.executableRelativePath,
     executableSha256: pin.executableSha256 ?? null,
-    provisionedBy: 'dsh-ops provision-shells',
+    provisionedBy: 'dsh-ops-pro provision-shells',
     provisionedAt: new Date().toISOString(),
     dshHome: dshHome(),
   }, null, 2) + '\n'

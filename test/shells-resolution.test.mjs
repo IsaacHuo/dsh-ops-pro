@@ -2,7 +2,7 @@
  * The shell ladder's resolution order: the configured path, the plugin's own
  * copies, PATH, and the well-known installs — plus the two phase-C layouts the
  * resolver must see (`@dsh-ops/<shell>-<platform>-<arch>` packages and the
- * `dsh-ops provision-shells` store).
+ * `dsh-ops-pro provision-shells` store).
  *
  * Every case is a fake by construction — temp directories, a synthetic PATH,
  * and a staged store or package tree — because a suite that asserted "Git for
@@ -435,7 +435,7 @@ await test('a platform the pins do not cover has no pin, and the store still res
   assert.equal(shellUpstreamPin({ kind: 'bash', platform: 'darwin', arch: 'arm64' }), undefined)
 })
 
-// --- the provisioned copies (`dsh-ops provision-shells`)
+// --- the provisioned copies (`dsh-ops-pro provision-shells`)
 
 await test('provisioned Bash outranks other copies while legacy PowerShell remains host-owned', async () => {
   await withTempDir('shells-provisioned', async (dir) => {

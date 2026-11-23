@@ -54,7 +54,7 @@ export function restrictedRemedy(file: string, source: string | undefined, why: 
   return `EXECUTOR_UNAVAILABLE: ops_bash cannot run the ${label}${file} in restricted modes (read-only / workspace-write): ${why} `
     +'By design, restricted modes run only the pinned MSYS whose DSH IPC compatibility proxies were verified; this is not a user authorization denial. '
     +'A custom bashPath or system Git for Windows works only in danger-full-access. '
-    +'Next steps: remove bashPath (and allowSystemShellFallback) so the bundled or provisioned pinned bash is used (`dsh-ops provision-shells --bash` if it is missing), '
+    +'Next steps: remove bashPath (and allowSystemShellFallback) so the bundled or provisioned pinned bash is used (`dsh-ops-pro provision-shells --bash` if it is missing), '
     +'or ask the user to switch the session to danger-full-access. Approvals never repair an incompatible confined runtime; do not bypass confinement.'
 }
 /** Whether restricted modes can run this bash, without copying or building anything. */

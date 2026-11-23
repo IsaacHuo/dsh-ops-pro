@@ -3,16 +3,16 @@
 English | [中文](磁盘与缓存.md)
 
 Every disk resource OPS may create has a declared owner, retention category and default action.
-`dsh-ops disk status` reports them read-only. The report **deletes nothing**, and no action on this
+`dsh-ops-pro disk status` reports them read-only. The report **deletes nothing**, and no action on this
 page is a promise that a future release evicts automatically: reclamation needs ownership evidence,
 never a directory-name or modification-time guess.
 
 ## Running the report
 
 ```console
-dsh-ops disk status                 # human table
-dsh-ops disk status --json          # stable machine schema (dsh-ops/disk-status@1)
-dsh-ops disk status --config row.json
+dsh-ops-pro disk status                 # human table
+dsh-ops-pro disk status --json          # stable machine schema (dsh-ops/disk-status@1)
+dsh-ops-pro disk status --config row.json
 ```
 
 `--config` reads a JSON file shaped like the row's config, for example
@@ -73,9 +73,9 @@ dead PID does not prove no shell descendant is still using the files.
 
 Operator entries:
 
-- `dsh-ops bash-runtime remove --yes` removes receipt-owned shell payloads.
-- `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped` reclaims idle Bash IPC generations.
-- `dsh-ops uninstall --yes` removes the whole `<DSH_HOME>/dsh-ops` tree. It is deliberately broad
+- `dsh-ops-pro bash-runtime remove --yes` removes receipt-owned shell payloads.
+- `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped` reclaims idle Bash IPC generations.
+- `dsh-ops-pro uninstall --yes` removes the whole `<DSH_HOME>/dsh-ops` tree. It is deliberately broad
   and is **not** evidence that a cache lifecycle is solved; see
   [Upgrade and uninstall](upgrading.md).
 

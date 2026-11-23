@@ -34,7 +34,7 @@ export function makeExecutable(file) {
 }
 
 /**
- * Stage one provisioned copy, exactly as `dsh-ops provision-shells` lays it out.
+ * Stage one provisioned copy, exactly as `dsh-ops-pro provision-shells` lays it out.
  * @param {string} home - the DSH home whose store to write into.
  * @param {'bash'|'pwsh'} kind - which shell.
  * @param {string} version - the version directory.

@@ -145,7 +145,7 @@ export function selectBashRuntime(source: BashSelectionSource, options: BashSele
     return { source, clear: true, engine: 'niubash',
       ...(resolved === undefined ? {} : { file: resolved }),
       detail: resolved === undefined
-        ? `No complete pinned Niubash ${NIUBASH_PIN.upstreamVersion} payload is installed; saving clears bashPath and the row reports the missing payload. Run dsh-ops bash-runtime install first.`
+        ? `No complete pinned Niubash ${NIUBASH_PIN.upstreamVersion} payload is installed; saving clears bashPath and the row reports the missing payload. Run dsh-ops-pro bash-runtime install first.`
         : `Niubash ${NIUBASH_PIN.upstreamVersion} resolved from the deployment's own payload.`,
       restriction: resolved === undefined ? '' : restrictedCompatibility(resolved, options).reason ?? '' }
   }

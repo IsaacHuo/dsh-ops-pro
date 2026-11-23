@@ -1,5 +1,5 @@
 /**
- * `dsh-ops uninstall`: report and remove what this plugin (and older versions
+ * `dsh-ops-pro uninstall`: report and remove what this plugin (and older versions
  * of it) installed outside the profile, without touching the profile install
  * itself.
  *
@@ -114,7 +114,7 @@ export function reportDirectory(label: string, dir: string) {
  */
 export function commandUninstall({ yes, purgeFastctx, dryRun }: { yes: boolean; purgeFastctx: boolean; dryRun: boolean }) {
   const removing = yes && !dryRun
-  console.log(`dsh-ops uninstall — ${removing ? 'removing' : 'report only (dry run; pass --yes to delete)'}`)
+  console.log(`dsh-ops-pro uninstall — ${removing ? 'removing' : 'report only (dry run; pass --yes to delete)'}`)
 
   const managed = managedDir()
   const managedReport = reportDirectory(`managed files (<DSH_HOME>/dsh-ops)`, managed)

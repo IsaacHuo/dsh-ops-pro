@@ -109,7 +109,7 @@ The host must first invalidate references logically and await active calls; a de
 purge is deferred cleanup, never a reason to rerun business operations. A failed purge records the
 root in a private pending ledger under the temporary directory (bounded attempts, last reason, boot
 id) and is retried when workspace-write authority returns, at the next start-up or through
-`dsh-ops result-cache reclaim --apply`; nothing is removed while the host stays read-only. Because
+`dsh-ops-pro result-cache reclaim --apply`; nothing is removed while the host stays read-only. Because
 the purge keeps the root, the scope directory and the lock, a host-side sweep reclaims idle
 structural leftovers at start-up and after the last owner unloads: it validates the name, the owner,
 the private mode, single-link files and the complete content whitelist, skips and reports a root

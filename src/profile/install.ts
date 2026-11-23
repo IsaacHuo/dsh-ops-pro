@@ -191,7 +191,7 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
     if (code !== 0) return code
   }
   console.log(operation === 'install'
-    ? 'Installed through the official profile manager. Reload/restart the target application if needed. On Windows the pinned Bash payload ships as an optional dependency; run dsh-ops bash-runtime install to repair a missing payload. No postinstall downloads.'
+    ? 'Installed through the official profile manager. Reload/restart the target application if needed. On Windows the pinned Bash payload ships as an optional dependency; run dsh-ops-pro bash-runtime install to repair a missing payload. No postinstall downloads.'
     : 'Removed through the official profile manager, including its runtime dependency references. Package-manager shared caches are not deleted.')
   return 0
 }

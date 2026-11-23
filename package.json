@@ -144,7 +144,6 @@
     }
   },
   "bin": {
-    "dsh-ops": "bin/dsh-ops.mjs",
     "dsh-ops-pro": "bin/dsh-ops.mjs"
   },
   "dsh": {

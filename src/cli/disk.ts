@@ -1,5 +1,5 @@
 /**
- * `dsh-ops disk status`: the read-only ownership and reclaim report.
+ * `dsh-ops-pro disk status`: the read-only ownership and reclaim report.
  *
  * The command only reads. It is the operator's answer to "what did this plugin
  * leave on disk, who owns it, and what may be reclaimed with evidence" without
@@ -29,7 +29,7 @@ export interface DiskCommandOptions {
 export function commandDisk(options: DiskCommandOptions = {}): number {
   const action = options.action ?? 'status'
   if (action !== 'status') {
-    console.error('dsh-ops disk: expected the status subcommand; usage: dsh-ops disk status [--json] [--config <file>]')
+    console.error('dsh-ops-pro disk: expected the status subcommand; usage: dsh-ops-pro disk status [--json] [--config <file>]')
     return 2
   }
   let config
@@ -50,7 +50,7 @@ export function commandDisk(options: DiskCommandOptions = {}): number {
     else console.log(renderDiskStatus(report))
     return 0
   } catch (error) {
-    console.error('dsh-ops disk: the status report could not be produced: ' + errorMessage(error))
+    console.error('dsh-ops-pro disk: the status report could not be produced: ' + errorMessage(error))
     return 1
   }
 }

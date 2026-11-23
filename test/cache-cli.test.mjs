@@ -1,5 +1,5 @@
 /**
- * "dsh-ops cache": the report, the preview, the offline confirmation, and the
+ * "dsh-ops-pro cache": the report, the preview, the offline confirmation, and the
  * exit codes. Every case seeds a root this suite owns and names it with --kind,
  * so a real temporary directory on the runner is never a target.
  */

@@ -183,7 +183,7 @@ export function resolveShells(config: ShellConfig | undefined, options: ShellRes
   const arch = options.arch ?? process.arch
   const allowSystemFallback = config?.allowSystemShellFallback === true
   // A POSIX host answers with its own bash: that is the deployment truth for the shell component
-  // and for `dsh-ops ladder`.
+  // and for `dsh-ops-pro ladder`.
   const posix = platform !== 'win32'
   const probe = { bundleRoot, env, platform, arch }
   const pwsh = resolvePwsh()
@@ -221,7 +221,7 @@ export function resolveShells(config: ShellConfig | undefined, options: ShellRes
       }
     }
     if (config?.bashPath === undefined) return { bash: { available: false, source: 'missing',
-      detail: 'Pinned complete Niubash v1.5.0 is missing or unsupported. Run dsh-ops provision-shells --bash to restore it, or configure an explicit absolute bashPath. No automatic Git Bash or system shell fallback.' }, pwsh }
+      detail: 'Pinned complete Niubash v1.5.0 is missing or unsupported. Run dsh-ops-pro provision-shells --bash to restore it, or configure an explicit absolute bashPath. No automatic Git Bash or system shell fallback.' }, pwsh }
   }
   const bashBundled = bundledShell({ kind: 'bash', ...probe })
   return {

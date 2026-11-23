@@ -228,7 +228,7 @@ tar -tzf dist/*.tgz | grep '^package/runtime/' | head
 
 Niubash 载荷无法执行被指定的文件。已知的真实缺陷在相关 issue 里跟踪；重复出现就是产品缺陷，不是 runner 问题。先收集套件打印的完整 `replace`/`bash` stderr（命令与退出码），再开 issue。
 
-#### 3.5.2 `Pinned Bash is unavailable. Run dsh-ops bash-runtime install, or set DSH_OPS_TEST_BASH …`
+#### 3.5.2 `Pinned Bash is unavailable. Run dsh-ops-pro bash-runtime install, or set DSH_OPS_TEST_BASH …`
 
 固定的 legacy Bash 载荷不在 `node_modules/@dsh-ops/bash-win32-x64`（由 `npm ci` 安装），且没有显式 `DSH_OPS_TEST_BASH`。发布门禁会显式 provision；CI 腿依赖 `npm ci`。检查 `npm ci` 是否按 `--ignore-scripts` 跑过（它仍会安装该载荷包）、以及平台过滤步骤没有把它删掉。
 

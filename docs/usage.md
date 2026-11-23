@@ -96,25 +96,25 @@ In the target DSH application's plugin marketplace, enter the npm package name *
 On Windows the pinned Bash payload arrives with the install; `bash-runtime` remains the selection and repair path when a copy is missing or damaged, and can install the verified managed copy or select an existing Git Bash:
 
 ```console
-dsh-ops bash-runtime status
-dsh-ops bash-runtime install
-dsh-ops bash-runtime git [--path <exe>]
-dsh-ops bash-runtime niubash
-dsh-ops bash-runtime remove            # preview only
-dsh-ops bash-runtime remove --yes      # remove receipt-marked managed versions
+dsh-ops-pro bash-runtime status
+dsh-ops-pro bash-runtime install
+dsh-ops-pro bash-runtime git [--path <exe>]
+dsh-ops-pro bash-runtime niubash
+dsh-ops-pro bash-runtime remove            # preview only
+dsh-ops-pro bash-runtime remove --yes      # remove receipt-marked managed versions
 ```
 
 `niubash` reports the default executor the deployment resolves and states that the mode rows' `bashPath` must be removed for it; `git` prints an absolute `bashPath` for the host config editor (the first scanned installation when `--path` is omitted). Neither edits a profile or PATH. The settings page's **Bash executor** card is the same choice with a UI: switch to Niubash, click a scanned Git Bash, or type a path; the host validates it before the save is written. Reload the mode row after applying the selection or installing/removing its runtime. Stop running Bash jobs before removal. Removal refuses links in the managed path and preserves unmarked versions, system Git and PowerShell. `install` reuses the pinned download and checksum checks from `provision-shells --bash`; `--dry-run` makes no download or change. Windows restricted modes still require the pinned MSYS IPC compatibility match. A different Git Bash remains a full-access choice; approval never repairs an incompatible restricted runtime. Linux/macOS continue using host Bash.
 
-Windows confined calls stage a private MSYS tree under `<DSH_HOME>/dsh-ops/bash-ipc`. Identical verified payloads share a content-addressed generation across profiles using the same DSH home; separate homes remain isolated. Lifecycle locking and durable process leases protect selected runtimes, including the interval before a child starts. Automatic reclamation retains the current generation and one predecessor, plus leased, legacy or uncertain entries. `bash-runtime status` and `ladder` expose observed cache usage. To reclaim historical copies, first run `dsh-ops bash-runtime clean-cache` to preview. Stop **all** OPS hosts and Bash jobs, then run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped` against the intended `DSH_HOME`; `--dry-run` never removes anything. Only recognized marker-owned generations are eligible; unrelated directories and linked paths are not removed. The selected generation and one predecessor remain. Removed caches are rebuilt on demand. Do not manually delete caches while any OPS host or shell may still use them.
+Windows confined calls stage a private MSYS tree under `<DSH_HOME>/dsh-ops/bash-ipc`. Identical verified payloads share a content-addressed generation across profiles using the same DSH home; separate homes remain isolated. Lifecycle locking and durable process leases protect selected runtimes, including the interval before a child starts. Automatic reclamation retains the current generation and one predecessor, plus leased, legacy or uncertain entries. `bash-runtime status` and `ladder` expose observed cache usage. To reclaim historical copies, first run `dsh-ops-pro bash-runtime clean-cache` to preview. Stop **all** OPS hosts and Bash jobs, then run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped` against the intended `DSH_HOME`; `--dry-run` never removes anything. Only recognized marker-owned generations are eligible; unrelated directories and linked paths are not removed. The selected generation and one predecessor remain. Removed caches are rebuilt on demand. Do not manually delete caches while any OPS host or shell may still use them.
 
-Long command output that overflows the in-memory tail is spilled by the host subprocess service to `<tmpdir>/dsh-subprocess-*`, and DSH itself keeps those files until an external cleanup that does not exist. OPS therefore records every spill path it settles in `<DSH_HOME>/ops-spill-ledger.jsonl` and reclaims only those recorded files: files older than `spillRetentionDays` (default 30), then the oldest files while the retained total exceeds `spillTotalBudgetMiB` (default 256 MiB), at most 64 files per bounded pass. `spillRetentionDays: 0` reports without deleting and `spillSweepEnabled: false` stops the automatic passes. `dsh-ops bash-runtime spill-report` shows the ledger count, existing and expired bytes, skipped non-local entries and the last failure; add `--json` for the raw report or `--sweep --yes` to delete the eligible files. `bash-runtime status` includes a one-line summary. OPS never removes a `dsh-subprocess-*` directory, never scans a directory for files to delete, and never touches a path no settlement recorded.
+Long command output that overflows the in-memory tail is spilled by the host subprocess service to `<tmpdir>/dsh-subprocess-*`, and DSH itself keeps those files until an external cleanup that does not exist. OPS therefore records every spill path it settles in `<DSH_HOME>/ops-spill-ledger.jsonl` and reclaims only those recorded files: files older than `spillRetentionDays` (default 30), then the oldest files while the retained total exceeds `spillTotalBudgetMiB` (default 256 MiB), at most 64 files per bounded pass. `spillRetentionDays: 0` reports without deleting and `spillSweepEnabled: false` stops the automatic passes. `dsh-ops-pro bash-runtime spill-report` shows the ledger count, existing and expired bytes, skipped non-local entries and the last failure; add `--json` for the raw report or `--sweep --yes` to delete the eligible files. `bash-runtime status` includes a one-line summary. OPS never removes a `dsh-subprocess-*` directory, never scans a directory for files to delete, and never touches a path no settlement recorded.
 
 ### Reclaiming OPS temporary state
 
-`dsh-ops cache status` reports every temporary resource OPS itself can reproduce, with its ownership evidence and the bytes it occupies: kept provision downloads under `<DSH_HOME>/dsh-ops/pending`, Niubash staging and previous siblings beside the fixed payload, quarantined Bash IPC generations, audit-store writer temporaries under `<root>/.dsh-ops`, legacy Niubash execution trees from 0.5.0–0.5.2, and non-current prepared Niubash versions plus broken/stage/retired leftovers. New calls reuse one prepared runtime, not temporary trees. Nothing is deleted on a name pattern: ownership evidence must verify inside a known root and no live lease may name it. Legacy execution trees may be incomplete or lack receipts, but every existing payload member must match the frozen bytes. Prepared directories instead belong to the exact manifest-hash namespace under the known prepared root; old manifests need not be installed. The current plain hash, unrelated names and links are excluded. Prepared reclamation renames a live name once before best-effort deletion, removes an already `.retired-` name in place, and keeps a refused rename for a later host start/reclaim.
+`dsh-ops-pro cache status` reports every temporary resource OPS itself can reproduce, with its ownership evidence and the bytes it occupies: kept provision downloads under `<DSH_HOME>/dsh-ops/pending`, Niubash staging and previous siblings beside the fixed payload, quarantined Bash IPC generations, audit-store writer temporaries under `<root>/.dsh-ops`, legacy Niubash execution trees from 0.5.0–0.5.2, and non-current prepared Niubash versions plus broken/stage/retired leftovers. New calls reuse one prepared runtime, not temporary trees. Nothing is deleted on a name pattern: ownership evidence must verify inside a known root and no live lease may name it. Legacy execution trees may be incomplete or lack receipts, but every existing payload member must match the frozen bytes. Prepared directories instead belong to the exact manifest-hash namespace under the known prepared root; old manifests need not be installed. The current plain hash, unrelated names and links are excluded. Prepared reclamation renames a live name once before best-effort deletion, removes an already `.retired-` name in place, and keeps a refused rename for a later host start/reclaim.
 
-`dsh-ops cache reclaim` is the same report with a decision. It previews by default, deletes only with `--yes`, and refuses outright without `--all-hosts-stopped`, because several of these roots belong to processes that may still be running — stop every OPS host and Bash job first. Each row reports `deleted`, `kept` or `unverified` plus bytes; a removal that fails is moved aside for the next run. `--kind` narrows the run to one class, `--root` names an audit-store root explicitly, and `--json` prints the same facts as data. Kept provision downloads are also reclaimed automatically, under a count/byte/age budget, by the next `provision-shells` run.
+`dsh-ops-pro cache reclaim` is the same report with a decision. It previews by default, deletes only with `--yes`, and refuses outright without `--all-hosts-stopped`, because several of these roots belong to processes that may still be running — stop every OPS host and Bash job first. Each row reports `deleted`, `kept` or `unverified` plus bytes; a removal that fails is moved aside for the next run. `--kind` narrows the run to one class, `--root` names an audit-store root explicitly, and `--json` prints the same facts as data. Kept provision downloads are also reclaimed automatically, under a count/byte/age budget, by the next `provision-shells` run.
 
 ### One-command npm installation
 
@@ -222,17 +222,17 @@ Restart DSH after successful installation so the host probes its executor again.
 
 ```console
 dsh-ops install --profile <desktop|web|tui> [--dsh-cli <path>]
-dsh-ops uninstall --profile <desktop|web|tui> [--dsh-cli <path>]
-dsh-ops status --profile <desktop|web|tui>
+dsh-ops-pro uninstall --profile <desktop|web|tui> [--dsh-cli <path>]
+dsh-ops-pro status --profile <desktop|web|tui>
                                 Report target-profile installation (tui maps to dsh-tui)
-dsh-ops repair-default --profile <desktop|web|tui> [--dry-run]
+dsh-ops-pro repair-default --profile <desktop|web|tui> [--dry-run]
                                 Clear a default that still names ops-ptc after a GUI removal
-dsh-ops build-ptc              Build the independent native Rust worker (all platforms)
-dsh-ops uninstall [--yes] [--purge-fastctx]
-dsh-ops ladder [--json] [--config <file>]
+dsh-ops-pro build-ptc              Build the independent native Rust worker (all platforms)
+dsh-ops-pro uninstall [--yes] [--purge-fastctx]
+dsh-ops-pro ladder [--json] [--config <file>]
                                 prompt ladder actually renders; nothing is spawned
 dsh-ops upgrade-host-pwsh [--yes] [--dry-run]
-dsh-ops provision-shells [--bash] [--pwsh] [--force] [--dry-run] [--pin <file>]
+dsh-ops-pro provision-shells [--bash] [--pwsh] [--force] [--dry-run] [--pin <file>]
                                 their digests, and install them under <DSH_HOME>/dsh-ops/shells
 dsh-ops panel [--serve] [dir] [--port <n>]
                                 Serve the panel viewer and capture reports over loopback

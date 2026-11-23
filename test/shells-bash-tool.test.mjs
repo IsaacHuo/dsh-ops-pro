@@ -40,7 +40,7 @@ await test('a missing bash publishes nothing and warns instead of failing', asyn
     assert.equal(warnings.length, 1)
     assert.match(warnings[0], /bash is unavailable/)
     assert.ok(warnings[0].includes('Pinned complete Niubash v1.5.0 is missing or unsupported.'), warnings[0])
-    assert.ok(warnings[0].includes('Run dsh-ops provision-shells --bash to restore it, or configure an explicit absolute bashPath.'), warnings[0])
+    assert.ok(warnings[0].includes('Run dsh-ops-pro provision-shells --bash to restore it, or configure an explicit absolute bashPath.'), warnings[0])
     assert.ok(warnings[0].includes('No automatic Git Bash or system shell fallback.'), warnings[0])
     assert.equal(typeof dispose, 'function')
     dispose()

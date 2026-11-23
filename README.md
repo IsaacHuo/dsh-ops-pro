@@ -100,7 +100,7 @@ npx --yes dsh-ops-pro@latest status --profile desktop
 npx --yes dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-把 `desktop` 换成 `web` 或 `tui` 即可。也可在市场卸载，或执行官方 `dsh plugin --profile ... remove dsh-ops-pro`。随包二进制由 profile 的包管理器管理；显式 provision 的副本不会随 npm 卸载，先查看 `dsh-ops bash-runtime status`，再用 `dsh-ops bash-runtime remove --dry-run` 预览、`remove --yes` 确认。不要误删系统 shell、其它 profile 或共享缓存。详见[二进制位置与更新清理](docs/升级与卸载.md#二进制位置与更新清理)。
+把 `desktop` 换成 `web` 或 `tui` 即可。也可在市场卸载，或执行官方 `dsh plugin --profile ... remove dsh-ops-pro`。随包二进制由 profile 的包管理器管理；显式 provision 的副本不会随 npm 卸载，先查看 `dsh-ops-pro bash-runtime status`，再用 `dsh-ops-pro bash-runtime remove --dry-run` 预览、`remove --yes` 确认。不要误删系统 shell、其它 profile 或共享缓存。详见[二进制位置与更新清理](docs/升级与卸载.md#二进制位置与更新清理)。
 
 旧版显式 provision 的 `<DSH_HOME>/dsh-ops/` 文件（provision 的 shell，以及早期版本可 provision 的 FastCtx 运行时）需单独清理：`npx --yes dsh-ops-pro@latest uninstall --yes`。已移除的后台组件留下的 `~/.fastctx/` 状态默认不删；需要时显式加 `--purge-fastctx`。
 
@@ -124,7 +124,7 @@ npx --yes dsh-ops-pro@latest uninstall --profile desktop
 
 ## Windows Bash 自检
 
-Windows Bash 自检：`dsh-ops ladder` 分别报告映像/祖先路径完整性标签与静态 MSYS
+Windows Bash 自检：`dsh-ops-pro ladder` 分别报告映像/祖先路径完整性标签与静态 MSYS
 哈希兼容性。Low 标签的可执行文件在 full-access 下仍可能产生 Low 子进程，无法修改
 既有 Medium/无标签文件；不可读标签明确为 unknown。详见
 [完整性检查](docs/常见问题.md#windows-bash-完整性标签)。

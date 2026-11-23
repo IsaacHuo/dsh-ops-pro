@@ -1,5 +1,5 @@
 /**
- * `dsh-ops result-cache`: report and reclaim result-cache roots under the temp directory.
+ * `dsh-ops-pro result-cache`: report and reclaim result-cache roots under the temp directory.
  *
  * The collector is the same bounded sweep the plugin runs at start-up and shutdown, so the
  * command cannot disagree with the product about what is reclaimable. `status` never removes
@@ -19,7 +19,7 @@ export interface ResultCacheCommandOptions {
   apply?: boolean
   /** Print the machine-readable report instead of the human summary. */
   json?: boolean
-  /** A JSON file holding the `dsh-ops` row config, as `dsh-ops ladder --config` accepts one. */
+  /** A JSON file holding the `dsh-ops` row config, as `dsh-ops-pro ladder --config` accepts one. */
   configFile?: string
 }
 
@@ -65,7 +65,7 @@ function printReport(report: ResultCacheGcReport, action: string, applied: boole
   } else if (action === 'reclaim') {
     console.log('Preview only: no root was removed. Stop every OPS host, then pass --apply to reclaim the listed roots.')
   } else {
-    console.log('Status only: no root was removed. Use `dsh-ops result-cache reclaim --apply` to reclaim them.')
+    console.log('Status only: no root was removed. Use `dsh-ops-pro result-cache reclaim --apply` to reclaim them.')
   }
 }
 

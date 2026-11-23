@@ -12,7 +12,7 @@ import {
 } from '../cli/niubash-payload.js'
 
 const UNAVAILABLE = 'EXECUTOR_UNAVAILABLE:'
-const unavailable = (detail: string): Error => new Error(`${UNAVAILABLE} Niubash payload is unusable: ${detail}. Restore the complete pinned v1.5.0 portable tree (dsh-ops provision-shells --bash); this is not a user authorization denial. Do not bypass confinement or fall back to another shell.`)
+const unavailable = (detail: string): Error => new Error(`${UNAVAILABLE} Niubash payload is unusable: ${detail}. Restore the complete pinned v1.5.0 portable tree (dsh-ops-pro provision-shells --bash); this is not a user authorization denial. Do not bypass confinement or fall back to another shell.`)
 const asUnavailable = (error: unknown): Error => error instanceof Error && error.message.startsWith(UNAVAILABLE)
   ? error : unavailable(error instanceof Error ? error.message : String(error))
 

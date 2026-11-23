@@ -167,17 +167,17 @@ Symptom, in a read-only or workspace-write session: an `EXECUTOR_UNAVAILABLE` wh
 
 Restricted calls run the pinned Bash from a private, verified copy under `<DSH_HOME>/dsh-ops/bash-ipc/<identity>`. The first confined call stages it (about 10 seconds for the 412 MB payload); later calls reuse it. The stage name says whether another call can help:
 
-- `bash-staging-failed` — the copy did not finish (an interrupted host, antivirus holding the freshly written tree, a full disk). The next call stages a fresh copy, so retry once; if it repeats, stop every confined shell and run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
+- `bash-staging-failed` — the copy did not finish (an interrupted host, antivirus holding the freshly written tree, a full disk). The next call stages a fresh copy, so retry once; if it repeats, stop every confined shell and run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
 - `bash-generation-quarantine-failed` — an unverifiable generation is still in use. Stop the confined shells that may own it, then retry; the retry quarantines it and stages a fresh copy.
-- `bash-lifecycle-lock-busy (<pid>)` — a host died while holding `<DSH_HOME>/dsh-ops/bash-ipc/.ops-lifecycle-lock`. The lock is never stolen from an owner that may still be alive. Stop every OPS host and confined shell, run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
-- `bash-runtime-missing` / `bash-ipc-mismatch` — the pinned payload or the IPC compatibility receipt is absent or changed. Restore the profile dependencies or run `dsh-ops provision-shells --bash`; a retry cannot repair these.
+- `bash-lifecycle-lock-busy (<pid>)` — a host died while holding `<DSH_HOME>/dsh-ops/bash-ipc/.ops-lifecycle-lock`. The lock is never stolen from an owner that may still be alive. Stop every OPS host and confined shell, run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
+- `bash-runtime-missing` / `bash-ipc-mismatch` — the pinned payload or the IPC compatibility receipt is absent or changed. Restore the profile dependencies or run `dsh-ops-pro provision-shells --bash`; a retry cannot repair these.
 
 An interrupted staging leaves a `stage-*` directory in the cache. Confined calls reclaim copies older than one hour automatically (the reported reclaimable bytes include them), `clean-cache --yes --all-hosts-stopped` removes all of them, and deleting them by hand while no confined shell is running is equally safe.
 
 ### Windows Niubash preparation is slow or old execution trees remain
 
 Payload bytes are hashed against the frozen manifest once, where they enter the machine: the
-package build and `dsh-ops provision-shells --bash`. Selecting Niubash (mount, the settings page,
+package build and `dsh-ops-pro provision-shells --bash`. Selecting Niubash (mount, the settings page,
 `ops_status`) only checks that every pinned file is present with its pinned size; it reads no
 contents and writes nothing. The first Bash call in a process prepares one runtime per prepared
 hash (`NIUBASH_PREPARED_SHA256`, covering the manifest and face list) at `<DSH_HOME>/dsh-ops/shells/niubash-prepared/<prepared hash>`, asynchronously: it copies the
@@ -203,8 +203,8 @@ not a separate security boundary against the account or an administrator (#870).
   allow-list rules should target the fixed prepared location, not a per-call temporary directory.
 - For leftovers from older releases, stop **every OPS host and Bash job**, then use the installed
   package's CLI with the original `DSH_HOME` and, if set, `DSH_OPS_EXEC_ROOT`:
-  `dsh-ops cache status --kind exec-tree`, then
-  `dsh-ops cache reclaim --kind exec-tree --all-hosts-stopped --yes`.
+  `dsh-ops-pro cache status --kind exec-tree`, then
+  `dsh-ops-pro cache reclaim --kind exec-tree --all-hosts-stopped --yes`.
   `DSH_OPS_EXEC_ROOT` remains relevant only for discovering those legacy trees. Reclamation clears
   legacy seals before deletion and does not reinstall a corrupt source. Do not recursively delete
   trees by wildcard or remove them while jobs are running.
@@ -284,7 +284,7 @@ What to do:
 - Collect the matching event before restoring: Defender
   `Get-MpThreat` / `Get-MpThreatDetection` (or the ESET detection log) with its
   timestamp, action and the exact file path.
-- Restore the complete pinned tree with `dsh-ops provision-shells --bash`, which
+- Restore the complete pinned tree with `dsh-ops-pro provision-shells --bash`, which
   re-verifies every member.
 - An allow-list rule, if you choose one, targets the fixed prepared location —
   never disable protection or broadly trust the payload tree.
@@ -489,7 +489,7 @@ effect without a restart.
 
 ## Windows Bash integrity labels
 
-`dsh-ops ladder --json` now includes `shells.bash.integrity`, separate from
+`dsh-ops-pro ladder --json` now includes `shells.bash.integrity`, separate from
 `restricted.compatible`. It reads the resolved image, its physical path, the
 PortableGit `usr/bin/bash.exe` when present, and ancestor directories. A Low or
 lower image label produces a warning: full access does not remove that label,

@@ -23,7 +23,7 @@ Plugin authors can also mount the [public integration API](integration-api.md) i
 | `disk` | Read-only ownership report; `status.includeRepository` false and `status.maxEntries` 5000 by default; the `retention` block is a validated contract only (no eviction in this release) |
 
 `disk.status.*` and the reserved `disk.retention.*` keys are YAML-only. See [Disk and cache](disk-and-cache.md) for
-the resource inventory, the read-only `dsh-ops disk status` report and what it deliberately never scans.
+the resource inventory, the read-only `dsh-ops-pro disk status` report and what it deliberately never scans.
 
 The page uses native Switch controls. Built-in cards start collapsed. Disabling a card greys its
 switches without erasing saved values. Standard/PTC/OPS PTC/Cordis have `residentTools` (default true),
@@ -233,7 +233,7 @@ Built-in sections retain validated worker/Shell settings (`binaryPath`, `require
 `resultCache` is a YAML section: the default sweep only reclaims roots with no snapshot data left
 (empty roots, or scope directories holding just the lock). The aggregate root/byte budgets default
 to 0 and mark over-budget roots as blocked in the report; the sweep never deletes a root that still
-holds snapshot data. `dsh-ops result-cache status|reclaim [--apply]` reports and runs the same
+holds snapshot data. `dsh-ops-pro result-cache status|reclaim [--apply]` reports and runs the same
 bounded pass.
 
 Host subprocess spill retention is bounded by three more built-in keys. `spillRetentionDays`
@@ -243,7 +243,7 @@ evicting the oldest first. `spillSweepEnabled` (default true) controls the autom
 component activation and every 256 settlements. Only paths recorded at a settlement in
 `<DSH_HOME>/ops-spill-ledger.jsonl` are eligible, at most 64 files are removed per pass, and the
 host's `dsh-subprocess-*` directories are never removed. Inspect and sweep from the CLI with
-`dsh-ops bash-runtime spill-report` (see [usage](usage.md)).
+`dsh-ops-pro bash-runtime spill-report` (see [usage](usage.md)).
 
 The bundle's `discovery.enabled` controls built-in **Native** dynamic entry publication, not the
 PTC SDK loader. PTC loading follows `ptc.dynamicTools` and `global.dynamicTools`. The Native keys

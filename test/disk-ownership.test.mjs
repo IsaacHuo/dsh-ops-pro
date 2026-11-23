@@ -50,8 +50,8 @@ await test('only renewable families name a cleanup command; diagnostics, user wo
     assert.equal(typeof entry.blocked.evidence, 'string')
   }
   // Two renewable families have an operator entry today; the rest are report-only until the GC slices land.
-  assert.equal(spec('R8').cleanupEntry, 'dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped')
-  assert.equal(spec('R9').cleanupEntry, 'dsh-ops bash-runtime remove --yes')
+  assert.equal(spec('R8').cleanupEntry, 'dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped')
+  assert.equal(spec('R9').cleanupEntry, 'dsh-ops-pro bash-runtime remove --yes')
   for (const entry of RESOURCES) {
     if (entry.category === 'renewable' && entry.id !== 'R8' && entry.id !== 'R9') assert.equal(entry.cleanupEntry, null, entry.id)
   }

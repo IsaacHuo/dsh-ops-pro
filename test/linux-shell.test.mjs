@@ -21,7 +21,7 @@
  *
  * Intentional omissions, both stated rather than papered over:
  *
- * - `dsh-ops provision-shells` provisioning the pinned payload is a Windows action, so this suite
+ * - `dsh-ops-pro provision-shells` provisioning the pinned payload is a Windows action, so this suite
  *   asserts the CLI *refuses* it here instead of exercising the download.
  * - The POSIX "no bash anywhere" branch cannot be reached on a host that has one: its candidates are
  *   real absolute paths, and `/bin/bash` exists on this machine, so no `PATH`/`bundleRoot` fixture can

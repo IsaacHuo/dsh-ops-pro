@@ -229,7 +229,7 @@ function humanAge(ageMs: number | null): string {
  */
 export function renderDiskStatus(report: DiskStatusReport): string {
   const lines: string[] = []
-  lines.push('dsh-ops disk status - read-only report; nothing was created or deleted')
+  lines.push('dsh-ops-pro disk status - read-only report; nothing was created or deleted')
   lines.push('  home:      ' + report.home)
   lines.push('  tempRoot:  ' + report.tempRoot)
   lines.push('  workspace: ' + report.workspace)

@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- **Breaking:** the `dsh-ops` command alias is removed; the package installs only the `dsh-ops-pro` command, and every diagnostic and doc names `dsh-ops-pro <command>`. Log prefixes (`dsh-ops:`) and the state directory `<DSH_HOME>/dsh-ops/` are unchanged.
+
 - Configuration modules live under `src/config/` (`resolve.ts`, `updates.ts`, `error.ts`); the built paths move from `lib/config.js`, `lib/config-updates.js` and `lib/config-error.js` to `lib/config/`.
 
 - The host-registered PTC outcome schema renders each tool's data schema once instead of three times (completed and partial share one branch; failure data is an untyped subset), because the generated SDK has no shared type aliases. Measured with the cost ledger fixture: baseline SDK 13,614 → 11,112 B, after loading `glob`/`grep`/`read_files` 38,799 → 24,451 B (load delta 25,110 → 13,339 B). Host validation no longer checks the completed/partial coverage discriminant; the producer still guarantees it. The published `dsh-ops-pro/ptc-sdk` typings keep the fully discriminated envelope (`typedOutcomeSchema`) and are byte-identical.
