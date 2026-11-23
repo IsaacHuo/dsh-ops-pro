@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-11-23 — Architecture release
+
 - `npm run env:probe` (`scripts/env-probe.mjs`) reports missing local test prerequisites (worker, `cargo`, Bash IPC payload, Niubash archive, `DSH_OPS_TEST_BASH`) and the suites each decides; an emptied Bash IPC directory is attributed to endpoint security.
 
 - The Windows shell stack modules move into `src/shells/` (`bash-ipc.ts`, `bash-ipc-lifecycle.ts`, `bash-pe.ts`, `bash-runtime-failure.ts`, `session-shells.ts`) and the publication rename retry into `src/fs/rename-retry.ts`; built paths follow under `lib/shells/` and `lib/fs/`.
