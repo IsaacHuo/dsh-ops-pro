@@ -105,15 +105,16 @@ export const CATEGORY_PRIORITY: readonly BatchingCategory[] = Object.freeze(['by
 /**
  * Which categories one program earns.
  *
- * A program that dispatched nothing has no call shape to correct. The shape category
+ * A program that dispatched nothing has no call shape to correct, but module I/O is
+ * still a bypass: reading files through `node:fs` needs no tool call at all. The shape category
  * needs two single-call programs in a row in one turn: one short program is often a
  * deliberate probe, while a run of them is the round-trip pattern the notice names.
  * @param trace - the finished program.
  * @param previousSingle - whether the previous root program of this turn made a single call.
  */
 export function findingsOf(trace: ProgramTrace, previousSingle: boolean): Record<BatchingCategory, boolean> {
-  if (trace.calls.length === 0) return { plan: false, bypass: false, shape: false }
   const text = typeof trace.code === 'string' ? trace.code : ''
+  if (trace.calls.length === 0) return { plan: false, bypass: MODULE_IO.test(text), shape: false }
   return {
     plan: parsePlan(trace.code).length === 0,
     bypass: MODULE_IO.test(text)
