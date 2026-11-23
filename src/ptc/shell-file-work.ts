@@ -46,13 +46,3 @@ export function shellFileWork(command: string): boolean {
   return false
 }
 
-/** Only inspect a literal command property belonging to an actual shell call. */
-export function literalShellFileWork(code: string, callEnd: number): boolean {
-  const args = code.slice(callEnd)
-  const command = /^\s*\{(?:\s*(?:description|cwd|timeout_ms)\s*:\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\d+)\s*,)*\s*(?:command|script)\s*:\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`[^`]*`)/u.exec(args)?.[1]
-  if (!command || command.startsWith('`') && command.includes('${')) return false
-  let decoded: string
-  try { decoded = command.startsWith('"') ? JSON.parse(command) as string : command.slice(1, -1).replace(/\\(['\\])/gu, '$1') }
-  catch { return false }
-  return shellFileWork(decoded)
-}

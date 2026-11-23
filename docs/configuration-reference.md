@@ -109,16 +109,15 @@ external English Markdown file:
 - **On a thin program**: when a **root** `run_code` program breaks one of three latched categories, a short
   notice is queued by that call and appended to the next pre-step as a user-role message. The tool result keeps
   its value, its content and its existing contexts; the program is never blocked or rewritten.
-- The three categories are `bypass` (file work through the shell or `node:fs`), `plan` (no `// plan:` on the
-  first physical line) and `shape` (a single operation in its own round trip). Each is latched once per turn,
-  and a program that complies with a category re-arms it, so a regression inside the same turn speaks again;
-  there is no per-turn cap.
+- The three categories are `bypass` (Node file or process modules imported by the program, or a shell call whose
+  actual command did file work), `plan` (no `// plan:` on the first physical line) and `shape` (two programs in a
+  row that each dispatched a single non-waiting call). Each is latched once per turn, a program that complies
+  with a category re-arms it, and at most 3 notices are sent per agent session (#1027).
 - Delivery priority is `bypass`, then `plan`, then `shape`: one program earns at most one notice.
-- Only the root call is inspected (`exec.parent === undefined`). Nested `tools.ops_*` calls belong to the PTC
-  execution and say nothing about the shape of the step.
-- The analysis is a literal heuristic over the program text: a loop or `map` counts one dispatch site, not its
-  runtime fan-out, and strings or comments can mislead it. Notices say so, nothing claims a measured dispatch
-  count, and a cancelled or never-dispatched call is not analysed.
+- A root program is judged by what it really dispatched: every nested call (it carries a parent token) is
+  recorded under the root's call id, and the root reads that trace when it settles. A program that dispatched
+  nothing is never accused, a loop counts its real calls, and strings or comments cannot trigger the shell rule.
+  A cancelled call is not analysed.
 - Everything rides the pre-step user batch and the tool schema is untouched, so the system prompt and its
   cache survive. The lesson is spent only once the host commits the delivered message; a batch that is rejected
   or cancelled commits nothing, so the next accepted batch still teaches it.

@@ -15,8 +15,10 @@ import { disclosurePlan } from '../ptc/disclosure.js'
 import { ownPtcScopes } from '../ptc/ownership.js'
 import {
   BATCHING_GUIDANCE_ID, BATCHING_GUIDANCE_REVISION, BATCHING_GUIDANCE_SOURCE_KIND,
-  createProgramLatch, loadBatchingGuidance, renderBatchingGuidance,
+  loadBatchingGuidance, renderBatchingGuidance,
 } from '../ptc/batching-guidance.js'
+import { createProgramLatch, createTraceRecorder, tracedCall } from '../ptc/batching-notices.js'
+import type { TraceRecorder } from '../ptc/batching-notices.js'
 import type { GuidanceSurface } from '../ptc/batching-guidance.js'
 import { InvocationLifetime, InvocationNotStarted } from '../lifecycle/invocations.js'
 import { monitoredInvoke } from '../execution/monitored.js'
@@ -63,6 +65,8 @@ interface Entry {
   lessonId?: string
   /** Plain user-text guidance waiting for the next pre-step. */
   queuedGuidance: string[]
+  /** Calls nested root programs dispatched, until each root settles. */
+  trace: TraceRecorder
   /** Host turn the delivery window belongs to; stale notices are dropped. */
   guidanceTurn: number
   files: Map<FileToolName | 'result', { lease: PublicationLease; revoke?: () => void; dispatch: ToolDefinition['execute']; granted?: { entitled: boolean; selected: boolean; config: object } }>
@@ -273,7 +277,7 @@ export function mountPtc(root: Context, rawConfig: unknown, gate: PtcGate = { al
       if (stopped || retired.has(agent) || !agent.ctx || !owns(agent)) return Promise.resolve()
       const existing = entries.get(agent)
       if (existing) return existing.ready
-      const entry: Entry = { agent, ready: Promise.resolve(), calls: new InvocationLifetime(), selected: new Set(), pending: new Set(), definitions: new Map(), disposers: [], taught: false, queuedGuidance: [], guidanceTurn: -1, files: new Map() }
+      const entry: Entry = { agent, ready: Promise.resolve(), calls: new InvocationLifetime(), selected: new Set(), pending: new Set(), definitions: new Map(), disposers: [], taught: false, queuedGuidance: [], trace: createTraceRecorder(), guidanceTurn: -1, files: new Map() }
       entries.set(agent, entry); ownership?.track(agent)
       entry.ready = Promise.resolve().then(async () => {
         if (!owns(agent) || entries.get(agent) !== entry) return
@@ -298,6 +302,7 @@ export function mountPtc(root: Context, rawConfig: unknown, gate: PtcGate = { al
             if (entry.guidanceTurn !== payload.turn) {
               entry.guidanceTurn = payload.turn
               entry.queuedGuidance.length = 0
+              entry.trace.clear()
             }
             // Nothing to say: skip the presentation probe entirely, so a plain
             // Native step costs no extra assembly.
@@ -345,27 +350,32 @@ export function mountPtc(root: Context, rawConfig: unknown, gate: PtcGate = { al
             if (lessonQueued) entry.lessonId = messages[0]!.id
             return { ...decision, messages: [...decision.messages, ...messages] }
           }))
-          // The program-shape trigger observes the ROOT run_code call: only there is
-          // the whole program text visible. Nested tools.ops_* calls carry a parent
-          // token, and their arguments say nothing about the shape of the step.
+          // The notice trigger judges a ROOT run_code program by the calls it really
+          // dispatched: every nested call (it carries a parent token) is recorded under
+          // its rootCallId and settles before the root, which then reads its trace.
           entry.disposers.push(agent.ctx!.on('tools/post-execute', async (exec, result, next) => {
             const decision = await next()
-            if (decision.kind !== 'accept') return decision
-            if (exec.agent !== agent || exec.name !== 'run_code' || exec.parent !== undefined) return decision
-            if (exec.signal.aborted) return decision
+            if (exec.agent !== agent) return decision
+            if (exec.parent !== undefined) {
+              entry.trace.record(exec.rootCallId, tracedCall(exec.name, exec.arguments))
+              return decision
+            }
+            if (exec.name !== 'run_code') return decision
             const code = (exec.arguments as { code?: unknown } | undefined)?.code
+            const trace = entry.trace.take(exec.rootCallId, code)
+            if (decision.kind !== 'accept' || exec.signal.aborted) return decision
             try {
               // Queue the corrective notice for the next pre-step, where it is
               // delivered as user-role text; the tool result keeps its own value,
               // content and contexts untouched.
-              const notice = shapeLatch.observe(agent, code)
+              const notice = shapeLatch.observe(agent, trace)
               if (notice !== undefined) {
                 entry.queuedGuidance.push(notice.text)
                 // Observation only: one line, no context, no new dependency.
                 if (gate.telemetry === true) {
                   const counts = shapeLatch.stats(agent)
                   ctx.logger.info('dsh-ops batching: turn=' + notice.turn + ' category=' + notice.category
-                    + ' plan=' + counts.plan + ' bypass=' + counts.bypass + ' shape=' + counts.shape + ' total=' + counts.total)
+                    + ' plan=' + counts.plan + ' bypass=' + counts.bypass + ' shape=' + counts.shape + ' total=' + counts.total + ' session=' + counts.session)
                 }
               }
             } catch (error) {

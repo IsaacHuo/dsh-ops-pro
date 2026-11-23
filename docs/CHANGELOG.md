@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- OPS-PTC batching notices now judge a root `run_code` program by the calls it actually dispatched (nested calls recorded per root call id) instead of regex analysis of its text: a program that dispatched nothing is never accused, a shell bypass is read from the command that really ran, and the single-call notice needs two single-call programs in a row. The per-session cap of 3 notices (#1027), lost in the upstream 0.5.6 merge, is restored. `src/ptc/batching-guidance.ts` keeps only lesson rendering; the notice kernel lives in `src/ptc/batching-notices.ts`.
+
 - Source layout: the official-tool catalogue, configuration and hiding moved to `src/official-tools/` (`catalog`, `config`, `hiding`), and profile install and default reset to `src/profile/` (`install`, `default-reset`). Internal modules only; no published entry point changed. / 源码布局：官方工具目录、配置与隐藏逻辑移入 `src/official-tools/`（`catalog`、`config`、`hiding`），配置档安装与默认值重置移入 `src/profile/`（`install`、`default-reset`）。仅涉及内部模块，未改变任何公开入口。
 
 - `src/adapter/dsh/` is now an enforced host boundary: `npm run check:host` (in CI) records the 162 host touch points outside it per file and fails when a file gains one, or drops one without lowering the baseline. The `host-surface` suite also checks that every host event and service name `src/` uses still exists in the installed DSH packages, so a host rename such as the one behind #1026 fails a test instead of a user session. / `src/adapter/dsh/` 现为强制的宿主边界：`npm run check:host`（已接入 CI）按文件记录其外的 162 个宿主接触点，某文件新增接触点、或减少后未调低基线时失败。`host-surface` 套件还会检查 `src/` 用到的每个宿主事件名和服务名仍存在于已安装的 DSH 包中，像 #1026 那样的宿主改名会让测试失败，而不是让用户会话出错。

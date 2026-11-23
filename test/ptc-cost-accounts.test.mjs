@@ -28,7 +28,7 @@ import path from 'node:path'
 import * as FsTools from '@deepseek-ai/dsh-tool-fs'
 import * as SearchTools from '@deepseek-ai/dsh-tool-fs-search'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import { analyzeProgram, noticeText } from '../lib/ptc/batching-guidance.js'
+import { noticeText } from '../lib/ptc/batching-notices.js'
 import { requireWorker } from './lib/boundary.mjs'
 import { bootEntryGroup, enterPtc } from './lib/ptc-entry.mjs'
 import { prepareStep } from './lib/executor.mjs'
@@ -85,7 +85,7 @@ function historyItemsOf(messages) {
     // The lesson is rendered for the reported sandbox mode, so identify it by its
     // opening heading instead of comparing against the shipped file (#963).
     const kind = text.startsWith('# Batch tool calls') ? 'teaching'
-      : text === noticeText('plan', analyzeProgram(THIN_PROGRAM)) ? 'notice:plan' : undefined
+      : text === noticeText('plan', { loader: true, resident: [], loadable: [] }) ? 'notice:plan' : undefined
     if (kind === undefined) continue
     items.push({ kind, bytes: bytes(text), sha: sha(text) })
   }
