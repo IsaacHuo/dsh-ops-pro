@@ -202,6 +202,7 @@
     "test:ptc": "node test/run.mjs ptc",
     "validate:manifest": "node scripts/validate-manifest.mjs",
     "check:size": "node scripts/check-file-size.mjs",
+    "check:host": "node scripts/check-host-surface.mjs",
     "test": "node test/run.mjs",
     "verify:release": "npm run verify && node bin/check-release.mjs",
     "verify": "node scripts/build.mjs && node scripts/validate-manifest.mjs && node test/run.mjs",

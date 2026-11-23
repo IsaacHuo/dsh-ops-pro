@@ -189,6 +189,8 @@ jobs:
           rust: 'false'
       - name: Check that every code file is at or under 1000 lines
         run: node scripts/check-file-size.mjs
+      - name: Check that host touch points outside src/adapter/dsh/ do not grow
+        run: node scripts/check-host-surface.mjs
 
   # Rust formatting and lints on every shipped OS family. The crates behind `#![cfg(windows)]` and
   # `cfg(target_os = "macos")` compile to nothing on Linux, so a Linux-only clippy never saw them

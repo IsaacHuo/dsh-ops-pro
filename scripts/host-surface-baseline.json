@@ -1,0 +1,222 @@
+{
+  "client/index.tsx": {
+    "inject:remote.pluginManager": 1,
+    "service:remote": 1,
+    "service:remote.dsh-ops": 1,
+    "service:remote.opsSettings": 1,
+    "service:remote.pluginManager": 1
+  },
+  "components/download-guard/index.ts": {
+    "event:tools/pre-execute": 1
+  },
+  "components/panel/index.ts": {
+    "event:session/disposed": 1,
+    "event:session/event": 1
+  },
+  "components/tui/index.ts": {
+    "event:session/event": 1,
+    "service:tuiPanels": 1
+  },
+  "consumer/mount.ts": {
+    "inject:systemPrompt": 1,
+    "inject:tools": 2,
+    "service:tools": 1
+  },
+  "discovery/controller.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "event:system-prompt/assemble": 1,
+    "service:agents": 2,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1,
+    "service:systemPrompt": 1,
+    "service:tools": 1
+  },
+  "execution/files.ts": {
+    "service:fs": 1,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1
+  },
+  "execution/jobs.ts": {
+    "service:sandbox": 1,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1
+  },
+  "execution/monitored.ts": {
+    "service:jobs": 1
+  },
+  "integration/diagnostics.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "inject:tools": 1,
+    "service:agents": 1,
+    "service:ptcRuntime": 1,
+    "service:systemPrompt": 1,
+    "service:tools": 1
+  },
+  "kernel/result-lifecycle.ts": {
+    "event:session/disposed": 1,
+    "event:session/event": 1
+  },
+  "kernel/result-storage.ts": {
+    "service:sandbox": 2,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1,
+    "service:tools": 1
+  },
+  "legacy/host.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:tools/pre-execute": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:subprocess": 1,
+    "inject:systemPrompt": 1,
+    "inject:tools": 2,
+    "service:agents": 1,
+    "service:tools": 1
+  },
+  "official-tool-hiding.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:system-prompt/assemble": 1,
+    "event:tools/change": 1,
+    "event:tools/pre-execute": 1,
+    "inject:systemPrompt": 1,
+    "inject:tools": 1,
+    "service:agents": 1,
+    "service:tools": 1
+  },
+  "presets/ops-ptc/register.ts": {
+    "inject:agentPresets": 1
+  },
+  "presets/registry.ts": {
+    "event:dsh-ops/modes": 1
+  },
+  "projections/native/read-dedup.ts": {
+    "event:agent/disposed": 1,
+    "event:llm/stream": 1,
+    "event:session/disposed": 1,
+    "event:session/event": 1,
+    "event:tools/result": 1
+  },
+  "projections/native/runtime.ts": {
+    "service:sandboxPolicy": 1,
+    "service:tools": 1
+  },
+  "prompt-injection/index.ts": {
+    "event:agent/pre-step": 1,
+    "service:systemPrompt": 1
+  },
+  "publication/changes.ts": {
+    "event:internal/dispatch": 1
+  },
+  "publication/native.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "event:system-prompt/assemble": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:subprocess": 1,
+    "inject:systemPrompt": 1,
+    "inject:tools": 1,
+    "service:agents": 2,
+    "service:systemPrompt": 1,
+    "service:tools": 1
+  },
+  "publication/providers.ts": {
+    "service:tools": 1
+  },
+  "publication/ptc.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:agent/pre-step": 1,
+    "event:session/event": 1,
+    "event:system-prompt/assemble": 1,
+    "event:system-prompt/change": 1,
+    "event:tools/post-execute": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:subprocess": 1,
+    "inject:systemPrompt": 1,
+    "inject:tools": 1,
+    "service:agents": 2,
+    "service:ptcRuntime": 1,
+    "service:sandboxPolicy": 2,
+    "service:subprocess": 1,
+    "service:systemPrompt": 1,
+    "service:tools": 1
+  },
+  "publication/registrar.ts": {
+    "event:tools/change": 1,
+    "service:tools": 1
+  },
+  "publication/replacements.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "event:system-prompt/assemble": 1,
+    "event:tools/post-execute": 1,
+    "inject:tools": 1,
+    "service:agents": 1,
+    "service:tools": 2
+  },
+  "publication/result-admission.ts": {
+    "event:system-prompt/change": 1,
+    "event:tools/execute": 1,
+    "service:systemPrompt": 1
+  },
+  "rust.ts": {
+    "event:data": 2
+  },
+  "session-shells.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "inject:jobs": 1,
+    "inject:sandbox": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:subprocess": 1,
+    "inject:tools": 1,
+    "service:agents": 1,
+    "service:jobs": 2,
+    "service:sandbox": 1,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1,
+    "service:tools": 1
+  },
+  "settings/runtime-host.ts": {
+    "inject:subprocess": 1,
+    "inject:typert": 1,
+    "service:opsSettings": 1
+  },
+  "shells/approval.ts": {
+    "service:approval": 1,
+    "service:sandboxPolicy": 1
+  },
+  "shells/host-tool.ts": {
+    "inject:jobs": 1,
+    "service:sandboxPolicy": 1,
+    "service:shellEnv": 1
+  },
+  "shells/job-wait-guidance.ts": {
+    "event:tools/post-execute": 1,
+    "service:job_output": 1,
+    "service:tools": 1
+  },
+  "shells/session-execution.ts": {
+    "service:sandbox": 1,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1
+  },
+  "shells/tool.ts": {
+    "service:subprocess": 2
+  },
+  "workspace-preparation.ts": {
+    "event:data": 2,
+    "event:tools/execute": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:tools": 1,
+    "service:sandboxPolicy": 1
+  }
+}
