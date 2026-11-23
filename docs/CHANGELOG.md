@@ -7,6 +7,11 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-11-23 — Documentation release
+
+- The READMEs (both languages) now describe dsh-ops-pro itself: its features, 1.0 changes, install and migration, development, and a dedicated section crediting the upstream dsh-ops maintainers and contributors. Upstream-only material (upstream team pages, benchmark images, partner tables, rankings) is removed.
+- `LICENSE` keeps the upstream copyright line and adds this fork's; `NOTICE` gains a dsh-ops-pro header and keeps every upstream notice unchanged.
+
 ## [1.0.0] — 2026-11-23 — Architecture release
 
 - `npm run env:probe` (`scripts/env-probe.mjs`) reports missing local test prerequisites (worker, `cargo`, Bash IPC payload, Niubash archive, `DSH_OPS_TEST_BASH`) and the suites each decides; an emptied Bash IPC directory is attributed to endpoint security.

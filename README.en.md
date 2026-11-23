@@ -1,172 +1,83 @@
-<p align="center">
-  <img src="docs/assets/readme/dsh-ops-header.svg" alt="dsh-ops header" width="640">
-</p>
-
-<p align="center">
-  <strong>English</strong> | <a href="README.md">中文</a>
-</p>
-
-<div align="center" style="text-align: center;">
-  <a href="https://trendshift.io/repositories/296103" title="Trendshift · JavaScript daily list">
-    <img src="https://trendshift.io/api/badge/trendshift/repositories/296103/daily?language=JavaScript" alt="Trendshift · JavaScript daily list" width="250" height="55" style="vertical-align: middle;">
-  </a>
-</div>
+<p align="center"><a href="README.md">中文</a> | <strong>English</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
-  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
-  <a href="https://upstar.dev/r/IsaacHuo/dsh-ops-pro"><img alt="Upstar: #2 in JavaScript" src="https://upstar.dev/badge/IsaacHuo/dsh-ops-pro.svg"></a>
+  <a href="https://github.com/IsaacHuo/dsh-ops-pro/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/IsaacHuo/dsh-ops-pro/ci.yml?branch=pro%2Fnext&style=flat-square&label=CI"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-4b6fff?style=flat-square"></a>
 </p>
 
 # dsh-ops-pro
 
-> A long-term independent fork of [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops), published on npm as **`dsh-ops-pro`**. It keeps fixing the upstream backlog and selectively absorbs upstream pull requests. Tool names (`ops_*`), the `dsh-ops` CLI and the managed state under `<DSH_HOME>/dsh-ops/` are unchanged.
->
-> **Migrating from upstream `dsh-ops`**: both publish the same `ops_*` tools and cannot be enabled together — `remove dsh-ops` first, then `add dsh-ops-pro`. The plugin row is now named `dsh-ops-pro`, so settings saved on the old `dsh-ops` row are not carried over; review them on the settings page. Integrators change their import from `dsh-ops/integration` to `dsh-ops-pro/integration`.
+A tool-enhancement plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH): it replaces some official tools with `ops_*` tools that take smaller inputs, return smaller outputs and report failures explicitly, so tasks cost fewer tokens and fewer rounds. Windows x64 is the primary platform; Linux x64 and macOS (arm64/x64) are supported too.
 
-OPS adds bounded file and document tools to DSH. Native mode returns compact, line-numbered text;
-PTC code receives typed Outcome values from the same one-shot Rust worker. Host integration is
-strict TypeScript, compiled to the existing JavaScript package paths.
+Maintained by [IsaacHuo](https://github.com/IsaacHuo). The project derives from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops), is published as its own npm package `dsh-ops-pro`, and since 1.0 follows its own architecture; see [the end of this file](#relationship-to-upstream) for upstream credit and copyright.
 
-Supported: Windows x64, Linux x64, and macOS 13+ on Apple Silicon or Intel
-(`darwin-arm64`, `darwin-x64`). See [macOS](docs/macos.md).
+## Features
 
-> [!IMPORTANT]
-> This branch is the **0.5.0 candidate**, not a published release: configuration now uses one
-> `dsh-ops` row. Commands using `@latest` below select the published package; build and pack this
-> checkout to evaluate the candidate. See the [changelog](docs/CHANGELOG.md).
+- **Windows Bash**: `ops_bash` ships a Niubash 1.5.0 runtime and can hide the host PowerShell tool; a local Git Bash or WSL can be used instead.
+- **File and search tools**: implemented by a Rust worker. The PTC SDK catalogue has 18 APIs: 15 file/document tools plus batching, result references and the loader. Results are paged and say whether they are complete; failures return structured errors (`status`, `error.code`).
+- **Presets**: built-in modes such as minimal, standard, ptc and ops-ptc, each able to hide the official tools it replaces.
+- **OPS-PTC**: batch tool calls inside one `run_code` program. The batching rules are taught once in the first root result; later notices are based on the calls a program actually made, at most three per session.
+- **On-demand loading**: specialised tools load when needed; the discovery section stays byte-identical across selections, so the prompt cache survives.
 
-- The single row enables the five built-in preset consumers: Standard and Cordis publish resident
-  Native file tools, PTC publishes typed APIs, and Minimal has no resident file baseline. OPS PTC is
-  the fifth enhanced preset, registered by the plugin at runtime (no plugin-manager preset row): it
-  keeps the PTC surface and delivers the English batch-call guidance from `prompts/batching-guidance.md`:
-  one lesson at session start, then short `additionalContexts` notices when a root `run_code` program
-  breaks the `bypass`/`plan`/`shape` shape categories (each latched once per turn), without touching the
-  system prompt and without blocking or rewriting the program. Native discovery and typed SDK loading are
-  independently configured.
-  Advanced selections activate in the owning agent's next provider request, never by executing a
-  discovery action. The default preset is never forced: the row's detail page carries one button that makes OPS (PTC)
-  the default for new sessions, once, and apply, remount and unload leave your own default alone. See
-  [presets](docs/presets.md).
-- The PTC SDK catalogue has 18 APIs: 15 file/document tools, batch, result references and its loader.
-  Only the configured resident or selected APIs are exposed. Native and PTC use separate outputs.
-- Discover bounded CSV/TSV, DOCX main-body paragraphs and a restricted PDF text layer. Binary DOC,
-  OCR, general PDF rendering, web search and HTML crawling are not implemented. Read the
-  [document-format limits](docs/native-kernel.md) before choosing a reader.
-- One native-switch configuration page controls built-in and explicitly listed custom consumers.
-  Global switches gate per-preset choices without losing saved intent. Residency, dynamic loading,
-  Bash, file replacement and Windows host-PowerShell hiding are independently controlled; panel
-  capture and TUI start off. Custom presets use the same assembler as built-ins, while unlisted
-  presets remain unchanged. Move legacy row overrides into the single row; the Compatibility row
-  is removed. See [settings](docs/configuration-reference.md) and [architecture](docs/internal-architecture.md).
-- Built-in preset consumers are enabled by default: on Windows the package embeds the pinned
-  **official Niubash 1.5.0 portable payload** and downloads no Git Bash optional package; the
-  settings page's **Bash executor** card switches between that payload and a Git Bash/MSYS
-  executable you scan or type in (saved as `bashPath`). Linux/macOS use the distribution's own
-  Bash, overridable with `config.bashPath`. `dsh-ops-pro bash-runtime install` remains the path for
-  installing, repairing and selecting a managed copy. PowerShell stays host-managed; its upgrade
-  command previews the standard installation and requires `--yes` to execute.
+## What changed in 1.0
 
-OPS publishes its own scoped tools and optional routing guidance; it does not rewrite the shared
-tool registry. Permissions and cancellation are checked per call. Windows restricted Bash retains
-its documented partial enforcement and runtime-compatibility limits.
+- Host touch points live in `src/adapter/dsh/`; `npm run check:host` ratchets every other location in CI.
+- Batching notices judge the calls a program dispatched instead of regex code analysis.
+- The PTC SDK declaration renders each tool's data schema once: loading glob/grep/read_files adds 13,339 B instead of 25,110 B.
+- A prefix-stability suite keeps non-dynamic sections byte-identical across selection, next step and next turn.
+- Upstream v0.5.6 is merged, along with fixes for a backlog of upstream issues (#1026, #1027, #975, #803, #798, #771 and more).
 
-Historical token-saving claims are not evidence that this candidate meets its release gates.
-The name “ops” means general operations, not an operations/SRE product.
+See the [changelog](docs/CHANGELOG.md) and the [1.0.0 release notes](docs/release-notes/v1.0.0.md).
 
-## Install, update and uninstall
+## Install
 
-### Official plugin marketplace
+Requires DSH **0.2.2-rc.1** or later, below 0.2.3 (`engines.dsh`: `>=0.2.2-rc.1 <0.2.3-0`).
 
-In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops-pro`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
+**Plugin marketplace**: search for `dsh-ops-pro` in the DSH plugin marketplace, install and enable it. If the official npm registry is unreachable, enter a mirror as a custom address, e.g. `https://mirrors.huaweicloud.com/repository/npm/`.
 
-Of course, if you are sure you can reach the official npm registry, pick the official registry; if you are not sure, follow the steps above.
-
-![Choose a custom registry in the plugin marketplace and enter the Huawei Cloud npm mirror](docs/assets/marketplace-huaweicloud-mirror.png)
-
-### One-command npm installation
-
-#### Installation
+**Command line** (a profile must be named):
 
 ```console
-npx --yes dsh-ops-pro@latest install --profile desktop
-npx --yes dsh-ops-pro@latest install --profile web
-npx --yes dsh-ops-pro@latest install --profile tui
-```
-
-An explicit target profile is required. `tui` maps to the **dsh-TUI product's `dsh-tui` profile**, not the old `tui` directory. Initialize the target application first. This entry point delegates installation to the official DSH CLI rather than implementing a separate profile lock and rollback logic.
-
-Desktop must use the CLI bundled with the desktop application; the default auto-detected path is `%LOCALAPPDATA%\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd`. For another installation location, add `--dsh-cli "<installation>\resources\runtime\cli\bin\dsh.cmd"`. Web/TUI require an available DSH CLI, which can also be specified explicitly.
-
-Add `--dry-run` to an install or uninstall command to preview it. The preview resolves the CLI from its path or `PATH` (`PATHEXT` on Windows), checks the file, POSIX execute permission and any Node CLI entry point, and applies the same Windows command-script path checks as execution. A failed check returns a nonzero exit code. The preview prints the plan without starting the CLI or changing the profile. Success covers these static checks; it does not establish the program's identity, version, profile compatibility or eventual installation result.
-
-You can also use the official commands directly:
-
-```console
-dsh plugin --profile web add dsh-ops-pro
-dsh plugin --profile dsh-tui add dsh-ops-pro
-"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops-pro
-```
-
-A regular DSH CLI cannot manage the reserved `desktop` profile; do not confuse it with the desktop app's own entry point.
-
-Install the published registry package or a fully built and packed source tarball.
-Direct `git+https` installation and unbuilt source checkouts lack the complete runtime; see
-[installing from Git is not a supported channel](docs/upgrading.md#installing-from-git-is-not-a-supported-channel).
-
-#### Update
-
-The 0.5 series supports DSH **from 0.2.2-rc.1**, not 0.2.0/0.2.1 or earlier 0.2.2 previews. The DSH adapter remains; integration uses the native 0.2.2 tool-admission and executor APIs. See
-[host versions and display metadata](docs/usage.md#host-compatibility-and-display-metadata)
-for component icon exports, profile refresh and config/schema checks.
-
-Re-run the same `npx --yes dsh-ops-pro@latest install --profile ...`, or use the official CLI `add dsh-ops-pro@latest`. Reload when the app asks; restart the app when replacing code that is already loaded.
-
-#### Uninstall and status
-
-```console
+npx --yes dsh-ops-pro@latest install --profile desktop   # or web, tui
 npx --yes dsh-ops-pro@latest status --profile desktop
 npx --yes dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops-pro bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
+The official CLI works too: `dsh plugin --profile web add dsh-ops-pro`. The desktop profile needs the CLI bundled with the desktop app (default `%LOCALAPPDATA%\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd`); pass `--dsh-cli <path>` for other locations and `--dry-run` to preview. To update, rerun the same `install`, or `add dsh-ops-pro@latest` and reload or restart when prompted. Binary locations and cleanup boundaries: [Upgrading and uninstalling](docs/upgrading.md).
 
-Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
-
-The former `dsh-ops/background` component (FastCtx background jobs) has been removed. A profile that still has its row keeps loading: the row publishes nothing and logs one warning, and can be deleted.
-
-## Optional read-only OPS sidebar
-
-Enable `tui.enabled` on the `dsh-ops` row in dsh-TUI and restart to add the OPS sidebar without stealing focus or executing tools. Without `tuiPanels`, only that optional row stays pending. See [Sidebar guide](docs/tui-panel.md). While focused, use `f` to filter, `n`/`p` for local pages and `a` to acknowledge all-session alerts; only bounded retained metadata is browsed, never fetched result pages.
+**Migrating from `dsh-ops`**: both publish the same `ops_*` tools and cannot be enabled together. Remove `dsh-ops` first, then add `dsh-ops-pro`. The plugin row is now `dsh-ops-pro` and old row settings are not migrated; the only command is `dsh-ops-pro`; integrators import `dsh-ops-pro/integration`. The state directory `<DSH_HOME>/dsh-ops/` and the `ops_` tool prefix are unchanged.
 
 ## Documentation
 
-- [Third-party preset integration API](docs/integration-api.md) · [External Native providers](docs/external-provider.md) · [Scoped diagnostics](docs/diagnostics.md)
+- [Usage](docs/usage.md) · [Troubleshooting](docs/troubleshooting.md) · [Configuration reference](docs/configuration-reference.md) · [Presets](docs/presets.md) · [Upgrading](docs/upgrading.md)
+- [PTC design](docs/native-ptc.md) · [Windows runtime evidence](docs/windows-runtime-evidence.md) · [TUI panel](docs/tui-panel.md)
+- [Contributing](docs/CONTRIBUTING.md) · [Changelog](docs/CHANGELOG.md) · [Provenance](docs/PROVENANCE.md)
 
-- [Usage](docs/usage.md) · [Troubleshooting](docs/troubleshooting.md) · [Component reference](docs/component-reference.md) · [Configuration reference](docs/configuration-reference.md) · [Presets](docs/presets.md)
-- [Windows runtime evidence](docs/windows-runtime-evidence.md): payload compatibility, Low integrity, MSYS startup and antivirus/approval diagnostics.
-- [Native PTC](docs/native-ptc.md) · [Manual validation](docs/manual-validation.md)
-- [Contributing](docs/CONTRIBUTING.md) · [Roadmap](docs/roadmap.md) · [Changelog](docs/CHANGELOG.md) · [Provenance](docs/PROVENANCE.md)
-- [CI troubleshooting](docs/ci-troubleshooting.md) · [CI 排错说明](docs/ci-troubleshooting.zh.md)
+## Development
 
-## Windows Bash diagnostics
+```console
+npm ci --ignore-scripts
+npm run build:ptc        # build the plugin and stage the Rust worker (needs cargo)
+node test/run.mjs        # every suite; node test/run.mjs <filter> runs matching suites
+npm run env:probe        # name missing local test prerequisites
+```
 
-Windows Bash diagnostics: `dsh-ops-pro ladder` reports image and ancestor integrity
-labels separately from static MSYS hash compatibility. A Low-labelled executable
-can start a Low child even in full access, preventing writes to existing
-Medium/unlabeled files. Unreadable labels remain unknown. See
-[integrity inspection](docs/troubleshooting.md#windows-bash-integrity-labels).
+Rules and workflow: [Contributing](docs/CONTRIBUTING.md). Report issues to [this repository](https://github.com/IsaacHuo/dsh-ops-pro/issues).
 
-## License
+## Relationship to upstream
 
-The current dsh-ops source is distributed under the **MIT License**; see [LICENSE](LICENSE). Versions before 0.3.2 bundled Apache-2.0-licensed FastCtx source; that source was removed together with the background component, and no FastCtx code or binary is part of the current distribution. FastCtx's license text and upstream notice are retained in `licenses/fastctx/`, and its historical attribution is preserved in [NOTICE](NOTICE).
+dsh-ops-pro derives from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops). The plugin's foundations — the Native and PTC projections, the Rust worker, the Niubash integration, presets and discovery — and most code before 0.5.6 come from the upstream maintainers [T-Auto](https://github.com/T-Auto), [ccch1mneyyy](https://github.com/ccch1mneyyy), [Haoming9527](https://github.com/Haoming9527), [Thatgfsj](https://github.com/Thatgfsj) and [all upstream contributors](https://github.com/T-Auto/dsh-ops/graphs/contributors). Thank you.
 
-The separate Windows Bash payload package (the npm optional dependency `@dsh-ops/bash-win32-x64`) is distributed under its upstream components' licenses: Git for Windows includes GPL-2.0 and other licensed components, whose original licenses, notices and provenance records are kept with the payload. PowerShell stays host-managed and is distributed under Microsoft's MIT and third-party component licenses. The plugin's MIT license does not replace those licenses. See [PROVENANCE.md](docs/PROVENANCE.md).
+Upstream fixes are absorbed with `cherry-pick -x`, keeping the original commit and author; `npm run sync:upstream` reports unabsorbed upstream commits and PRs, and decisions are recorded in [.github/upstream-decisions.json](.github/upstream-decisions.json). This is not an official upstream distribution; report problems here.
 
-## Acknowledgements
+## License and third-party components
 
-Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-duan)'s Codex plugin FastCtx and used its source code to provide the Rust tool surface. FastCtx's source was removed with the background component; the current `native/` Rust core is original MIT-licensed dsh-ops code. FastCtx's license text and the notice that must be reproduced remain in `licenses/fastctx/` and [NOTICE](NOTICE) as attribution for those earlier versions:
+MIT, see [LICENSE](LICENSE): the upstream copyright notice (Copyright (c) 2026 T-Auto and the dsh-ops contributors) is retained and this fork's notice is added.
+
+The Niubash v1.5.0 payload shipped on Windows and its WinuxCmd, Git and other components keep their own licenses; their original licenses and source records ship with the payload. The MIT grant replaces no third-party license; see [NOTICE](NOTICE).
+
+Upstream versions before `0.3.2` vendored FastCtx by [yc-duan](https://github.com/yc-duan) (Apache-2.0). This distribution contains no FastCtx code or binary; its license text stays in `licenses/fastctx/` and the required notice is kept:
 
 > This product includes FastCtx
 > (https://github.com/yc-duan/fastctx), Copyright (c) 2026 yc-duan,
@@ -178,28 +89,3 @@ Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-du
 > supported by, and not attributable to the author of FastCtx, who
 > accepts no liability of any kind arising from this distribution or
 > from anything built on top of it.
-
-## Maintainers
-
-<table>
-  <tbody>
-    <tr>
-      <td align="center" width="150"><a href="https://github.com/T-Auto"><img src="https://github.com/T-Auto.png?size=160" width="96" height="96" alt="T-Auto"></a><br><a href="https://github.com/T-Auto"><b>T-Auto</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/ccch1mneyyy"><img src="https://github.com/ccch1mneyyy.png?size=160" width="96" height="96" alt="ccch1mneyyy"></a><br><a href="https://github.com/ccch1mneyyy"><b>ccch1mneyyy</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Haoming9527"><img src="https://github.com/Haoming9527.png?size=160" width="96" height="96" alt="Haoming9527"></a><br><a href="https://github.com/Haoming9527"><b>Haoming9527</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Thatgfsj"><img src="https://github.com/Thatgfsj.png?size=160" width="96" height="96" alt="Thatgfsj"></a><br><a href="https://github.com/Thatgfsj"><b>Thatgfsj</b></a></td>
-    </tr>
-  </tbody>
-</table>
-
-*In no particular order*
-
----
-
-## Contributors
-
-[![Contributors](https://contrib.rocks/image?repo=IsaacHuo/dsh-ops-pro)](https://github.com/IsaacHuo/dsh-ops-pro)
-
-## Star trend
-
-[![Star trend chart](https://api.star-history.com/svg?repos=IsaacHuo/dsh-ops-pro&type=Date)](https://star-history.com/#IsaacHuo/dsh-ops-pro&Date)
