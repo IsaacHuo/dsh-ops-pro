@@ -26,8 +26,10 @@ async function admitted(ctx, owner) {
   finally { step.dispose() }
 }
 const admittedDefinition = async (ctx, name, owner) => (await admitted(ctx, owner)).find(tool => tool.name === name)
+// The deadline only guards against a hang; a converging system passes on the first true check.
+// It matches the harness waitFor guard so machine load cannot fail a correct convergence.
 async function waitAdmission(check, options = {}) {
-  const deadline = Date.now() + 5000
+  const deadline = Date.now() + (options.timeoutMs ?? 30_000)
   while (!await check()) {
     if (Date.now() > deadline) throw new Error(`timed out waiting for admitted ${options.what ?? 'tool visibility'}`)
     await new Promise(resolve => setTimeout(resolve, 50))
@@ -64,7 +66,7 @@ async function agent(ctx, cwd, presentation = 'native', parent) {
   return value
 }
 async function call(ctx, owner, name, args) {
-  await waitFor(() => definition(ctx, name, owner), { timeoutMs: 5000, what: `${name} agent registration` })
+  await waitFor(() => definition(ctx, name, owner), { what: `${name} agent registration` })
   const prepared = await prepareStep(ctx, owner)
   try {
     assert.ok(ctx.get('tools').executable(name, owner, prepared.toolSet), `${name} admitted to resolved toolSet`)
@@ -211,16 +213,16 @@ await test('Native children of PTC parents share one result schema with Native p
       const parent = await agent(ctx, root, 'ptc'), child = await agent(ctx, root, 'native', parent)
       const resultFor = scope => admittedDefinition(ctx, 'ops_result', scope)
       await waitAdmission(async () => (await resultFor(parent))?.parameters.properties.action.enum.includes('put')
-        && (await resultFor(child))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'Native/PTC result projections' })
+        && (await resultFor(child))?.parameters.properties.action.enum.includes('put'), { what: 'Native/PTC result projections' })
       assert.equal((await admitted(ctx, child)).some(tool => tool.name === 'ops_batch'), false)
       const stored = await put(ctx, child, root, [{ child: true }])
       assert.deepEqual((await page(ctx, child, { action: 'page', id: stored.id })).value.data.items, [{ child: true }])
       assert.equal((await page(ctx, child, { action: 'put', items: [] })).value.error.code, 'PUBLICATION_DENIED')
       const nativeDefinition = (await resultFor(child))
       await file.fiber.dispose()
-      await waitAdmission(async () => !(await admitted(ctx, child)).some(tool => tool.name === 'ops_result'), { timeoutMs: 5000, what: 'file pager withdrawal' })
+      await waitAdmission(async () => !(await admitted(ctx, child)).some(tool => tool.name === 'ops_result'), { what: 'file pager withdrawal' })
       assert.equal((await nativeDefinition.execute({ action: 'page', id: stored.id }, { agent: child, signal: new AbortController().signal })).error.code, 'PUBLICATION_IDENTITY_MISMATCH')
-      await waitAdmission(async () => (await resultFor(parent))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'PTC remains available' })
+      await waitAdmission(async () => (await resultFor(parent))?.parameters.properties.action.enum.includes('put'), { what: 'PTC remains available' })
       const ptcStored = await ptcPut(ctx, parent, [{ ptc: true }])
       assert.equal(ptcStored.status, 'completed', JSON.stringify(ptcStored))
       await component.dispose(); assert.equal((await admitted(ctx, parent)).some(tool => tool.name === 'ops_result'), false)
@@ -245,25 +247,25 @@ await test('agent-scoped file rows isolate sibling pagers and yield only their e
       const current = value => admittedDefinition(ctx, 'ops_result', value)
       const mount = value => mountNativeCatalogue(value.ctx, { binaryPath: WORKER, required: true })
       const leftFile = await mount(left)
-      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'left scoped Native pager' })
+      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put'), { what: 'left scoped Native pager' })
       assert.equal((await current(right)), undefined, 'a sibling cannot borrow the left file executor')
       const rightFile = await mount(right)
-      await waitAdmission(async () => (await current(right))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'right scoped Native pager' })
+      await waitAdmission(async () => (await current(right))?.parameters.properties.action.enum.includes('put'), { what: 'right scoped Native pager' })
       const rightStored = await put(ctx, right, root, [{ right: true }])
       assert.deepEqual((await page(ctx, right, { action: 'page', id: rightStored.id })).value.data.items, [{ right: true }])
       left.liftPresentation()
       await left.ctx.plugin({ inject: ['tools', 'systemPrompt'], apply(inner) { left.liftPresentation = selectExecutor(inner, 'ptc') } })
-      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'exact-layer PTC takeover' })
+      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put'), { what: 'exact-layer PTC takeover' })
       const leftStored = await ptcPut(ctx, left, [{ left: true }])
       assert.equal(leftStored.status, 'completed', JSON.stringify(leftStored))
       assert.deepEqual((await current(right)).parameters.properties.action.enum, ['put', 'page', 'release'])
       const late = await agent(ctx, root, 'ptc')
-      await waitAdmission(async () => (await current(late))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'PTC before file mount' })
+      await waitAdmission(async () => (await current(late))?.parameters.properties.action.enum.includes('put'), { what: 'PTC before file mount' })
       const lateFile = await mount(late)
-      await waitAdmission(async () => !(await admittedDefinition(ctx, 'ops_grep', late)) && (await current(late))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'file mounted after PTC' })
+      await waitAdmission(async () => !(await admittedDefinition(ctx, 'ops_grep', late)) && (await current(late))?.parameters.properties.action.enum.includes('put'), { what: 'file mounted after PTC' })
       await component.dispose()
       for (const value of [left, late]) { value.liftPresentation(); await value.ctx.plugin({ inject: ['tools', 'systemPrompt'], apply(inner) { value.liftPresentation = selectExecutor(inner, 'native') } }) }
-      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put') && (await current(late))?.parameters.properties.action.enum.includes('put'), { timeoutMs: 5000, what: 'Native peer resumes on PTC unload' })
+      await waitAdmission(async () => (await current(left))?.parameters.properties.action.enum.includes('put') && (await current(late))?.parameters.properties.action.enum.includes('put'), { what: 'Native peer resumes on PTC unload' })
       await leftFile.dispose(); assert.equal((await current(left)), undefined)
       assert.deepEqual((await current(right)).parameters.properties.action.enum, ['put', 'page', 'release'])
       await rightFile.dispose(); await lateFile.dispose(); assert.equal((await current(right)), undefined)
