@@ -119,10 +119,11 @@ await test('the host-rendered SDK retains typed modes and excludes unrelated sea
   assert.match(text, /paths \(default\): string\[\]/)
   assert.match(text, /files_with_matches: \{path\}\[\]/)
   for (const tool of schemas.filter(tool => ['ops_glob', 'ops_grep'].includes(tool.name))) {
-    for (const branch of tool.output.oneOf) {
-      for (const key of ['revision', 'bytes', 'lineCount', 'dryRun']) assert.equal(key in branch.properties.data.properties, false)
-      assert.notDeepEqual(branch.properties.data.properties.items.items, {})
-    }
+    // The data schema is rendered once, in the success branch; the failure branch only names it.
+    const [success, ...failures] = tool.output.oneOf.filter(branch => branch.properties.data.properties !== undefined)
+    assert.equal(failures.length, 0, `${tool.name} renders its data schema in one branch`)
+    for (const key of ['revision', 'bytes', 'lineCount', 'dryRun']) assert.equal(key in success.properties.data.properties, false)
+    assert.notDeepEqual(success.properties.data.properties.items.items, {})
   }
   console.log(`  host SDK (five loaded APIs, shared PTC projection): ${Buffer.byteLength(text)} bytes`)
 })
