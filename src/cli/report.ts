@@ -26,8 +26,8 @@ import {
   renderToolingPolicy,
 } from '../policy.js'
 import { resolveWorker } from '../execution/runtime.js'
-import { bashIpcReport, restrictedCompatibility } from '../bash-ipc.js'
-import type { BashIpcInventory } from '../bash-ipc.js'
+import { bashIpcReport, restrictedCompatibility } from '../shells/bash-ipc.js'
+import type { BashIpcInventory } from '../shells/bash-ipc.js'
 import { resolveShells } from '../shells.js'
 import { bashIntegrityReport } from './integrity.js'
 import type { IntegrityReport } from './integrity.js'

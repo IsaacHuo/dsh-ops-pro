@@ -3,7 +3,7 @@ import path from 'node:path'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { selectNiubash } from '../lib/niubash/runtime.js'
 import { resolveShells } from '../lib/shells/resolve.js'
-import { confinedBash, restrictedCompatibility } from '../lib/bash-ipc.js'
+import { confinedBash, restrictedCompatibility } from '../lib/shells/bash-ipc.js'
 import { syntheticNiubashTree } from './lib/niubash-distribution-fixture.mjs'
 
 await test('a local receipt cannot stand in for the pinned inventory', async () => {

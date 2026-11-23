@@ -13,7 +13,7 @@
 import os from 'node:os'
 import path from 'node:path'
 import { dshHome } from '../paths.js'
-import { bashIpcReport } from '../bash-ipc.js'
+import { bashIpcReport } from '../shells/bash-ipc.js'
 import { DEFAULT_DISK_CONFIG, RESOURCES } from './ownership.js'
 import type { DiskConfig, DiskContext, ReclaimBlocked, ReclaimEvidence } from './ownership.js'
 import { combineMeasures, measureFamily, measureTree } from './measure.js'

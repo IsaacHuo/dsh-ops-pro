@@ -1,16 +1,16 @@
 /** Installation-relative, verified private MSYS runtime for confined Windows calls.
  * Original payloads remain untouched. Full access does not select this runtime.
  */
-import { isNiubashExecutable, selectNiubash } from './niubash/runtime.js'
+import { isNiubashExecutable, selectNiubash } from '../niubash/runtime.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 export { recoverBashLifecycleLock } from './bash-ipc-lifecycle.js'
-import { renameWithRetry } from './rename-retry.js'
-export { renameWithRetry, RENAME_RETRY_DELAYS_MS } from './rename-retry.js'
-import { errorMessage } from './shells/types.js'
+import { renameWithRetry } from '../fs/rename-retry.js'
+export { renameWithRetry, RENAME_RETRY_DELAYS_MS } from '../fs/rename-retry.js'
+import { errorMessage } from './types.js'
 import { bashRuntimeFailure } from './bash-runtime-failure.js'
 import { patchMsys } from './bash-pe.js'
 import { GENERATION_NAME, RETIRED_NAME, QUARANTINE_NAME, noLinks, assertNoLinks, plainDirectory, plainTree, withLifecycleLock, idleGeneration, markManaged, leaseGeneration, hasLiveLease } from './bash-ipc-lifecycle.js'
@@ -46,7 +46,7 @@ const SOURCES: Record<string, string>={config:'configured bashPath',path:'system
 function msysRoot(file: string) {
   const directory=path.dirname(file)
   return path.basename(directory).toLowerCase()==='bin' && path.basename(path.dirname(directory)).toLowerCase()==='usr'
-    ? path.resolve(directory,'../..') : path.resolve(directory,'..')
+    ? path.resolve(directory,'../../..') : path.resolve(directory,'..')
 }
 /** The one actionable explanation for a bash that restricted modes cannot run (#42). */
 export function restrictedRemedy(file: string, source: string | undefined, why: string) {

@@ -22,7 +22,7 @@
  * @module dsh-ops/bash-runtime-failure
  */
 
-import { errorMessage } from './shells/types.js'
+import { errorMessage } from './types.js'
 
 /**
  * The named stages a confined-Bash preparation can fail at.

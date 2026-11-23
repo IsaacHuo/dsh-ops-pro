@@ -21,7 +21,7 @@ import {
   withBashStatus,
 } from '../lib/shells.js'
 import { BASH_PARSE_CONTRACT } from '../lib/shells/prompt.js'
-import { sessionWorkdir } from '../lib/session-shells.js'
+import { sessionWorkdir } from '../lib/shells/session-shells.js'
 import { assert, TEST_HOME, report, test, withTempDir } from './lib/harness.mjs'
 import { config, fakeSubprocess, makeExecutable } from './lib/shells-fixtures.mjs'
 

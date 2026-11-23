@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { pinnedBashExecutable } from '../lib/shells/pinned.js'
-import { patchMsys, proxyDefinition } from '../lib/bash-pe.js'
+import { patchMsys, proxyDefinition } from '../lib/shells/bash-pe.js'
 import { bashIpcBuildBatch } from './lib/bash-ipc-command.mjs'
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 if(process.platform!=='win32'||process.arch!=='x64')throw Error('Build the Bash IPC proxies on Windows x64')

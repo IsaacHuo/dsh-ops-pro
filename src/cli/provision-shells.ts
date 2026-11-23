@@ -19,7 +19,7 @@ import { errorMessage } from '../shells/types.js'
 import os from 'node:os'
 import path from 'node:path'
 import { dshHome } from '../paths.js'
-import { renameWithRetry } from '../rename-retry.js'
+import { renameWithRetry } from '../fs/rename-retry.js'
 import {
   PLATFORM_PACKAGES,
   SHELL_UPSTREAM_PINS,

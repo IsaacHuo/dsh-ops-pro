@@ -1,7 +1,7 @@
 /** #180/#113: a tool call's directory belongs to its session, not the host process. */
 import path from 'node:path'
 import { assert, report, test } from './lib/harness.mjs'
-import { sessionWorkdir } from '../lib/session-shells.js'
+import { sessionWorkdir } from '../lib/shells/session-shells.js'
 
 const cwd = path.resolve('session workspace')
 const session = { header: { cwd } }

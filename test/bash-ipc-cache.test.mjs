@@ -8,8 +8,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
-import { markManaged, withLifecycleLock, recoverBashLifecycleLock } from '../lib/bash-ipc-lifecycle.js'
-import { bashIpcInventory, bashIpcRoot, reclaimBashGenerations } from '../lib/bash-ipc.js'
+import { markManaged, withLifecycleLock, recoverBashLifecycleLock } from '../lib/shells/bash-ipc-lifecycle.js'
+import { bashIpcInventory, bashIpcRoot, reclaimBashGenerations } from '../lib/shells/bash-ipc.js'
 import { assert, report, test, withTempDir } from './lib/harness.mjs'
 
 const generation = (seed) => seed.repeat(24).slice(0, 24)
@@ -206,7 +206,7 @@ await test('a real second process lease preserves an old generation even after t
   await withTempDir('bash-ipc-process-lease', async home => {
     const root=bashIpcRoot(home), current=generation('a'), old=generation('b')
     seed(path.join(root,current),1);seed(path.join(root,old),2)
-    const helper=new URL('../lib/bash-ipc-lifecycle.js',import.meta.url).href
+    const helper=new URL('../lib/shells/bash-ipc-lifecycle.js',import.meta.url).href
     const script='import {withLifecycleLock,leaseGeneration} from '+JSON.stringify(helper)+';withLifecycleLock('+JSON.stringify(root)+',()=>leaseGeneration('+JSON.stringify(path.join(root,old))+'));console.log("leased");setInterval(()=>{},1000)'
     const child=spawn(process.execPath,['--input-type=module','-e',script],{stdio:['ignore','pipe','pipe']})
     try{

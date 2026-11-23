@@ -21,7 +21,7 @@ import {
 } from '../lib/shells.js'
 import { BASH_OUTPUT_SCHEMA } from '../lib/shells/tool.js'
 import { BASH_ARGUMENT_ERROR_CODE, BashArgumentError, isBashArgumentError } from '../lib/shells/argument-error.js'
-import { bashRefusalValue, sessionWorkdir } from '../lib/session-shells.js'
+import { bashRefusalValue, sessionWorkdir } from '../lib/shells/session-shells.js'
 import { assert, report, test, withTempDir } from './lib/harness.mjs'
 import { fakeSubprocess, makeExecutable } from './lib/shells-fixtures.mjs'
 

@@ -10,7 +10,7 @@
  */
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { SessionStore } from '@deepseek-ai/dsh-session'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 import { prepareStep } from './lib/executor.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, TEST_HOME } from './lib/harness.mjs'

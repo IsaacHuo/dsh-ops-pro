@@ -19,7 +19,7 @@
  * is a deployment decision rather than a pin, so `allowSystemShellFallback` (the
  * Windows gate on reaching outside the pinned payload) deliberately does not
  * apply there: on POSIX the system bash IS the rung. Confined modes still
- * require a host sandbox, and `lib/session-shells.js` refuses the call rather
+ * require a host sandbox, and `lib/shells/session-shells.js` refuses the call rather
  * than executing unrestricted when one is absent.
  *
  * @module dsh-ops/shells/pins

@@ -18,7 +18,7 @@ const UNRECOVERABLE_BASH_STAGES = new Set(['bash-runtime-missing', 'bash-ipc-mis
  * retrying the same call cannot repair (#962). Only Bash preparation stages without a
  * retry remedy qualify: a staging interruption is repaired by the next call, and lifting
  * the shadow for it would flap between two tool sets. The stage is the stable second
- * segment of the model-facing EXECUTOR_UNAVAILABLE text (src/bash-runtime-failure.ts);
+ * segment of the model-facing EXECUTOR_UNAVAILABLE text (src/shells/bash-runtime-failure.ts);
  * bash-runtime-incompatible keeps its own complete message without that prefix, so its
  * stage name inside the message is its identifier. PTC Outcome failures carry a structured
  * error object, never this text, so they never classify.

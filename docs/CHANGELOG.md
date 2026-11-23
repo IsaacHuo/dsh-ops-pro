@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- The Windows shell stack modules move into `src/shells/` (`bash-ipc.ts`, `bash-ipc-lifecycle.ts`, `bash-pe.ts`, `bash-runtime-failure.ts`, `session-shells.ts`) and the publication rename retry into `src/fs/rename-retry.ts`; built paths follow under `lib/shells/` and `lib/fs/`.
+
 - **Breaking:** the `dsh-ops` command alias is removed; the package installs only the `dsh-ops-pro` command, and every diagnostic and doc names `dsh-ops-pro <command>`. Log prefixes (`dsh-ops:`) and the state directory `<DSH_HOME>/dsh-ops/` are unchanged.
 
 - Configuration modules live under `src/config/` (`resolve.ts`, `updates.ts`, `error.ts`); the built paths move from `lib/config.js`, `lib/config-updates.js` and `lib/config-error.js` to `lib/config/`.

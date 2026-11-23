@@ -8,7 +8,7 @@ import { PACKAGE_ROOT, dshHome } from '../paths.js'
 import { provisionedShellStore } from './pins.js'
 import { registryGitBash, type RegistryQuery } from './git-registry.js'
 import { executableNames, isSpawnableFile, isWslBashLauncher, wellKnownCandidates } from './paths.js'
-import { restrictedCompatibility } from '../bash-ipc.js'
+import { restrictedCompatibility } from './bash-ipc.js'
 
 export interface BashRuntimeOptions { env?: NodeJS.ProcessEnv; platform?: NodeJS.Platform; arch?: string; registry?: RegistryQuery }
 export interface ManagedBashVersion { directory: string; version: string; owned: boolean; sha256?: string; backend?: 'niubash' }

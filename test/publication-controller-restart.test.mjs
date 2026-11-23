@@ -7,7 +7,7 @@
  */
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { SessionStore } from '@deepseek-ai/dsh-session'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 import { mountReplacements } from '../lib/publication/replacements.js'
 import * as hidingModule from '../lib/official-tools/hiding.js'
 import { legacyComponent } from './lib/legacy-component.mjs'

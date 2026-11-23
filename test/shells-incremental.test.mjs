@@ -1,7 +1,7 @@
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { assert, test, report } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 const flush = () => new Promise(resolve => setImmediate(resolve))
 
 async function setup() {

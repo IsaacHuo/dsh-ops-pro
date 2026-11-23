@@ -1,6 +1,6 @@
 /** Actual publication controllers, real scoped registry, one held host refusal. */
 import { createScope } from '@deepseek-ai/dsh-scope'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 import { mountNative } from '../lib/publication/native.js'
 import { mountPtc } from '../lib/publication/ptc.js'
 import { mountDiscovery } from '../lib/discovery/controller.js'

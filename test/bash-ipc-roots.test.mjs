@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { pinnedBashExecutable } from '../lib/shells/pinned.js'
-import { markManaged } from '../lib/bash-ipc-lifecycle.js'
-import { confinedBash } from '../lib/bash-ipc.js'
+import { markManaged } from '../lib/shells/bash-ipc-lifecycle.js'
+import { confinedBash } from '../lib/shells/bash-ipc.js'
 import { independentBashRoots } from './lib/bash-ipc-processes.mjs'
 import { assert, test, report, ownWindowsFixture, withTempDir } from './lib/harness.mjs'
 

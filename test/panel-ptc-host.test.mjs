@@ -10,7 +10,7 @@ import NodePtc from "@deepseek-ai/dsh-ptc-runtime-node";
 import LocalJobs from "@deepseek-ai/dsh-jobs-local";
 import { BASH_TOOL } from "../lib/policy.js";
 import { startBashJob } from "../lib/shells/jobs.js";
-import { mountSessionBash } from "../lib/session-shells.js";
+import { mountSessionBash } from "../lib/shells/session-shells.js";
 import { resolveShells } from "../lib/shells.js";
 import { createPanelCollector, parseAppendLog, resolvePanelConfig } from "../lib/panel/collect.js";
 import { bootHost, shutdown } from "./lib/host.mjs";

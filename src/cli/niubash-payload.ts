@@ -1,7 +1,7 @@
 /** Frozen complete Niubash distribution. Receipts describe bytes; only this manifest authorizes them. */
 import { NIUBASH_FACES, NIUBASH_WINUXCMD, niubashFacePath } from '../niubash/faces.js'
 import { unsealDirectorySync } from '../niubash/seal.js'
-import { renameWithRetry } from '../rename-retry.js'
+import { renameWithRetry } from '../fs/rename-retry.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'

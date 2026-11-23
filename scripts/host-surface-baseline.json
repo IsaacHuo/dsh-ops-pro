@@ -169,22 +169,6 @@
   "rust.ts": {
     "event:data": 2
   },
-  "session-shells.ts": {
-    "event:agent/created": 1,
-    "event:agent/disposed": 1,
-    "event:session/event": 1,
-    "inject:jobs": 1,
-    "inject:sandbox": 1,
-    "inject:sandboxPolicy": 1,
-    "inject:subprocess": 1,
-    "inject:tools": 1,
-    "service:agents": 1,
-    "service:jobs": 2,
-    "service:sandbox": 1,
-    "service:sandboxPolicy": 1,
-    "service:subprocess": 1,
-    "service:tools": 1
-  },
   "settings/runtime-host.ts": {
     "inject:subprocess": 1,
     "inject:typert": 1,
@@ -208,6 +192,22 @@
     "service:sandbox": 1,
     "service:sandboxPolicy": 1,
     "service:subprocess": 1
+  },
+  "shells/session-shells.ts": {
+    "event:agent/created": 1,
+    "event:agent/disposed": 1,
+    "event:session/event": 1,
+    "inject:jobs": 1,
+    "inject:sandbox": 1,
+    "inject:sandboxPolicy": 1,
+    "inject:subprocess": 1,
+    "inject:tools": 1,
+    "service:agents": 1,
+    "service:jobs": 2,
+    "service:sandbox": 1,
+    "service:sandboxPolicy": 1,
+    "service:subprocess": 1,
+    "service:tools": 1
   },
   "shells/tool.ts": {
     "service:subprocess": 2
