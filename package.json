@@ -202,6 +202,7 @@
     "validate:manifest": "node scripts/validate-manifest.mjs",
     "check:size": "node scripts/check-file-size.mjs",
     "check:host": "node scripts/check-host-surface.mjs",
+    "env:probe": "node scripts/env-probe.mjs",
     "test": "node test/run.mjs",
     "verify:release": "npm run verify && node bin/check-release.mjs",
     "verify": "node scripts/build.mjs && node scripts/validate-manifest.mjs && node test/run.mjs",

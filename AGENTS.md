@@ -58,6 +58,7 @@ npm run build:bash-ipc                                   # Windows only
 npm run verify                                           # build + manifest check + all suites
 node test/run.mjs <filter>                               # only suites whose file name contains <filter>
 npm run check:size                                       # the 1000-line gate
+npm run env:probe                                        # name missing local prerequisites before blaming a suite
 node scripts/verify-gate.mjs --skip-install              # the full release gate, exactly what CI runs
 ```
 

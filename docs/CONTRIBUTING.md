@@ -307,6 +307,10 @@ Windows round-trip fixture is unavailable and does not count it as passing.
 
 This fork absorbs work from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops). `npm run sync:upstream` fetches the `upstream` remote and lists upstream commits and open pull requests that `pro/next` has not absorbed yet. Pick with `git cherry-pick -x` so the trailer records the source; record a pull request you decline or rewrite in `.github/upstream-decisions.json` with the reason.
 
+## Local environment
+
+`npm run env:probe` lists the prerequisites the suites need on this machine — staged worker, `cargo`, and on Windows the Bash IPC payload, the Niubash archive (`DSH_OPS_NIUBASH_ARCHIVE`) and `DSH_OPS_TEST_BASH` — and names the suites each one decides. An emptied `runtime/win32-x64/bash-ipc/` after a successful `build:bash-ipc` means endpoint security removed the DLLs; treat CI as the reference for those suites. Run it before calling a local failure flaky.
+
 ## Host boundary
 
 `src/adapter/dsh/` is the only directory free to subscribe to host events, look up or inject host services, or read cordis internals. Everywhere else the touch points are recorded per file in `scripts/host-surface-baseline.json`, and `npm run check:host` (CI `source-size` job) fails when a file gains one or drops one without lowering the baseline, so the count only goes down. Route new host access through the adapter; if a direct touch point is deliberate, run `node scripts/check-host-surface.mjs --update` and say why in the PR. `node test/run.mjs host-surface` also checks that every event and service name `src/` uses still appears in the installed `@deepseek-ai` packages; names the plugin owns or treats as optional are listed with their reason in `NON_HOST_NAMES` (`scripts/lib/host-surface.mjs`).
