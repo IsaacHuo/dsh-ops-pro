@@ -26,7 +26,7 @@ export function useEditor<T>(form: ConfigPageForm | undefined, read: (value: Rec
   useEffect(() => {
     if (!dirty) { setDraft(read(form?.state.value ?? {})); setBaseline(form?.state.value ?? {}); setRevision(form?.state.revision) }
   }, [form?.state.revision, form?.state.status, read, dirty])
-  const edit = (value: T) => { setDraft(value); setDirty(true); setNotice(undefined) }
+  const edit = (value: T, changed: boolean) => { setDraft(value); setDirty(changed); setNotice(undefined) }
   const reset = () => {
     setDraft(read(form?.state.value ?? {})); setBaseline(form?.state.value ?? {})
     setRevision(form?.state.revision); setDirty(false); setNotice(undefined)

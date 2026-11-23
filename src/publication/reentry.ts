@@ -6,6 +6,18 @@ const REFUSAL = 'session append cannot reenter while another append is being pub
 const delays = [25, 100, 400, 1000] as const
 // Cordis FiberState.UNLOADING rejects effects even while uid is retained for restart.
 const UNLOADING: Context['fiber']['state'] = 5
+/**
+ * Whether a publication owner can still apply effects.
+ *
+ * A restart keeps the fiber identity but enters Cordis UNLOADING, which refuses
+ * new effects: the same liveness rule must gate every registration attempt and
+ * every cached controller entry, or a cancelled lease is mistaken for a shadow.
+ * @param ctx - the owner context of a planned registration.
+ * @returns whether the fiber can still accept effects.
+ */
+export function publicationOwnerLive(ctx: Context): boolean {
+  return ctx.fiber.uid !== null && ctx.fiber.state !== UNLOADING
+}
 export function publicationError(error: unknown): string {
   try {
     if (error !== null && typeof error === 'object' && 'message' in error) return String(error.message)
@@ -14,13 +26,17 @@ export function publicationError(error: unknown): string {
 }
 export function appendReentry(error: unknown): boolean { return publicationError(error).includes(REFUSAL) }
 
+/** Admission outcome. Later withdrawal leaves the original readiness verdict intact. */
+export type PublicationLeaseState = 'pending' | 'settled' | 'cancelled' | 'failed'
+
 interface Work {
   wanted: boolean
   active(): boolean
   apply(): () => void
   undo?: () => void
   running?: boolean
-  failed?: boolean
+  state: PublicationLeaseState
+  reason?: unknown
   ready: Promise<void>
   resolve(): void
   reject(error: unknown): void
@@ -28,7 +44,16 @@ interface Work {
 interface Queue { retain(ctx: Context): void; submit(work: Work, immediate: boolean): void; pending: Set<Work> }
 const queues = new WeakMap<object, Queue>()
 const registrations = new WeakMap<() => void, Work>()
-const cancel = (work: Work, reason: string): void => { work.wanted = false; work.reject(new Error(reason)) }
+function rejectAdmission(work: Work, state: 'cancelled' | 'failed', error: unknown): void {
+  if (work.state !== 'pending') return
+  work.state = state
+  work.reason = error
+  work.reject(error)
+}
+const cancel = (work: Work, reason: string): void => {
+  work.wanted = false
+  rejectAdmission(work, 'cancelled', new Error(reason))
+}
 function inactiveEffect(error: unknown): boolean {
   try { return error !== null && typeof error === 'object' && 'code' in error && error.code === 'INACTIVE_EFFECT' }
   catch { return false }
@@ -63,14 +88,12 @@ function queueFor(ctx: Context): Queue {
             else {
               work.undo = work.apply()
               if (!work.active()) cancel(work, 'Publication owner inactive during registration')
-              else if (work.wanted) work.resolve()
-              else work.reject(new Error('Publication cancelled during registration'))
+              else if (work.wanted) { work.state = 'settled'; work.resolve() }
+              else cancel(work, 'Publication cancelled during registration')
             }
           }
           if (!work.wanted && work.undo) { work.undo(); work.undo = undefined }
           pending.delete(work)
-          // A synchronous tools/change observer can revoke during registration.
-          if (!work.wanted && work.undo) pending.add(work)
         } catch (error) {
           if (!work.active() && !work.undo && inactiveEffect(error)) {
             cancel(work, 'Publication owner inactive during registration')
@@ -89,8 +112,7 @@ function queueFor(ctx: Context): Queue {
             return
           }
           pending.delete(work)
-          work.failed = true
-          work.reject(error)
+          rejectAdmission(work, 'failed', error)
           // Configuration/readiness errors never enter the refusal retry loop.
           if (work === propagate) throw error
           warn(`dsh-ops: deferred registry publication failed: ${publicationError(error)}`)
@@ -112,11 +134,14 @@ function queueFor(ctx: Context): Queue {
         if (!rootOwned && !owners.size) teardown()
       }, 'dsh-ops: registry refusal queue')
       // A new live fallback owner inherits the same queue and its owed withdrawals.
-      if (owner.fiber.uid !== null && owner.fiber.state !== UNLOADING) stopped = false
+      if (publicationOwnerLive(owner)) stopped = false
     } catch (error) { owners.delete(owner.fiber); throw error }
   }, submit(work, immediate) {
     if (stopped && work.wanted) cancel(work, 'Publication root disposed')
-    if (!work.wanted && !work.undo && !work.running) { pending.delete(work); work.reject(new Error('Publication cancelled before registration')) }
+    if (!work.wanted && !work.undo && !work.running) {
+      pending.delete(work)
+      cancel(work, 'Publication cancelled before registration')
+    }
     else pending.add(work)
     if (!pending.size && timer) { clearTimeout(timer); timer = undefined; level = 0 }
     if (immediate) flush(work)
@@ -158,7 +183,7 @@ export function publicationRegistration(ctx: Context, apply: () => (() => void))
   // Synchronous grant changes cannot await publication. Lifecycle callers can
   // still await this original promise and roll back a later permanent failure.
   void ready.catch(() => {})
-  const work: Work = { wanted: true, active: () => ctx.fiber.uid !== null && ctx.fiber.state !== UNLOADING, apply, ready, resolve, reject }
+  const work: Work = { wanted: true, state: 'pending', active: () => publicationOwnerLive(ctx), apply, ready, resolve, reject }
   let lifetime: (() => void) | undefined
   const dispose = () => { lifetime?.() }
   registrations.set(dispose, work)
@@ -172,18 +197,48 @@ export function publicationRegistration(ctx: Context, apply: () => (() => void))
       cancel(work, 'Publication owner inactive before registration')
       return dispose
     }
-    work.failed = true
-    work.reject(error)
+    rejectAdmission(work, 'failed', error)
     throw error
   }
   try { queue.submit(work, true) } catch (error) { dispose(); throw error }
   return dispose
 }
 
-/** Immediate verification must wait for an owed registry write to settle. */
-export function publicationPending(dispose: () => void): boolean {
+/**
+ * Verdict of one tracked registration handle.
+ *
+ * Cancellation and failure both look like "not pending" to a boolean, but only
+ * `settled` means the host accepted the registration: a cancelled or failed lease
+ * never became visible, so a controller must not cache it as a live entity.
+ * @param dispose - the handle returned by {@link publicationRegistration}.
+ * @returns pending before admission, otherwise the recorded outcome.
+ */
+export function publicationLeaseState(dispose: () => void): PublicationLeaseState {
+  return registrations.get(dispose)?.state ?? 'failed'
+}
+
+/**
+ * Why a cancelled or failed lease never became live.
+ * @param dispose - the handle returned by {@link publicationRegistration}.
+ * @returns the recorded rejection error, or a diagnostic for a missing handle.
+ */
+export function publicationLeaseError(dispose: () => void): unknown {
   const work = registrations.get(dispose)
-  return work !== undefined && work.wanted && !work.failed && work.undo === undefined
+  if (work === undefined) return new Error('Publication lease is not tracked')
+  return work.state === 'failed' || work.state === 'cancelled' ? work.reason : new Error('Publication lease has no recorded rejection')
+}
+
+/**
+ * Immediate verification must wait for an owed registry write to settle.
+ *
+ * Only a still-pending registration is reported. Cancelled and failed leases are
+ * not pending either, so callers that must distinguish them use
+ * {@link publicationLeaseState} rather than treating `false` as "landed".
+ * @param dispose - the handle returned by {@link publicationRegistration}.
+ * @returns whether the host has not yet accepted this registration.
+ */
+export function publicationPending(dispose: () => void): boolean {
+  return publicationLeaseState(dispose) === 'pending'
 }
 
 export function publicationReady(dispose: () => void): Promise<void> {

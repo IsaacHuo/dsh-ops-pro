@@ -15,7 +15,7 @@ const Switch = ({ checked, label, disabled, onChange }) => h('button', {
   type: 'button', role: 'switch', 'aria-label': label, 'aria-checked': String(checked), disabled,
   onClick: () => onChange(!checked),
 })
-const ready = (value, revision = 'v1') => ({ status: 'ready', writable: true, value, base: {}, user: {}, revision })
+const ready = (value, revision = 1) => ({ status: 'ready', writable: true, value, base: {}, user: {}, revision })
 const selectedPath = 'C:/draft/bash.exe'
 const modes = ['minimal', 'standard', 'ptc', 'ops-ptc', 'cordis']
 const pathOps = file => modes.map(mode => ({ op: 'set', path: [mode, 'bashPath'], value: file }))
@@ -27,7 +27,9 @@ async function mount(form, select = async request => ({ ok: true, value: {
   const container = document.createElement('div'); document.body.append(container)
   const root = createRoot(container)
   const executor = { api: { select }, snapshot: { git: ['C:/candidate/bash.exe'] }, busy: false, refresh() {} }
-  const render = (dictionary = en) => act(async () => root.render(h(RowForm, { form, t: translate(dictionary), Switch, executor })))
+  const render = (dictionary = en, pwsh7Installed) => act(async () => {
+    root.render(h(RowForm, { form, t: translate(dictionary), Switch, executor, pwsh7Installed }))
+  })
   await render()
   return { container, render, save: () => container.querySelector('button[type=submit]'),
     reset: () => container.querySelector('.ops-reset'), input: () => container.querySelector('input[type=text]'),
@@ -55,14 +57,14 @@ await test('executor-only drafts retain the original revision and write set thro
     await click(view.radio('git')); await type(view, selectedPath)
     assert.equal(view.input().value, selectedPath)
     assert.equal(view.save().disabled, false)
-    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' }, presets: { later: { bashPath: 'C:/later/bash.exe' } } }, 'v2')
+    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' }, presets: { later: { bashPath: 'C:/later/bash.exe' } } }, 2)
     await view.render()
     assert.equal(view.input().value, selectedPath, 'host refresh must not discard an executor-only draft')
     assert.equal(view.save().disabled, false)
     assert.deepEqual(calls, [], 'refresh does not write')
     await click(view.save())
     assert.deepEqual(selections, [{ source: 'git', path: selectedPath }])
-    assert.deepEqual(calls, [[pathOps(selectedPath), 'v1']], 'new host paths are not silently adopted into the draft write set')
+    assert.deepEqual(calls, [[pathOps(selectedPath), 1]], 'new host paths are not silently adopted into the draft write set')
     assert.equal(view.status(), en.rejected)
     assert.equal(view.input().value, selectedPath)
     assert.equal(view.save().disabled, false)
@@ -71,7 +73,7 @@ await test('executor-only drafts retain the original revision and write set thro
     assert.equal(view.status(), undefined)
     assert.equal(view.save().disabled, true)
     await click(view.switch()); await click(view.save())
-    assert.deepEqual(calls[1], [[switchOp], 'v2'], 'reset adopts the latest revision without rewriting executor paths')
+    assert.deepEqual(calls[1], [[switchOp], 2], 'reset adopts the latest revision without rewriting executor paths')
   } finally { await view.close() }
 })
 
@@ -81,12 +83,12 @@ await test('combined drafts keep both fields and clear only executor paths from 
   const view = await mount(form)
   try {
     await click(view.switch()); await click(view.radio('niubash'))
-    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' }, standard: { bashPath: 'C:/new/bash.exe' } }, 'v2')
+    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' }, standard: { bashPath: 'C:/new/bash.exe' } }, 2)
     await view.render()
     assert.equal(view.radio('niubash').checked, true)
     assert.equal(view.switch().getAttribute('aria-checked'), 'false')
     await click(view.save())
-    assert.deepEqual(calls, [[[switchOp, { op: 'unset', path: ['ptc', 'bashPath'] }], 'v1']])
+    assert.deepEqual(calls, [[[switchOp, { op: 'unset', path: ['ptc', 'bashPath'] }], 1]])
     assert.equal(view.status(), en.rejected)
   } finally { await view.close() }
 })
@@ -97,10 +99,10 @@ await test('switch-only drafts never adopt or write an executor changed by anoth
   const view = await mount(form, async request => { selections.push(request); throw new Error('Unexpected executor validation') })
   try {
     await click(view.switch())
-    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' } }, 'v2')
+    form.state = ready({ ptc: { bashPath: 'C:/other/bash.exe' } }, 2)
     await view.render(); await click(view.save())
     assert.equal(view.input().value, 'C:/saved/bash.exe')
-    assert.deepEqual(calls, [[[switchOp], 'v1']])
+    assert.deepEqual(calls, [[[switchOp], 1]])
     assert.deepEqual(selections, [])
   } finally { await view.close() }
 })
@@ -108,17 +110,17 @@ await test('switch-only drafts never adopt or write an executor changed by anoth
 await test('successful executor-only saves adopt the host-normalized path and next revision', async () => {
   const calls = [], canonicalPath = 'C:/canonical/bash.exe'
   const form = { state: ready({}), mutate: async (...args) => {
-    calls.push(args); form.state = ready(pathRow(canonicalPath), 'v2'); return true
+    calls.push(args); form.state = ready(pathRow(canonicalPath), 2); return true
   } }
   const view = await mount(form, async () => ({ ok: true, value: { clear: false, file: canonicalPath, detail: 'Validated.', restriction: '' } }))
   try {
     await click(view.radio('git')); await type(view, selectedPath); await click(view.save())
-    assert.deepEqual(calls, [[pathOps(canonicalPath), 'v1']])
+    assert.deepEqual(calls, [[pathOps(canonicalPath), 1]])
     assert.equal(view.input().value, canonicalPath)
     assert.equal(view.save().disabled, true)
     assert.equal(view.status(), en.saved)
     await click(view.switch()); await click(view.save())
-    assert.deepEqual(calls[1], [[switchOp], 'v2'])
+    assert.deepEqual(calls[1], [[switchOp], 2])
   } finally { await view.close() }
 })
 
@@ -127,15 +129,15 @@ await test('clean forms follow host revisions and candidate edits keep their rev
   const form = { state: ready({}), mutate: async (...args) => { calls.push(args); return false } }
   const view = await mount(form)
   try {
-    form.state = ready({ ptc: { bashPath: 'C:/host/bash.exe' } }, 'v2')
+    form.state = ready({ ptc: { bashPath: 'C:/host/bash.exe' } }, 2)
     await view.render()
     assert.equal(view.input().value, 'C:/host/bash.exe')
     assert.equal(view.save().disabled, true)
     await click(view.container.querySelector('.ops-candidate'))
-    form.state = ready({}, 'v3'); await view.render()
+    form.state = ready({}, 3); await view.render()
     assert.equal(view.input().value, 'C:/candidate/bash.exe')
     await click(view.save())
-    assert.deepEqual(calls, [[pathOps('C:/candidate/bash.exe'), 'v2']])
+    assert.deepEqual(calls, [[pathOps('C:/candidate/bash.exe'), 2]])
   } finally { await view.close() }
 })
 
@@ -173,6 +175,93 @@ await test('in-flight save completion uses the current language while raw host e
     assert.equal(writes, 2)
     await click(view.reset())
     assert.equal(view.status(), undefined)
+  } finally { await view.close() }
+})
+
+await test('returning the executor to its original value lets the clean form follow the host', async () => {
+  const form = { state: ready({}), mutate: async () => { throw new Error('Unexpected write') } }
+  const view = await mount(form)
+  try {
+    await click(view.radio('git'))
+    await type(view, selectedPath)
+    await click(view.radio('niubash'))
+    assert.equal(view.save().disabled, true)
+    form.state = ready(pathRow('C:/new/bash.exe'), 2)
+    await view.render()
+    assert.equal(view.input().value, 'C:/new/bash.exe')
+  } finally { await view.close() }
+})
+
+await test('a late companion detection never writes an untouched switch in an executor draft', async () => {
+  const writes = []
+  const form = { state: ready({}), mutate: async (...args) => { writes.push(args); return false } }
+  const view = await mount(form)
+  try {
+    await click(view.radio('git'))
+    await type(view, selectedPath)
+    await view.render(en, true)
+    await click(view.save())
+    assert.deepEqual(writes, [[pathOps(selectedPath), 1]])
+  } finally { await view.close() }
+})
+
+await test('disclosure-only drafts keep their revision across host refresh and reset to the latest tier', async () => {
+  const calls = []
+  const form = { state: ready({}), mutate: async (...args) => { calls.push(args); return false } }
+  const view = await mount(form)
+  const full = () => view.container.querySelectorAll('input[name=ops-disclosure]')[1]
+  try {
+    await click(full())
+    form.state = ready({ ptc: { disclosurePolicy: 'full' } }, 2)
+    await view.render(zh)
+    assert.equal(full().checked, true, 'host refresh retains the chosen tier')
+    await click(view.save())
+    assert.deepEqual(calls, [[[
+      { op: 'set', path: ['ptc', 'disclosurePolicy'], value: 'full' },
+      { op: 'set', path: ['ops-ptc', 'disclosurePolicy'], value: 'full' },
+    ], 1]])
+    assert.equal(view.status(), zh.rejected)
+    await click(view.reset())
+    assert.equal(full().checked, false, 'reset adopts the latest mixed tier')
+    assert.equal(view.save().disabled, true)
+    await view.render(en)
+    await click(view.switch()); await click(view.save())
+    assert.deepEqual(calls[1], [[switchOp], 2])
+  } finally { await view.close() }
+})
+
+await test('executor drafts do not adopt or overwrite a concurrently changed disclosure tier', async () => {
+  const calls = []
+  const form = { state: ready({}), mutate: async (...args) => { calls.push(args); return false } }
+  const view = await mount(form)
+  try {
+    await click(view.radio('git')); await type(view, selectedPath)
+    form.state = ready({ ptc: { disclosurePolicy: 'full' }, 'ops-ptc': { disclosurePolicy: 'full' } }, 2)
+    await view.render()
+    assert.equal(view.container.querySelector('input[name=ops-disclosure]').checked, true)
+    await click(view.save())
+    assert.deepEqual(calls, [[pathOps(selectedPath), 1]], 'executor-only save must not write disclosure')
+    await click(view.reset())
+    assert.equal(view.container.querySelectorAll('input[name=ops-disclosure]')[1].checked, true)
+    assert.equal(view.save().disabled, true)
+  } finally { await view.close() }
+})
+
+await test('executor validation locks every draft control until the reviewed values are saved', async () => {
+  let finish
+  const writes = []
+  const form = { state: ready({}), mutate: async (...args) => { writes.push(args); return true } }
+  const view = await mount(form, () => new Promise(resolve => { finish = resolve }))
+  try {
+    await click(view.radio('git'))
+    await type(view, selectedPath)
+    await click(view.save())
+    assert.equal(view.switch().disabled, true)
+    assert.ok([...view.container.querySelectorAll('[role=switch]')].every(button => button.disabled))
+    await click(view.switch())
+    await act(async () => finish({ ok: true, value: { clear: false, file: selectedPath, detail: 'Valid', restriction: '' } }))
+    assert.deepEqual(writes, [[pathOps(selectedPath), 1]])
+    assert.equal(view.switch().disabled, false)
   } finally { await view.close() }
 })
 

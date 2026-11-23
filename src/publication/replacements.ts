@@ -2,7 +2,7 @@
 import type { Agent, Context, ToolActivationContext, ToolDefinition } from '../adapter/dsh/types.js'
 import type {} from '../adapter/dsh/types.js'
 import { onToolChange, withToolChange } from './changes.js'
-import { publicationError, publicationPending, publicationRegistration } from './reentry.js'
+import { publicationError, publicationLeaseState, publicationOwnerLive, publicationRegistration } from './reentry.js'
 import { publicationAdmission } from './registrar.js'
 import { loadScopes } from '../adapter/dsh/host.js'
 import { RAW_OFFICIAL_REPLACEMENTS } from '../capabilities/replacements.js'
@@ -122,17 +122,15 @@ export function mountReplacements(root: Context, publication: ReplacementPublica
       try { if (entry) lift(agent, entry) } catch (error) { warn(agent, error) }
     }
     const isCurrent = (agent: Agent, entry: Entry): boolean => !stopped && !inactive.has(agent)
-      && entries.get(agent) === entry && agent.ctx.fiber.uid !== null
+      && entries.get(agent) === entry && publicationOwnerLive(agent.ctx)
     const refresh = (agent: Agent, action: () => void): void => {
       try {
-        agent.ctx.fiber.assertActive()
-        action()
-        // Registration can synchronously dispose its own scope without throwing.
-        if (agent.ctx.fiber.uid === null) retire(agent)
+        if (publicationOwnerLive(agent.ctx)) action()
       } catch (error) {
-        if (agent.ctx.fiber.uid === null) retire(agent)
-        else warn(agent, error)
+        if (publicationOwnerLive(agent.ctx)) warn(agent, error)
       }
+      // A scoped registry write can synchronously dispose its owner.
+      if (agent.ctx.fiber.uid === null) retire(agent)
     }
     /** Skip this controller's ancestor shadows and inspect the actual inherited official source. */
     const sourceFor = (agent: Agent, name: string): ToolDefinition | undefined => {
@@ -155,7 +153,8 @@ export function mountReplacements(root: Context, publication: ReplacementPublica
           // A same-scope foreign registration cannot be shadowed; never replace its policy.
           const canShadow = current !== undefined && tools.get(official, entry.probe) !== undefined
             && (sources.has(current) || current === source)
-          if (old && old.source === source && canShadow) continue
+          if (old && old.source === source && canShadow
+            && (current === old.definition || publicationLeaseState(old.dispose) === 'pending')) continue
           if (old) { old.dispose(); entry.shadows.delete(official) }
           if (!source || !canShadow) continue
           const definition = { ...source }
@@ -203,7 +202,11 @@ export function mountReplacements(root: Context, publication: ReplacementPublica
             }
             return unregister
           })
-          if (!isCurrent(agent, entry)) { dispose(); return }
+          const lease = publicationLeaseState(dispose)
+          // Never cache a lease the host never admitted: a cancelled registration
+          // (owner unloading) or a failed one would shadow nothing while the
+          // controller believed the official tool was replaced.
+          if (!isCurrent(agent, entry) || lease === 'cancelled' || lease === 'failed') { dispose(); return }
           entry.shadows.set(official, { source, definition, dispose })
         }
       })
@@ -308,7 +311,17 @@ export function mountReplacements(root: Context, publication: ReplacementPublica
           withToolChange([agent], () => {
             for (const name of targets.keys()) {
               const shadow = entry.shadows.get(name)
-              if (shadow && publicationPending(shadow.dispose)) continue
+              const lease = shadow === undefined ? undefined : publicationLeaseState(shadow.dispose)
+              // A deferred registration is not visible yet: wait for its own notification.
+              if (lease === 'pending') continue
+              // A cancelled or failed lease never became live: drop the cached ghost
+              // so the apply below registers again instead of trusting it.
+              if (shadow && lease !== 'settled') {
+                shadow.dispose()
+                entry.shadows.delete(name)
+                changed = true
+                continue
+              }
               const source = sourceFor(agent, name)
               if (!shadow) { if (source && tools.get(name, agent) === source) changed = true; continue }
               if (tools.get(name, entry.probe) !== shadow.definition || source !== shadow.source) {
@@ -328,8 +341,7 @@ export function mountReplacements(root: Context, publication: ReplacementPublica
     ctx.effect(() => () => {
       stopped = true
       if (scheduled !== undefined) clearImmediate(scheduled)
-      for (const [agent, entry] of entries) lift(agent, entry)
-      entries.clear()
+      for (const agent of entries.keys()) retire(agent)
     }, `dsh-ops: ${mode} replacements`)
     reconcile()
   })

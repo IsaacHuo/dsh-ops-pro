@@ -10,8 +10,9 @@ const probes = new WeakSet<AssembleContext>()
  * probe. */
 const ambient = new AsyncLocalStorage<number>()
 export function isPresentationProbe(context: AssembleContext): boolean { return probes.has(context) }
-export async function inspectPresentation(prompt: Pick<SystemPrompt, 'assemble'>, agent: Agent, signal?: AbortSignal): Promise<PromptAssembly> {
-  const context: AssembleContext = { scope: agent, agent, signal }
+export async function inspectPresentation(prompt: Pick<SystemPrompt, 'assemble'>, agent: Agent, signal?: AbortSignal,
+  modelSelection?: ToolActivationContext['modelSelection']): Promise<PromptAssembly> {
+  const context: AssembleContext = { scope: agent, agent, signal, ...(modelSelection === undefined ? {} : { modelSelection }) }
   probes.add(context)
   try {
     return await ambient.run((ambient.getStore() ?? 0) + 1, () => prompt.assemble(context))
@@ -23,7 +24,7 @@ const activationPresentations = new WeakMap<ToolActivationContext, Promise<Promp
 export async function activationIsPtc(prompt: Pick<SystemPrompt, 'assemble'>, context: ToolActivationContext): Promise<boolean> {
   let pending = activationPresentations.get(context)
   if (!pending) {
-    pending = inspectPresentation(prompt, context.agent, context.signal)
+    pending = inspectPresentation(prompt, context.agent, context.signal, context.modelSelection)
     activationPresentations.set(context, pending)
   }
   const assembly = await pending

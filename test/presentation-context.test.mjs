@@ -2,6 +2,7 @@
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { activationIsPtc, inspectPresentation, isNativePresentation, isPresentationProbe } from '../lib/publication/presentation.js'
+import { mountPtc } from '../lib/publication/ptc.js'
 import { selectExecutor } from './lib/executor.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
@@ -14,7 +15,7 @@ async function fixture(cwd, mode = 'native') {
     agent.ctx = createScope(inner, agent).ctx
     selectExecutor(agent.ctx, mode)
   } })
-  for (const name of ['model', 'provider', 'cwd']) prompt.variable(name, context => context.agent?.options[name])
+  for (const name of ['model', 'provider', 'cwd']) prompt.variable(name, context => context.modelSelection?.[name] ?? context.agent?.options[name])
   agent.ctx.get('systemPrompt').section({ name: 'deployment:persona-prefix', order: 0, text: '{{model}} / {{provider}} / {{cwd}}' })
   return { ctx, prompt, agent }
 }
@@ -35,28 +36,52 @@ await test('inspection resolves agent variables and preserves probe identity and
     assert.equal(observed.agent, agent)
     assert.equal(observed.scope, agent)
     assert.equal(observed.signal, signal)
+    assert.equal(Object.hasOwn(observed, 'modelSelection'), false)
     assert.equal(isPresentationProbe(observed), false, 'the completed probe loses its exemption')
   } finally { await shutdown(ctx) }
 }))
 
-for (const mode of ['native', 'ptc']) await test(`${mode} detection supports persona interpolation during assembly`, () => withTempDir('presentation-mode', async cwd => {
+for (const mode of ['native', 'ptc']) await test(`${mode} detects presentation with the actual activation model selection`, () => withTempDir('presentation-mode', async cwd => {
   const { ctx, prompt, agent } = await fixture(cwd, mode)
   try {
     let probes = 0
+    const modelSelection = { model: 'selected-model', provider: 'selected-provider' }
     ctx.on('system-prompt/assemble', async (assembly, context, next) => {
       if (isPresentationProbe(context)) {
         probes += 1
-        assert.ok(renderPrompt(assembly).includes('probe-model / probe-provider'))
+        const selection = probes === 1 ? undefined : modelSelection
+        assert.equal(context.modelSelection, selection)
+        assert.ok(renderPrompt(assembly).includes(selection ? 'selected-model / selected-provider' : 'probe-model / probe-provider'))
         assert.equal(assembly.variables.cwd, cwd)
       }
       return next()
     })
     const signal = new AbortController().signal
     assert.equal(await isNativePresentation(prompt, agent, signal), mode === 'native')
-    const activation = { agent, signal }
+    const activation = { agent, signal, modelSelection }
     assert.equal(await activationIsPtc(prompt, activation), mode === 'ptc')
     assert.equal(await activationIsPtc(prompt, activation), mode === 'ptc')
     assert.equal(probes, 2, 'one Native probe and one cached activation probe')
+  } finally { await shutdown(ctx) }
+}))
+
+await test('the PTC replacement controller and its SDK use the same activation selection', () => withTempDir('publisher-model', async cwd => {
+  const { ctx, prompt, agent } = await fixture(cwd, 'ptc')
+  try {
+    ctx.provide('sandboxPolicy', { resolve: () => ({ mode: 'read-only', workspaceRoot: cwd }) })
+    ctx.provide('subprocess', { spawn() { throw new Error('a presentation probe must not spawn a worker') } })
+    let publisher
+    await ctx.plugin({ apply(inner) { publisher = mountPtc(inner, { binaryPath: process.execPath, required: true }) } })
+    const selections = []
+    ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
+      if (isPresentationProbe(context)) selections.push(context.modelSelection)
+      return next()
+    })
+    const modelSelection = { provider: 'selected-provider', model: 'selected-model' }
+    const activation = { agent, signal: new AbortController().signal, modelSelection }
+    assert.equal(await publisher.isPtc(activation), true)
+    assert.equal(await activationIsPtc(prompt, activation), true)
+    assert.deepEqual(selections, [modelSelection])
   } finally { await shutdown(ctx) }
 }))
 

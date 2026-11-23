@@ -59,7 +59,12 @@ await test('disposed scopes are retired before a delayed agent/disposed notifica
   const [retiring, healthy] = agents
   await scopes[0].dispose()
   assert.throws(() => retiring.ctx.fiber.assertActive(), { code: 'INACTIVE_EFFECT' })
-  assert.doesNotThrow(replaceOfficial, 'a stale cached agent must not fail the unrelated registry mutation')
+  let applied = false
+  await ctx.plugin({ name: 'foreign-plugin-fixture', apply() {
+    replaceOfficial()
+    applied = true
+  } })
+  assert.equal(applied, true, 'a stale cached agent must not interrupt another plugin applying')
   await assertReplacement(ctx, tools, healthy)
   await tick()
   const before = warnings.length
