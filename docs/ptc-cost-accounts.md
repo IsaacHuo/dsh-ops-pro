@@ -57,7 +57,7 @@ history; its two byte sizes below are measured on the current guidance text.
 
 Loading `glob`/`grep`/`read_files` is the hand-computed example: between the
 steady and loaded snapshots every other section is byte-identical and the
-system delta equals the SDK-section delta exactly (+25,110 B), so the change
+system delta equals the SDK-section delta exactly (+13,339 B), so the change
 lands in system exactly once — the SDK subset is never counted twice. Two fresh
 groups running the same fixture and code must agree on every byte (sha-equal),
 and the same config repeated within a session must be byte-identical.

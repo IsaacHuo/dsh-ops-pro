@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- The host-registered PTC outcome schema renders each tool's data schema once instead of three times (completed and partial share one branch; failure data is an untyped subset), because the generated SDK has no shared type aliases. Measured with the cost ledger fixture: baseline SDK 13,614 → 11,112 B, after loading `glob`/`grep`/`read_files` 38,799 → 24,451 B (load delta 25,110 → 13,339 B). Host validation no longer checks the completed/partial coverage discriminant; the producer still guarantees it. The published `dsh-ops-pro/ptc-sdk` typings keep the fully discriminated envelope (`typedOutcomeSchema`) and are byte-identical.
+
 - OPS-PTC batching notices now judge a root `run_code` program by the calls it actually dispatched (nested calls recorded per root call id) instead of regex analysis of its text: a program that dispatched nothing is never accused, a shell bypass is read from the command that really ran, and the single-call notice needs two single-call programs in a row. The per-session cap of 3 notices (#1027), lost in the upstream 0.5.6 merge, is restored. `src/ptc/batching-guidance.ts` keeps only lesson rendering; the notice kernel lives in `src/ptc/batching-notices.ts`.
 
 - Source layout: the official-tool catalogue, configuration and hiding moved to `src/official-tools/` (`catalog`, `config`, `hiding`), and profile install and default reset to `src/profile/` (`install`, `default-reset`). Internal modules only; no published entry point changed. / 源码布局：官方工具目录、配置与隐藏逻辑移入 `src/official-tools/`（`catalog`、`config`、`hiding`），配置档安装与默认值重置移入 `src/profile/`（`install`、`default-reset`）。仅涉及内部模块，未改变任何公开入口。

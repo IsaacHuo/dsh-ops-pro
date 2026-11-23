@@ -89,15 +89,22 @@ await test('bounded continuation decoding never admits mutation or result-releas
   const cycle = {}; cycle.self = cycle
   assert.equal(continuationFor('diff', cycle, { nextOffset: 2 }), undefined)
 })
-await test('host schema validation and generated SDK enforce the discriminated envelope', () => {
-  const schema = outcomeSchema({ type: 'object', properties: { value: { type: 'integer' } }, required: ['value'], additionalProperties: false })
+await test('the envelope declares the data schema once and still enforces its required fields', () => {
+  const data = { type: 'object', properties: { value: { type: 'integer', description: 'DATA-MARK' } }, required: ['value'], additionalProperties: false }
+  const schema = outcomeSchema(data)
   assertSupportedJsonSchema(schema)
   const sdk = jsonSchemaToTs(schema)
-  assert.match(sdk, /status: "completed"/); assert.match(sdk, /continuation: string/)
+  assert.match(sdk, /status: "completed" \| "partial"/); assert.match(sdk, /continuation\?: string/)
+  assert.match(sdk, /Present when status is 'partial'/, 'the partial contract is documented on the field')
+  // The SDK has no shared aliases: a second copy of the data type is paid on every request.
+  assert.equal(sdk.split('DATA-MARK').length - 1, 1, 'the data schema is rendered exactly once')
   assert.doesNotMatch(sdk, /\bany\b|:\s*unknown\b/)
   assert.deepEqual(validateJsonSchemaValue(schema, { status: 'completed', data: { value: 2 } }), [])
-  for (const bad of [{ status: 'partial', data: { value: 2 } }, { status: 'completed', data: { value: 2 }, coverage: { scannedFiles: 0, matchedCount: 0, isComplete: false } }, { status: 'error' }]) {
-    assert.ok(validateJsonSchemaValue(schema, bad).length > 0)
+  assert.deepEqual(validateJsonSchemaValue(schema, { status: 'partial', data: { value: 2 }, continuation: 'c',
+    coverage: { scannedFiles: 1, matchedCount: 1, isComplete: false } }), [])
+  assert.deepEqual(validateJsonSchemaValue(schema, { status: 'error', error: { code: 'X', message: 'm', effectState: 'none', retry: 'never' }, data: {} }), [])
+  for (const bad of [{ status: 'completed', data: { value: 'two' } }, { status: 'completed' }, { status: 'error' }, { status: 'done', data: { value: 2 } }]) {
+    assert.ok(validateJsonSchemaValue(schema, bad).length > 0, JSON.stringify(bad))
   }
 })
 await test('partial pages recommend the same-path next page and a complete page recommends none', () => {
