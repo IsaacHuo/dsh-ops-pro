@@ -53,13 +53,17 @@ await test('the recorder groups calls by root and drains them on take', () => {
   assert.deepEqual(recorder.take('root-2', 'code'), { code: 'code', calls: [] }, 'clear drops every root')
 })
 
-await test('a program that dispatched nothing earns no category', () => {
-  for (const code of ['return 1', 'import fs from "node:fs"\nreturn 1', '// tools.ops_stat({ path: "a" })\nreturn 1']) {
+await test('a program that dispatched nothing earns only the module-I/O bypass', () => {
+  for (const code of ['return 1', '// tools.ops_stat({ path: "a" })\nreturn 1']) {
     assert.deepEqual(findingsOf(trace(code), true), NONE, code)
   }
+  // Reading files through node:fs needs no tool call, so it must not hide behind an empty trace.
+  assert.deepEqual(findingsOf(trace('const fs = await import("node:fs")\nreturn fs.readdirSync(".")'), true),
+    { plan: false, bypass: true, shape: false })
   const latch = createProgramLatch(() => LOADER), agent = {}
   assert.equal(latch.observe(agent, trace('return 1')), undefined)
   assert.equal(latch.stats(agent).total, 0, 'no category was spent')
+  assert.equal(latch.observe(agent, trace('import fs from "node:fs"\nreturn 1'))?.category, 'bypass')
 })
 
 await test('the plan finding reads only the first line of a program that dispatched', () => {

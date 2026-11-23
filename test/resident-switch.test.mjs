@@ -244,6 +244,9 @@ await test('a loader-less ops-ptc row teaches only what it publishes', () => wit
   } finally { await shutdown(ctx) }
 }))
 
+/** A bypass every platform can run: Bash is only published on Windows, and module I/O needs no tool. */
+const FS_BYPASS = 'const fs = await import("node:fs")\nreturn fs.readdirSync(".")'
+
 /** The replaced Step 3 section of a taught loader-less lesson, as plain text. */
 const step3Of = text => text.slice(text.indexOf('call what is published'), text.indexOf('Trajectory 1'))
 
@@ -264,7 +267,7 @@ await test('a read-only loader-less lesson and notice keep the mutating API out'
     commitGuidance(ctx, agent, guidanceOf(first))
     // The same surface narrows the bypass notice: no write API, the reader stays named.
     const result = await executeCall(ctx, { agent, toolSet: agent.prepared.toolSet, name: 'run_code',
-      arguments: { description: 'shape fixture', code: 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text' },
+      arguments: { description: 'shape fixture', code: FS_BYPASS },
       callId: 'readonly-lesson-' + ++sequence, signal: new AbortController().signal })
     assert.equal((result.additionalContexts ?? []).length, 0, 'the notice never rides the tool result')
     const notice = textsOf(guidanceOf(await drivePreStep(agent, 1)))
@@ -321,9 +324,9 @@ await test('the root run_code trigger answers on the next pre-step', () => withT
     const planNotice = await nextText()
     assert.match(planNotice, /did not open with a plan line/, 'the plan notice rides the next pre-step')
     assert.doesNotMatch(planNotice, /Promise\.all/, 'the plan notice stays about the comment')
-    // A shell listing is a bypass; resident file APIs are reachable without loading,
+    // Module file I/O is a bypass on every platform; resident file APIs are reachable without loading,
     // so the notice still names them even though this pool could not load them.
-    const bypass = await run('const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text')
+    const bypass = await run(FS_BYPASS)
     const bypassNotice = await nextText()
     assert.match(bypassNotice, /ops_inspect_local_file/, 'the notice names the resident file API')
     assert.doesNotMatch(bypassNotice, /ops_bash/, 'the shell it just accused is not offered as the fix')
@@ -341,7 +344,7 @@ await test('a read-only agent is never told to edit files through the notice', (
     // The policy is resolved per delivery, so a read-only session narrows the surface.
     agent.session.mode = 'read-only'
     const result = await executeCall(ctx, { agent, toolSet: agent.prepared.toolSet, name: 'run_code',
-      arguments: { description: 'shape fixture', code: 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r.stdout.text' },
+      arguments: { description: 'shape fixture', code: FS_BYPASS },
       callId: 'readonly-' + ++sequence, signal: new AbortController().signal })
     assert.equal((result.additionalContexts ?? []).length, 0)
     const text = textsOf(guidanceOf(await drivePreStep(agent, 1)))
