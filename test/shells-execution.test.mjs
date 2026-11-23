@@ -73,14 +73,17 @@ await test('the first stop cause wins when timeout and caller cancellation race'
     },
   } })
   const execution = definition.start({ command: 'true', timeoutMs: 1 }, { signal: caller.signal })
-  // Hold the loop until the race settles: a fixed-length timer lets Node exit with an
-  // unsettled await (exit 13) whenever preparation outlasts it under load.
+  // The deadline timer is unref'd; hold the loop until the race settles.
   const keepAlive = setInterval(() => {}, 60_000)
-  await timeout.promise
-  caller.abort(new Error('later cancellation'))
-  finished.resolve({ exitCode: null, signal: 'SIGTERM' })
-  const value = await execution.result()
-  clearInterval(keepAlive)
+  let value
+  try {
+    // A 1 ms budget may expire before spawn (preparation is checked against it) or after it
+    // (the spawned command sees the abort). Either way the timeout must win the later cancel.
+    await Promise.race([timeout.promise, execution.result()])
+    caller.abort(new Error('later cancellation'))
+    finished.resolve({ exitCode: null, signal: 'SIGTERM' })
+    value = await execution.result()
+  } finally { clearInterval(keepAlive) }
   assert.equal(value.timedOut, true)
   assert.equal(value.cancelled, undefined)
 })
