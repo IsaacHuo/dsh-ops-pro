@@ -226,7 +226,7 @@ catalogue, retry rules and positive/negative TypeScript contracts. Node declarat
   `test/lib/` layout.
 - **Tool names** always come from `publicToolName()` in `src/policy.ts`; never hand-write the `ops_`
   prefix.
-- **Config validation** lives in `src/config.ts`; an unknown key is an error that names the key.
+- **Config validation** lives in `src/config/resolve.ts`; an unknown key is an error that names the key.
   Defaults in `cordis.patch.yml` must match the defaults in code.
 - **Parsing and probing** happen synchronously in `apply`; `required: true` must refuse activation
   at load time.

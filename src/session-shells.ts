@@ -2,7 +2,7 @@
 import path from 'node:path'
 import type { Context, Fiber } from './adapter/dsh/types.js'
 import type { Agent } from './adapter/dsh/types.js'
-import type { ResolvedConfig } from './config.js'
+import type { ResolvedConfig } from './config/resolve.js'
 import type { ShellResolution } from './shells/paths.js'
 import type { HostShellDefinition, ShellJobs, ShellResult } from './shells/types.js'
 import { errorMessage } from './shells/types.js'

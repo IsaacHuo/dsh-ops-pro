@@ -1,7 +1,7 @@
 /** Optional Bash acquisition and lifecycle CLI; never edits a profile or ambient PATH. */
 import { commandProvisionShells } from './provision-shells.js'
 import { readRowConfig } from './report.js'
-import { resolveConfig } from '../config.js'
+import { resolveConfig } from '../config/resolve.js'
 import { resolveShells } from '../shells.js'
 import { bashEngine, gitBashCandidates, managedBashInventory, removeManagedBash, selectBashRuntime } from '../shells/manager.js'
 import { bashIpcReport, reclaimBashGenerations, recoverBashLifecycleLock } from '../bash-ipc.js'

@@ -6,7 +6,7 @@ import { parse } from 'yaml'
 import { spawnSync } from 'node:child_process'
 import { assert, test, report, withTempDir, waitFor, PACKAGE_ROOT } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
-import { DEFAULT_RESULT_CACHE, resolveConfig, resolveResultCacheConfig } from '../lib/config.js'
+import { DEFAULT_RESULT_CACHE, resolveConfig, resolveResultCacheConfig } from '../lib/config/resolve.js'
 import { resolveMergedConfig } from '../lib/settings/merged.js'
 import { runResultCacheGc, configureResultCacheGc } from '../lib/kernel/result-cache-gc.js'
 import {

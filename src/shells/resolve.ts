@@ -26,7 +26,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { PACKAGE_ROOT } from '../paths.js'
 import { isNiubashExecutable, niubashCandidates, selectNiubash } from '../niubash/runtime.js'
-import type { ResolvedConfig } from '../config.js'
+import type { ResolvedConfig } from '../config/resolve.js'
 import type { BundledCause, ShellResolution } from './paths.js'
 import {
   POSIX_BASH_REMEDY,
@@ -167,7 +167,7 @@ function resolvePwsh(): ShellResolution {
  * Synchronous, side-effect free, and total: every failure mode becomes a
  * resolution with `available: false`, never a throw, because this runs during
  * mount where an exception would take the whole plugin down.
- * @param {import('../config.js').ResolvedConfig} config - the plugin configuration.
+ * @param {import('../config/resolve.js').ResolvedConfig} config - the plugin configuration.
  * @param {object} [options] - resolution overrides, for tests and for a host
  *   resolving against a different root. Production callers pass none.
  * @param {string} [options.bundleRoot] - the plugin package root.

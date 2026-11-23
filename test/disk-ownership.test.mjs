@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { DEFAULT_DISK_CONFIG, RESOURCES, resolveDiskConfig } from '../lib/disk/ownership.js'
 import { resolveMergedConfig, hostConfig } from '../lib/settings/merged.js'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { assert, test, report, PACKAGE_ROOT } from './lib/harness.mjs'
 
 const spec = (id) => RESOURCES.find((entry) => entry.id === id)

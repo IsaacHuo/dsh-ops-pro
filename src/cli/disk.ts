@@ -8,7 +8,7 @@
  * @module dsh-ops/cli/disk
  */
 import { errorMessage } from '../shells/types.js'
-import { resolveConfig } from '../config.js'
+import { resolveConfig } from '../config/resolve.js'
 import { resolveShells } from '../shells.js'
 import { diskStatus, renderDiskStatus } from '../disk/status.js'
 import { readRowConfig } from './report.js'

@@ -1,6 +1,6 @@
 import type { Context } from '../../adapter/dsh/types.js'
 import { apply as mount } from '../../publication/ptc.js'
-import { resolvePtcConfig } from '../../config.js'
+import { resolvePtcConfig } from '../../config/resolve.js'
 import { editable, settingsConfig } from '../../settings/schema.js'
 export const name = 'dsh-ops-ptc'
 export const Config = settingsConfig(resolvePtcConfig, {

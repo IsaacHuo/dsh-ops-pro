@@ -1,4 +1,4 @@
-import { resolveConfig } from '../config.js'
+import { resolveConfig } from '../config/resolve.js'
 import { configObject, editable, settingsConfig } from './schema.js'
 export const Config = settingsConfig(value => {
   const raw = configObject(value ?? {}), config = resolveConfig(raw)

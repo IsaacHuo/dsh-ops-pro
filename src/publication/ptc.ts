@@ -1,7 +1,7 @@
 /** Stable, scoped PTC definitions; DSH resolves selection once per model step. */
 import type { Agent, Context, Fiber, ToolActivationContext, ToolDefinition, ToolRunContext } from '../adapter/dsh/types.js'
 import { loadUserMessage } from '../adapter/dsh/host.js'
-import { resolvePtcConfig } from '../config.js'
+import { resolvePtcConfig } from '../config/resolve.js'
 import { acquirePtcFile, acquireSharedFile, isSharedFileApi } from './scope-owner.js'
 import type { PublicationLease } from './registrar.js'
 import type { FileToolName } from '../capabilities/registry.js'
@@ -32,7 +32,7 @@ import { activationIsPtc, inspectPresentation, isPresentationProbe } from './pre
 import { visibleNames } from './surface.js'
 import { publicationRegistration, publicationReady } from './reentry.js'
 import { retired as retiredLegacyRow } from '../settings/legacy.js'
-export { resolvePtcConfig } from '../config.js'
+export { resolvePtcConfig } from '../config/resolve.js'
 export const name = 'dsh-ops-ptc'
 
 /**

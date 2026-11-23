@@ -19,7 +19,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { resolveConfig } from '../../lib/config.js'
+import { resolveConfig } from '../../lib/config/resolve.js'
 import { provisionedShellVersionDir, shellExecutable, shellUpstreamPin } from '../../lib/shells.js'
 
 /**
@@ -68,7 +68,7 @@ export function platformPackageName(kind, platform = process.platform, arch = pr
 /**
  * A configuration with every key the plugin documents, overridden per case.
  * @param {Record<string, unknown>} [overrides] - the keys to set.
- * @returns {import('../../lib/config.js').ResolvedConfig} the resolved config.
+ * @returns {import('../../lib/config/resolve.js').ResolvedConfig} the resolved config.
  */
 export function config(overrides = {}) {
   return resolveConfig(overrides)

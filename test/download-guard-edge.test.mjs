@@ -1,7 +1,7 @@
 import { assert, test, report } from './lib/harness.mjs'
 import { inspectCommand } from '../lib/download-guard/detect.js'
 import { decideDownload, renderForwarder } from '../lib/download-guard/policy.js'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { spawnSync } from 'node:child_process'
 
 await test('stdout, discarded output, quoted text and script bodies are not disk download calls', () => {

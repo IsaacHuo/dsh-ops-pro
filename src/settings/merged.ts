@@ -11,11 +11,11 @@
  * take effect while the matching bundle-wide switch is on. The mode switch keeps
  * the operator's intent and simply stops applying.
  */
-import { ConfigError } from '../config.js'
+import { ConfigError } from '../config/resolve.js'
 import { resolveModeConfig, type ModeConfig } from '../presets/config.js'
 import { MODE_IDS } from '../presets/types.js'
 import { resolveDiscoveryConfig } from '../discovery/config.js'
-import { resolveConfig, resolveResultCacheConfig, type DownloadGuardConfig, type ResultCacheConfig } from '../config.js'
+import { resolveConfig, resolveResultCacheConfig, type DownloadGuardConfig, type ResultCacheConfig } from '../config/resolve.js'
 import { resolvePanelConfig } from '../panel/collect.js'
 import { resolveActivityConfig } from '../tui/activity.js'
 import { resolveDiskConfig, type DiskConfig } from '../disk/ownership.js'

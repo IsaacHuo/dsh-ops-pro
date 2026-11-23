@@ -299,7 +299,7 @@ This version starts no long-lived server process: the native file worker is owne
 
 ## Update configuration modification area
 
-`lib/config-updates.js` centralizes one-time config migrations. On first startup with 0.2.5, each owning component row runs a self-check:
+`lib/config/updates.js` centralizes one-time config migrations. On first startup with 0.2.5, each owning component row runs a self-check:
 
 - With no `configUpdateVersion` (or `0`), change legacy `allowSystemShellFallback: true` to `false` before resolving executors or publishing tools.
 - Submit the raw owning row through the official loader lifecycle with `configUpdateVersion: 1`. Preserve other fields; never change foreign plugins, PATH or global config. Disabled components migrate when first started.

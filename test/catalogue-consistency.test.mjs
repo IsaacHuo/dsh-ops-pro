@@ -6,7 +6,7 @@ import { RAW_OFFICIAL_REPLACEMENTS, OFFICIAL_REPLACEMENT_NAMES } from '../lib/ca
 import { OFFICIAL_REPLACEMENTS } from '../lib/official-tools/catalog.js'
 import { Config as shellConfig, NON_EDITABLE_CONFIG_KEYS } from '../lib/components/shell/index.js'
 import { Config as discoveryConfig } from '../lib/components/discovery/index.js'
-import { CORE_CONFIG_KEYS, resolveDiscoveryConfig } from '../lib/config.js'
+import { CORE_CONFIG_KEYS, resolveDiscoveryConfig } from '../lib/config/resolve.js'
 import { DISCOVERY_CONFIG_KEYS } from '../lib/discovery/config.js'
 import { resolvePanelConfig } from '../lib/components/panel/index.js'
 import { resolveTuiConfig } from '../lib/components/tui/index.js'

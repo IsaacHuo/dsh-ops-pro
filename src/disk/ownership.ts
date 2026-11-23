@@ -13,7 +13,7 @@
  * @module dsh-ops/disk/ownership
  */
 import path from 'node:path'
-import { ConfigError } from '../config-error.js'
+import { ConfigError } from '../config/error.js'
 import type { MeasureTarget } from './measure.js'
 
 /** What the resource is, in the retention vocabulary of issue #723. */

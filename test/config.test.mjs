@@ -6,7 +6,7 @@
  * where a number belongs must see its own key in the failure.
  */
 
-import { ConfigError, DEFAULT_DENIED_HOST_TOOLS, LEGACY_FASTCTX_KEYS, resolveConfig } from '../lib/config.js'
+import { ConfigError, DEFAULT_DENIED_HOST_TOOLS, LEGACY_FASTCTX_KEYS, resolveConfig } from '../lib/config/resolve.js'
 import { assert, report, test } from './lib/harness.mjs'
 
 await test('an absent config resolves to the documented defaults', () => {

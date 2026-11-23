@@ -1,6 +1,6 @@
 import { Context } from '@deepseek-ai/cordis'
 import { getEncoding } from 'js-tiktoken'
-import { resolveDiscoveryConfig } from '../lib/config.js'
+import { resolveDiscoveryConfig } from '../lib/config/resolve.js'
 import { DISCOVERABLE_TOOLS } from '../lib/discovery/config.js'
 import { parseRequest, search } from '../lib/discovery/search.js'
 import { DISCOVERY_PARAMETERS, DISCOVERY_DESCRIPTION } from '../lib/capabilities/discovery.js'

@@ -20,7 +20,7 @@
  * @module dsh-ops/components/download-guard
  */
 import type { Context } from '../../adapter/dsh/types.js'
-import { resolveConfig } from '../../config.js'
+import { resolveConfig } from '../../config/resolve.js'
 import { inspectCommand } from '../../download-guard/detect.js'
 import { decideDownload } from '../../download-guard/policy.js'
 import { BASH_TOOL } from '../../policy.js'

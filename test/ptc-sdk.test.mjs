@@ -15,7 +15,7 @@ import * as ptcModule from '../lib/publication/ptc.js'
 import { withToolChange } from '../lib/publication/changes.js'
 import { isPresentationProbe } from '../lib/publication/presentation.js'
 import { mountNativeCatalogue } from './lib/native-catalogue.mjs'
-import { resolvePtcConfig } from '../lib/config.js'
+import { resolvePtcConfig } from '../lib/config/resolve.js'
 import { sdkDefinition, requestedApis } from '../lib/ptc/sdk.js'
 import { legacyComponent } from './lib/legacy-component.mjs'
 const ptc = legacyComponent(ptcModule)

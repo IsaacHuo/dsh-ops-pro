@@ -7,7 +7,7 @@
  *
  * @module dsh-ops/cli/result-cache
  */
-import { DEFAULT_RESULT_CACHE, resolveConfig, type ResultCacheConfig } from '../config.js'
+import { DEFAULT_RESULT_CACHE, resolveConfig, type ResultCacheConfig } from '../config/resolve.js'
 import { resolveMergedConfig } from '../settings/merged.js'
 import { runResultCacheGc, type ResultCacheGcReport } from '../kernel/result-cache-gc.js'
 import { listPendingCleanup } from '../kernel/result-cleanup-registry.js'

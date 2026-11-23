@@ -5,7 +5,7 @@
  * compatibility keys older rows used, so one validator owns every accepted key
  * and a malformed row still fails loud and names the offending key.
  */
-import { LEGACY_FASTCTX_KEYS, resolveConfig, type ResolvedConfig } from '../config.js'
+import { LEGACY_FASTCTX_KEYS, resolveConfig, type ResolvedConfig } from '../config/resolve.js'
 import { parsePtcConfig, type DisclosurePolicy, type PtcConfig } from '../ptc/config.js'
 import { editable, settingsConfig, type Field } from '../settings/schema.js'
 import { configObject } from '../settings/schema.js'

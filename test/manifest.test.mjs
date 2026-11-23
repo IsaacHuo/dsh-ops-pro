@@ -137,7 +137,7 @@ await test('the manifest license matches the package and is MIT', () => {
 
 await test('the bundle patch inserts exactly the one row and no removed FastCtx key', async () => {
   const { parse } = await import('yaml')
-  const { LEGACY_FASTCTX_KEYS } = await import('../lib/config.js')
+  const { LEGACY_FASTCTX_KEYS } = await import('../lib/config/resolve.js')
   // The bundle declares one patch file and that file inserts one row: the ops-ptc
   // preset is registered at runtime, so it is not a bundle row the user can toggle.
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml')

@@ -1,5 +1,5 @@
 /** Explicit reviewed replacements. Legacy blanket settings are validated but inert. */
-import { ConfigError } from '../config-error.js'
+import { ConfigError } from '../config/error.js'
 import { OFFICIAL_REPLACEMENTS } from './catalog.js'
 import type { OfficialReplacement } from './catalog.js'
 export interface HidingConfig { replaceTools: OfficialReplacement[] }

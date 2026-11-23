@@ -1,5 +1,5 @@
 /** Public preset configuration. Normalization never mounts services or publishes tools. */
-import { ConfigError, resolveConfig, type ResolvedConfig } from '../config.js'
+import { ConfigError, resolveConfig, type ResolvedConfig } from '../config/resolve.js'
 import { resolveDiscoveryConfig, type DiscoveryConfig } from '../discovery/config.js'
 import { NATIVE_RESIDENT_RAW } from '../capabilities/profiles.js'
 import { NATIVE_FILE_TOOLS, type FileToolName } from '../capabilities/registry.js'

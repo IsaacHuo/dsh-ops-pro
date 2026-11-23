@@ -15,8 +15,8 @@ import { errorMessage } from '../shells/types.js'
 import os from 'node:os'
 import path from 'node:path'
 import { PACKAGE_ROOT, dshHome } from '../paths.js'
-import { resolveConfig } from '../config.js'
-import type { ResolvedConfig } from '../config.js'
+import { resolveConfig } from '../config/resolve.js'
+import type { ResolvedConfig } from '../config/resolve.js'
 import type { ShellResolution } from '../shells.js'
 import {
   BASH_TOOL,
@@ -97,7 +97,7 @@ export function readRowConfig(file: string | undefined): Record<string, unknown>
  * The native worker resolution as a report value — the same `resolveWorker` the
  * file component runs at mount, including the packaged runtime's provenance
  * check. Nothing is spawned; the resolver's own error text explains a miss.
- * @param {import('../config.js').ResolvedConfig} config - the plugin configuration.
+ * @param {import('../config/resolve.js').ResolvedConfig} config - the plugin configuration.
  * @returns {{resolved: boolean, executable: string|null, source: string|null, error: string|null}} the report value.
  */
 export function workerReport(config: ResolvedConfig): WorkerReport {
@@ -157,7 +157,7 @@ export function restrictedReport(resolution: ShellResolution) {
  * @param {object} options - the ladder input.
  * @param {{resolved: boolean}} options.worker - the native worker report value.
  * @param {{bash: {available: boolean}, pwsh: {available: boolean}}} options.shells - the shell resolutions.
- * @param {import('../config.js').ResolvedConfig} options.config - the plugin configuration.
+ * @param {import('../config/resolve.js').ResolvedConfig} options.config - the plugin configuration.
  * @returns {import('../policy.js').LadderLevels} the rungs.
  */
 export function ladderFor({ worker, shells, config }: { worker: { resolved: boolean }; shells: { bash: { available: boolean }; pwsh: { available: boolean } }; config: ResolvedConfig }) {
