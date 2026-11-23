@@ -66,7 +66,7 @@ await test('each default preset stays within its resident per-request byte budge
             assert.ok(names.includes('ops_load_sdk'))
             assert.ok(names.includes('ops_inspect_local_file'))
           } else {
-            assert.ok(names.includes('ops_discover_tools'))
+            assert.ok(names.includes('ops_discover_tools'), `${preset}: discovery is unpublished; without a built native worker (npm run build:ptc) it stays silent`)
             for (const tool of ['ops_inspect_local_file', 'ops_glob', 'ops_grep']) assert.equal(names.includes(tool), preset !== 'minimal')
           }
           assert.equal(names.includes('ops_bash'), process.platform === 'win32')
