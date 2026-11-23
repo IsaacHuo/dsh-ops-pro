@@ -297,7 +297,7 @@ the open `niu: Permission denied` issues; a run that repeats this is a product d
 problem. Collect the full `replace`/`bash` stderr from the suite (it prints the command and exit
 status) before filing.
 
-#### 3.5.2 `Pinned Bash is unavailable. Run dsh-ops bash-runtime install, or set DSH_OPS_TEST_BASH …`
+#### 3.5.2 `Pinned Bash is unavailable. Run dsh-ops-pro bash-runtime install, or set DSH_OPS_TEST_BASH …`
 
 The pinned legacy Bash payload is missing from `node_modules/@dsh-ops/bash-win32-x64` (the package is
 installed by `npm ci`) and no explicit `DSH_OPS_TEST_BASH` was provided. The release gate provisions

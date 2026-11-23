@@ -87,6 +87,10 @@ Long scripts, heredocs and multi-layer quotes and backslashes make the model esc
 
 A key the `ops_bash` schema does not declare is refused before execution, and the error names both the unknown keys and the accepted ones. This is deliberate — nothing is silently ignored.
 
+### The model calls `bash` instead of `ops_bash`
+
+This package publishes exactly one shell tool, named `ops_bash`; there is no `bash` alias. The tool table is assembled by the host from the names this package declares once (`publicToolName` in `src/policy.ts`), and a misnamed call never reaches this package: the host answers with its own unknown-tool message, so any did-you-mean correction also belongs to the host, not here. Point the model back to the real name — the tool table and the prompt both spell `ops_bash` — instead of expecting a silent alias.
+
 ### Bash script files, PATH precedence and empty input
 
 `script_path` always selects a Bash script; the extension does not select an
@@ -135,23 +139,45 @@ guide](windows-runtime-evidence.md). The plugin-side projection is guarded by
 `test/shells-full-access-confinement.test.mjs`, which fails if a full-access
 call ever routes through `confinedBash` or `sandbox.confine`.
 
+### A full-access `ops_bash` child seems to keep the restricted Low token
+
+The session mode projects straight through in full access: the selected payload
+spawns without `sandbox.confine`, a plain `bashPath` runs directly, and the child
+carries the session's own token. Compare the tokens from the same caller before
+assigning a cause (#581):
+
+```console
+MSYS2_ARG_CONV_EXCL='*' /c/Windows/System32/whoami.exe /groups
+```
+
+The `Mandatory Label` line is the child's integrity level: `S-1-16-4096` is Low,
+`S-1-16-8192` Medium, and an elevated caller reports higher. A confined-mode child
+is expected to differ from the host shell; a full-access child must match the
+session's own level. A full-access child that still reports Low is a host
+token-construction difference, not a dsh-ops setting: collect both `whoami.exe
+/groups` outputs, the DSH core, OPS and Bash payload versions, and the exact
+executable paths, and report them with the [runtime evidence
+guide](windows-runtime-evidence.md). The plugin-side projection is guarded by
+`test/shells-full-access-confinement.test.mjs`, which fails if a full-access
+call ever routes through `confinedBash` or `sandbox.confine`.
+
 ### Restricted Bash is still preparing, or its last preparation was interrupted
 
 Symptom, in a read-only or workspace-write session: an `EXECUTOR_UNAVAILABLE` whose second segment names a stage, for example `EXECUTOR_UNAVAILABLE: bash-staging-failed: …`, `bash-generation-quarantine-failed: …` or `bash-lifecycle-lock-busy: …`.
 
 Restricted calls run the pinned Bash from a private, verified copy under `<DSH_HOME>/dsh-ops/bash-ipc/<identity>`. The first confined call stages it (about 10 seconds for the 412 MB payload); later calls reuse it. The stage name says whether another call can help:
 
-- `bash-staging-failed` — the copy did not finish (an interrupted host, antivirus holding the freshly written tree, a full disk). The next call stages a fresh copy, so retry once; if it repeats, stop every confined shell and run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
+- `bash-staging-failed` — the copy did not finish (an interrupted host, antivirus holding the freshly written tree, a full disk). The next call stages a fresh copy, so retry once; if it repeats, stop every confined shell and run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
 - `bash-generation-quarantine-failed` — an unverifiable generation is still in use. Stop the confined shells that may own it, then retry; the retry quarantines it and stages a fresh copy.
-- `bash-lifecycle-lock-busy (<pid>)` — a host died while holding `<DSH_HOME>/dsh-ops/bash-ipc/.ops-lifecycle-lock`. The lock is never stolen from an owner that may still be alive. Stop every OPS host and confined shell, run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
-- `bash-runtime-missing` / `bash-ipc-mismatch` — the pinned payload or the IPC compatibility receipt is absent or changed. Restore the profile dependencies or run `dsh-ops provision-shells --bash`; a retry cannot repair these.
+- `bash-lifecycle-lock-busy (<pid>)` — a host died while holding `<DSH_HOME>/dsh-ops/bash-ipc/.ops-lifecycle-lock`. The lock is never stolen from an owner that may still be alive. Stop every OPS host and confined shell, run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped`, then retry.
+- `bash-runtime-missing` / `bash-ipc-mismatch` — the pinned payload or the IPC compatibility receipt is absent or changed. Restore the profile dependencies or run `dsh-ops-pro provision-shells --bash`; a retry cannot repair these.
 
 An interrupted staging leaves a `stage-*` directory in the cache. Confined calls reclaim copies older than one hour automatically (the reported reclaimable bytes include them), `clean-cache --yes --all-hosts-stopped` removes all of them, and deleting them by hand while no confined shell is running is equally safe.
 
 ### Windows Niubash preparation is slow or old execution trees remain
 
 Payload bytes are hashed against the frozen manifest once, where they enter the machine: the
-package build and `dsh-ops provision-shells --bash`. Selecting Niubash (mount, the settings page,
+package build and `dsh-ops-pro provision-shells --bash`. Selecting Niubash (mount, the settings page,
 `ops_status`) only checks that every pinned file is present with its pinned size; it reads no
 contents and writes nothing. The first Bash call in a process prepares one runtime per prepared
 hash (`NIUBASH_PREPARED_SHA256`, covering the manifest and face list) at `<DSH_HOME>/dsh-ops/shells/niubash-prepared/<prepared hash>`, asynchronously: it copies the
@@ -177,8 +203,8 @@ not a separate security boundary against the account or an administrator (#870).
   allow-list rules should target the fixed prepared location, not a per-call temporary directory.
 - For leftovers from older releases, stop **every OPS host and Bash job**, then use the installed
   package's CLI with the original `DSH_HOME` and, if set, `DSH_OPS_EXEC_ROOT`:
-  `dsh-ops cache status --kind exec-tree`, then
-  `dsh-ops cache reclaim --kind exec-tree --all-hosts-stopped --yes`.
+  `dsh-ops-pro cache status --kind exec-tree`, then
+  `dsh-ops-pro cache reclaim --kind exec-tree --all-hosts-stopped --yes`.
   `DSH_OPS_EXEC_ROOT` remains relevant only for discovering those legacy trees. Reclamation clears
   legacy seals before deletion and does not reinstall a corrupt source. Do not recursively delete
   trees by wildcard or remove them while jobs are running.
@@ -258,7 +284,7 @@ What to do:
 - Collect the matching event before restoring: Defender
   `Get-MpThreat` / `Get-MpThreatDetection` (or the ESET detection log) with its
   timestamp, action and the exact file path.
-- Restore the complete pinned tree with `dsh-ops provision-shells --bash`, which
+- Restore the complete pinned tree with `dsh-ops-pro provision-shells --bash`, which
   re-verifies every member.
 - An allow-list rule, if you choose one, targets the fixed prepared location —
   never disable protection or broadly trust the payload tree.
@@ -463,7 +489,7 @@ effect without a restart.
 
 ## Windows Bash integrity labels
 
-`dsh-ops ladder --json` now includes `shells.bash.integrity`, separate from
+`dsh-ops-pro ladder --json` now includes `shells.bash.integrity`, separate from
 `restricted.compatible`. It reads the resolved image, its physical path, the
 PortableGit `usr/bin/bash.exe` when present, and ancestor directories. A Low or
 lower image label produces a warning: full access does not remove that label,

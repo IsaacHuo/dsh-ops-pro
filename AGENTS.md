@@ -58,6 +58,7 @@ npm run build:bash-ipc                                   # Windows only
 npm run verify                                           # build + manifest check + all suites
 node test/run.mjs <filter>                               # only suites whose file name contains <filter>
 npm run check:size                                       # the 1000-line gate
+npm run env:probe                                        # name missing local prerequisites before blaming a suite
 node scripts/verify-gate.mjs --skip-install              # the full release gate, exactly what CI runs
 ```
 
@@ -71,7 +72,7 @@ node scripts/verify-gate.mjs --skip-install              # the full release gate
 - English for code, comments, CLI output and commit messages; user-facing docs in both languages,
   updated in the same PR.
 - Tool names always come from `publicToolName()` in `src/policy.ts`; never hand-write `ops_`.
-- Config is validated in `src/config.ts`; unknown keys are errors that name the key. Defaults in
+- Config is validated in `src/config/resolve.ts`; unknown keys are errors that name the key. Defaults in
   `cordis.patch.yml` must equal the defaults in code.
 - The host half must not import `@deepseek-ai/*` values at load time; use `ctx.inject` / `ctx.get`.
   Publish tools only through this plugin's own scoped `ctx.tools.register`.

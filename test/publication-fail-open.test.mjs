@@ -2,7 +2,7 @@
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { mountReplacements } from '../lib/publication/replacements.js'
 import { mountConsumer } from '../lib/consumer/mount.js'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { resolveShells } from '../lib/shells.js'
 import { BASH_TOOL } from '../lib/policy.js'
 import { assert, test, report } from './lib/harness.mjs'

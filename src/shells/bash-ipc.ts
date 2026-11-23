@@ -1,20 +1,21 @@
 /** Installation-relative, verified private MSYS runtime for confined Windows calls.
  * Original payloads remain untouched. Full access does not select this runtime.
  */
-import { isNiubashExecutable, selectNiubash } from './niubash/runtime.js'
+import { isNiubashExecutable, selectNiubash } from '../niubash/runtime.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 export { recoverBashLifecycleLock } from './bash-ipc-lifecycle.js'
-import { renameWithRetry } from './rename-retry.js'
-export { renameWithRetry, RENAME_RETRY_DELAYS_MS } from './rename-retry.js'
-import { errorMessage } from './shells/types.js'
+import { renameWithRetry } from '../fs/rename-retry.js'
+export { renameWithRetry, RENAME_RETRY_DELAYS_MS } from '../fs/rename-retry.js'
+import { errorMessage } from './types.js'
 import { bashRuntimeFailure } from './bash-runtime-failure.js'
 import { patchMsys } from './bash-pe.js'
 import { GENERATION_NAME, RETIRED_NAME, QUARANTINE_NAME, noLinks, assertNoLinks, plainDirectory, plainTree, withLifecycleLock, idleGeneration, markManaged, leaseGeneration, hasLiveLease } from './bash-ipc-lifecycle.js'
-const packageRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
+// lib/shells/bash-ipc.js → package root.
+const packageRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..')
 const hash=(bytes: Uint8Array)=>createHash('sha256').update(bytes).digest('hex')
 interface Runtime { file: string; env?: NodeJS.ProcessEnv; runtime?: string }
 interface TreeEntry { size: number; mtimeMs: number; sha256?: string }
@@ -54,7 +55,7 @@ export function restrictedRemedy(file: string, source: string | undefined, why: 
   return `EXECUTOR_UNAVAILABLE: ops_bash cannot run the ${label}${file} in restricted modes (read-only / workspace-write): ${why} `
     +'By design, restricted modes run only the pinned MSYS whose DSH IPC compatibility proxies were verified; this is not a user authorization denial. '
     +'A custom bashPath or system Git for Windows works only in danger-full-access. '
-    +'Next steps: remove bashPath (and allowSystemShellFallback) so the bundled or provisioned pinned bash is used (`dsh-ops provision-shells --bash` if it is missing), '
+    +'Next steps: remove bashPath (and allowSystemShellFallback) so the bundled or provisioned pinned bash is used (`dsh-ops-pro provision-shells --bash` if it is missing), '
     +'or ask the user to switch the session to danger-full-access. Approvals never repair an incompatible confined runtime; do not bypass confinement.'
 }
 /** Whether restricted modes can run this bash, without copying or building anything. */

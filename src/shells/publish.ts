@@ -23,7 +23,7 @@
  */
 
 import type { Context } from '../adapter/dsh/types.js'
-import type { ResolvedConfig } from '../config.js'
+import type { ResolvedConfig } from '../config/resolve.js'
 import type { ShellResolution } from './paths.js'
 import { errorMessage } from './types.js'
 import { BASH_TOOL_NAME } from './constants.js'
@@ -57,7 +57,7 @@ function reportShellProblem(ctx: Context, message: string) {
  * logger; it never throws, because a deployment without bash must still load
  * this plugin.
  * @param {object} ctx - a Cordis context carrying the tool registry.
- * @param {import('../config.js').ResolvedConfig} config - the plugin configuration.
+ * @param {import('../config/resolve.js').ResolvedConfig} config - the plugin configuration.
  * @param {{bash: import('./paths.js').ShellResolution, pwsh: import('./paths.js').ShellResolution}} shells - the resolution to publish for.
  * @returns {() => void} the disposer for every registration made here.
  */

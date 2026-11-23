@@ -7,10 +7,10 @@
  * profile or rename dsh-ops/file: name-qualified overrides would be skipped.
  * Explicit legacy panel capture:false is retained; no migration may start capture.
  */
-import type { Context } from './adapter/dsh/types.js'
-import type {} from './adapter/dsh/types.js'
-import { LEGACY_FASTCTX_KEYS } from './config.js'
-import { PACKAGE_NAME } from './identity.js'
+import type { Context } from '../adapter/dsh/types.js'
+import type {} from '../adapter/dsh/types.js'
+import { LEGACY_FASTCTX_KEYS } from './resolve.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 export const CONFIG_UPDATE_VERSION = 2
 

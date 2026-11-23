@@ -12,7 +12,7 @@ import {
 } from '../cli/niubash-payload.js'
 
 const UNAVAILABLE = 'EXECUTOR_UNAVAILABLE:'
-const unavailable = (detail: string): Error => new Error(`${UNAVAILABLE} Niubash payload is unusable: ${detail}. Restore the complete pinned v1.5.0 portable tree (dsh-ops provision-shells --bash); this is not a user authorization denial. Do not bypass confinement or fall back to another shell.`)
+const unavailable = (detail: string): Error => new Error(`${UNAVAILABLE} Niubash payload is unusable: ${detail}. Restore the complete pinned v1.5.0 portable tree (dsh-ops-pro provision-shells --bash); this is not a user authorization denial. Do not bypass confinement or fall back to another shell.`)
 const asUnavailable = (error: unknown): Error => error instanceof Error && error.message.startsWith(UNAVAILABLE)
   ? error : unavailable(error instanceof Error ? error.message : String(error))
 
@@ -42,6 +42,16 @@ const WINUXCMD_SIZE: number = (NIUBASH_PIN.sizes as Readonly<Record<string, numb
 function inspectPreparedNiubash(target: string): string {
   const file = inspectNiubashTree(target)
   for (const name of GENERATED_FACES) expectNiubashFile(target, name, WINUXCMD_SIZE)
+  // A face-list change must retire stale generated faces: an argv0 stub the
+  // current list no longer declares would keep shadowing the system command
+  // with a dispatch entry that cannot run it (#966). Naming it damaged moves
+  // the version aside and rebuilds it from the pinned source.
+  const declared = new Set([...GENERATED_FACES, ...Object.keys(NIUBASH_PIN.files)])
+  for (const entry of fs.readdirSync(path.join(target, 'winuxcmd', 'usr', 'bin'), { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.toLowerCase().endsWith('.exe') && !declared.has(`winuxcmd/usr/bin/${entry.name}`)) {
+      throw Error(`Stale generated Niubash face: winuxcmd/usr/bin/${entry.name}`)
+    }
+  }
   for (const name of NIUBASH_EXECUTION_DIRECTORIES) {
     if (!fs.lstatSync(path.join(target, name), { throwIfNoEntry: false })?.isDirectory()) throw Error(`Incomplete Niubash state directory: ${name}`)
   }

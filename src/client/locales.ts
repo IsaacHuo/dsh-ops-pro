@@ -74,6 +74,7 @@ export const en = {
   summaryMissing: 'No usable Bash was resolved. Install the packaged payload below, or choose a Git Bash path on the row page.',
   summaryNoShell: 'No enabled mode publishes ops_bash; turn Bash on for the preset you use.',
   summaryNone: 'Waiting for the host runtime report.', pwsh7Plugin: 'dsh-win-pwsh7', pwsh7Present: 'Available', pwsh7Absent: 'Not installed', installPwsh7: 'Install dsh-win-pwsh7', pwsh7Installing: 'Installing… {seconds}s elapsed; the host runs the phases.',
+  pwsh7Unknown: 'Plugin status unavailable',
   pwsh7Installed: 'Installed. Restart DSH and check again; reopening the configuration page turns the link on by detection.', pwsh7Failed: 'The installation did not complete:',
   pwsh7Hint: 'PowerShell 7 was not detected. dsh-win-pwsh7 is a separate plugin that points the pwsh tool at PowerShell 7; install it from the plugin market first.',
   runtimeHelp: 'The packaged payload needs no installation. Choosing an executor happens on the row page; a managed copy under DSH_HOME is optional, and removing one requires stopping Bash jobs first.',
@@ -90,6 +91,15 @@ export const en = {
   defaultPresetNoUpdate: 'Nothing to do: new sessions already start in OPS (PTC).',
   defaultPresetUnavailable: 'The OPS (PTC) preset is not registered right now, so the default preset was not changed.',
   defaultPresetFailed: 'The default preset was not changed:',
+  disclosureTitle: 'PTC disclosure tier',
+  disclosureHint: 'One choice for both PTC rows: when the full permitted tool declaration appears in a session. The distinction is the timing, never the permissions.',
+  disclosureOnDemand: 'On-demand (default)',
+  disclosureOnDemandHint: 'The first step publishes resident tools plus the loader; the full declaration appears after the loader call, two steps.',
+  disclosureFull: 'Full',
+  disclosureFullHint: 'The first step publishes the whole permitted tool pool with no loader. Choosing this never widens permissions.',
+  disclosureMixed: 'The saved PTC rows disagree about the tier. Choosing one below unifies them on save.',
+  disclosureSuspended: 'The dynamic-tools bundle switch is off, so the full tier is suspended and both rows run on-demand until it is back on; the saved choice is kept.',
+  disclosureAppliesOnSave: 'The choice applies to new sessions; running sessions keep their current surface.',
 }
 export const zh: Record<keyof typeof en, string> = {
   ptcFilesRequired: '类型化 PTC 必须启用文件能力；用常驻开关控制启动 API。',
@@ -166,6 +176,7 @@ export const zh: Record<keyof typeof en, string> = {
   summaryMissing: '没有解析到可用的 Bash。可在下方安装随包载荷，或在配置页选择 Git Bash 路径。',
   summaryNoShell: '没有任何启用的模式发布 ops_bash；请在使用的预设里开启 Bash。',
   summaryNone: '正在等待宿主运行时报告。', pwsh7Plugin: 'dsh-win-pwsh7', pwsh7Present: '可用', pwsh7Absent: '未安装', installPwsh7: '安装 dsh-win-pwsh7', pwsh7Installing: '正在安装…已等待 {seconds} 秒；具体阶段由宿主执行。',
+  pwsh7Unknown: '插件状态暂不可用',
   pwsh7Installed: '已安装。重启 DSH 后重新检测；重新打开配置页后联动会按检测自动开启。', pwsh7Failed: '安装未完成：',
   pwsh7Hint: '未检测到 PowerShell 7。dsh-win-pwsh7 是一个独立插件，安装后会把 pwsh 工具指向 PowerShell 7，需要先在插件市场安装它。',
   runtimeHelp: '随包载荷无需安装。执行器在配置页选择；DSH_HOME 下的托管副本是可选项，删除前请先停止 Bash 作业。',
@@ -182,6 +193,15 @@ export const zh: Record<keyof typeof en, string> = {
   defaultPresetNoUpdate: '无需更改：新会话本来就默认使用 OPS (PTC)。',
   defaultPresetUnavailable: 'OPS (PTC) 预设当前未注册，默认预设没有改动。',
   defaultPresetFailed: '默认预设没有改动：',
+  disclosureTitle: 'PTC 披露档位',
+  disclosureHint: '两条 PTC 行统一选择：完整获准工具声明在会话中出现的时机。区别只在时机，从不改变权限。',
+  disclosureOnDemand: '按需（默认）',
+  disclosureOnDemandHint: '首步只发布常驻工具与加载入口；完整声明在加载调用之后出现，分两步。',
+  disclosureFull: '全量',
+  disclosureFullHint: '首步直接发布整个获准工具池，且无加载入口。选择全量不会扩大任何权限。',
+  disclosureMixed: '已保存的两条 PTC 行档位不一致。在下面选定一个，保存后会统一。',
+  disclosureSuspended: '动态工具总开关已关闭，全量档暂不生效，两行按需运行；已保存的选择原样保留，开关回开后重新生效。',
+  disclosureAppliesOnSave: '选择对新会话生效；正在运行的会话保持当前工具面。',
 }
 declare module '@deepseek-ai/dsh-client-ui-slots' { interface LocaleNamespaceMap { dshOps: keyof typeof en } }
 export type Translator = TranslateNS<'dshOps'>

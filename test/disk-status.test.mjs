@@ -246,7 +246,7 @@ await test('the CLI prints the same report as JSON and as a human table, deletin
 
     const human = run(['status'])
     assert.equal(human.status, 0, human.stderr)
-    assert.match(human.stdout, /^dsh-ops disk status - read-only report; nothing was created or deleted$/mu)
+    assert.match(human.stdout, /^dsh-ops-pro disk status - read-only report; nothing was created or deleted$/mu)
     assert.ok(human.stdout.includes('host-subprocess-local'))
     assert.ok(human.stdout.includes('never-touch'))
     assert.ok(human.stdout.includes('report-only'))

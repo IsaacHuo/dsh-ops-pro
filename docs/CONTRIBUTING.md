@@ -226,7 +226,7 @@ catalogue, retry rules and positive/negative TypeScript contracts. Node declarat
   `test/lib/` layout.
 - **Tool names** always come from `publicToolName()` in `src/policy.ts`; never hand-write the `ops_`
   prefix.
-- **Config validation** lives in `src/config.ts`; an unknown key is an error that names the key.
+- **Config validation** lives in `src/config/resolve.ts`; an unknown key is an error that names the key.
   Defaults in `cordis.patch.yml` must match the defaults in code.
 - **Parsing and probing** happen synchronously in `apply`; `required: true` must refuse activation
   at load time.
@@ -264,7 +264,7 @@ Native build and acceptance details: [native-ptc.md](native-ptc.md) and
 
 The credential fence, trusted path anchors and permission helpers are strict TypeScript modules (`src/credential-policy.ts`, `src/authority-paths.ts`, `src/permissions.ts`). Their emitted `.js` imports and wire failures stay stable. Authority policies use type-only host definitions; unknown worker failures must be narrowed before use. `node test/run.mjs kernel-types authority credential-fence credential-denial safety-atomicity permissions` covers the typed boundary and existing authority behavior.
 
-`src/profile-install.ts` and `src/session-temp.ts` are strict TypeScript helpers with unchanged emitted paths. Profile mutations still delegate to the official CLI; manifest data is narrowed before reading it. Private temporary directories retain their session-derived names and refusal of link/file targets. `node test/run.mjs profile-temp kernel-types` checks delegation, dry-run, failures and typed outcomes.
+`src/profile/install.ts` and `src/session-temp.ts` are strict TypeScript helpers with unchanged emitted paths. Profile mutations still delegate to the official CLI; manifest data is narrowed before reading it. Private temporary directories retain their session-derived names and refusal of link/file targets. `node test/run.mjs profile-temp kernel-types` checks delegation, dry-run, failures and typed outcomes.
 
 `src/index.ts` types the component entry against the public Cordis `Context` and `Agent` contracts. Raw configuration remains `unknown` until validation; callbacks and tool-denial decisions retain their public host signatures. Runtime imports remain `.js`, and host dependencies remain type-only at module load. `node test/run.mjs kernel-types mount bundle-startup progressive-loop` checks the type boundary, scoped startup/disposal and next-step publication.
 
@@ -306,3 +306,11 @@ Windows round-trip fixture is unavailable and does not count it as passing.
 ## Tracking upstream
 
 This fork absorbs work from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops). `npm run sync:upstream` fetches the `upstream` remote and lists upstream commits and open pull requests that `pro/next` has not absorbed yet. Pick with `git cherry-pick -x` so the trailer records the source; record a pull request you decline or rewrite in `.github/upstream-decisions.json` with the reason.
+
+## Local environment
+
+`npm run env:probe` lists the prerequisites the suites need on this machine — staged worker, `cargo`, and on Windows the Bash IPC payload, the Niubash archive (`DSH_OPS_NIUBASH_ARCHIVE`) and `DSH_OPS_TEST_BASH` — and names the suites each one decides. An emptied `runtime/win32-x64/bash-ipc/` after a successful `build:bash-ipc` means endpoint security removed the DLLs; treat CI as the reference for those suites. Run it before calling a local failure flaky.
+
+## Host boundary
+
+`src/adapter/dsh/` is the only directory free to subscribe to host events, look up or inject host services, or read cordis internals. Everywhere else the touch points are recorded per file in `scripts/host-surface-baseline.json`, and `npm run check:host` (CI `source-size` job) fails when a file gains one or drops one without lowering the baseline, so the count only goes down. Route new host access through the adapter; if a direct touch point is deliberate, run `node scripts/check-host-surface.mjs --update` and say why in the PR. `node test/run.mjs host-surface` also checks that every event and service name `src/` uses still appears in the installed `@deepseek-ai` packages; names the plugin owns or treats as optional are listed with their reason in `NON_HOST_NAMES` (`scripts/lib/host-surface.mjs`).

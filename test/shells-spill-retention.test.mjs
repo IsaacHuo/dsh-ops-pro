@@ -24,7 +24,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { parseDocument } from 'yaml'
 import { assert, PACKAGE_ROOT, report, test, TEST_HOME, wait, waitFor } from './lib/harness.mjs'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { resolveModeConfig } from '../lib/presets/config.js'
 import { SpillLedger, spillLedgerFile } from '../lib/shells/spill-ledger.js'
 import {

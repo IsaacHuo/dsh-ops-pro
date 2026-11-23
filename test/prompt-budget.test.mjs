@@ -15,8 +15,9 @@ import { assert, test, report, withTempDir } from './lib/harness.mjs'
 // Pre-slice win32 baseline: minimal=10516, standard=19996, cordis=19996, ptc=29639.
 // Windows is the largest default surface (OPS Bash); POSIX must fit the same bounds.
 // minimal pays ~600 bytes for file-tool usage notes from the first step instead of
-// rewriting the whole prefix when the first file tool loads (#975).
-const budgets = { minimal: 8700, standard: 13700, cordis: 13700, ptc: 19200 }
+// rewriting the whole prefix when the first file tool loads (#975); #753 mounts the
+// ops_status diagnosis on built-in modes (+174-201 bytes on minimal and ptc).
+const budgets = { minimal: 9000, standard: 13700, cordis: 13700, ptc: 19300 }
 await test('each default preset stays within its resident per-request byte budget', async () => {
   await withTempDir('prompt-budget', async root => {
     const { ctx } = await bootHost()
@@ -65,7 +66,7 @@ await test('each default preset stays within its resident per-request byte budge
             assert.ok(names.includes('ops_load_sdk'))
             assert.ok(names.includes('ops_inspect_local_file'))
           } else {
-            assert.ok(names.includes('ops_discover_tools'))
+            assert.ok(names.includes('ops_discover_tools'), `${preset}: discovery is unpublished; without a built native worker (npm run build:ptc) it stays silent`)
             for (const tool of ['ops_inspect_local_file', 'ops_glob', 'ops_grep']) assert.equal(names.includes(tool), preset !== 'minimal')
           }
           assert.equal(names.includes('ops_bash'), process.platform === 'win32')

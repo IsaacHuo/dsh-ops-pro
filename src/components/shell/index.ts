@@ -1,7 +1,7 @@
 import type { Context } from '../../adapter/dsh/types.js'
 import { applyComponent } from '../../index.js'
 import { mountRuntimeSettings } from '../../settings/runtime-host.js'
-import { resolveConfig } from '../../config.js'
+import { resolveConfig } from '../../config/resolve.js'
 import { editable, settingsConfig, configObject } from '../../settings/schema.js'
 import { retired as retiredLegacyRow } from '../../settings/legacy.js'
 export const name = 'dsh-ops-bash & host PowerShell'

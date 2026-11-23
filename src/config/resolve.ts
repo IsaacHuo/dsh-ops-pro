@@ -16,7 +16,7 @@
  * Keys only the removed FastCtx surface read. Existing rows still carry them
  * (the bundle patch wrote `enableShellTools` and `toolCallTimeoutMs` into every
  * file row), so they stay accepted and type-checked, are never returned, and
- * config update 2 removes them from saved rows (`lib/config-updates.js`).
+ * config update 2 removes them from saved rows (`lib/config/updates.js`).
  */
 export const LEGACY_FASTCTX_KEYS = Object.freeze(['serverName', 'enableShellTools', 'toolCallTimeoutMs'])
 export const CORE_CONFIG_KEYS = Object.freeze([
@@ -34,11 +34,11 @@ export const SHELL_POLICIES = ['advise', 'deny-host-shell']
 /** Host tool names the `deny-host-shell` policy refuses by default. */
 export const DEFAULT_DENIED_HOST_TOOLS = ['pwsh', 'bash', 'pwsh_persistent']
 
-import { ConfigError } from './config-error.js'
-import { DEFAULT_SPILL_RETENTION_DAYS, DEFAULT_SPILL_SWEEP_ENABLED, DEFAULT_SPILL_TOTAL_BUDGET_MIB } from './shells/spill-retention.js'
-import { resolveDiskConfig } from './disk/ownership.js'
-import type { DiskConfig } from './disk/ownership.js'
-export { ConfigError } from './config-error.js'
+import { ConfigError } from './error.js'
+import { DEFAULT_SPILL_RETENTION_DAYS, DEFAULT_SPILL_SWEEP_ENABLED, DEFAULT_SPILL_TOTAL_BUDGET_MIB } from '../shells/spill-retention.js'
+import { resolveDiskConfig } from '../disk/ownership.js'
+import type { DiskConfig } from '../disk/ownership.js'
+export { ConfigError } from './error.js'
 
 /**
  * Reject a key the plugin does not implement instead of silently ignoring it.
@@ -340,9 +340,9 @@ export function resolveResultCacheConfig(rawConfig: unknown): ResultCacheConfig 
   }
 }
 
-export { resolveHidingConfig } from './official-tool-config.js'
+export { resolveHidingConfig } from '../official-tools/config.js'
 
 /** Independent PTC row configuration uses the same central validation entry point. */
-export { parsePtcConfig as resolvePtcConfig } from './ptc/config.js'
-export { resolveDiscoveryConfig } from './discovery/config.js'
+export { parsePtcConfig as resolvePtcConfig } from '../ptc/config.js'
+export { resolveDiscoveryConfig } from '../discovery/config.js'
 

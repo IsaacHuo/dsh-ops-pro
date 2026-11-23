@@ -1,7 +1,7 @@
 /**
- * `dsh-ops uninstall`: what this plugin (and older versions of it) installed
+ * `dsh-ops-pro uninstall`: what this plugin (and older versions of it) installed
  * outside the profile, and the leftover FastCtx state it does not own. Plus
- * `dsh-ops ladder`, the same CLI read back through its report, and the commands
+ * `dsh-ops-pro ladder`, the same CLI read back through its report, and the commands
  * removed with the FastCtx background component.
  *
  * The suite runs the real CLI as a child process against a throwaway `DSH_HOME`
@@ -23,7 +23,7 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { FILE_TOOLS, renderToolingPolicy, publicToolName } from '../lib/policy.js'
 import { resolveShells } from '../lib/shells.js'
 import { PACKAGE_ROOT, TEST_HOME, assert, report, test, withTempDir } from './lib/harness.mjs'
@@ -203,7 +203,7 @@ await test('an unknown command still exits 2', () => {
 })
 
 await test('the commands removed with the FastCtx background component say what replaces them', () => {
-  for (const [command, replacement] of [['resolve', /dsh-ops ladder/u], ['status', /status --profile/u], ['build', /build-ptc/u], ['provision', /provision-shells/u]]) {
+  for (const [command, replacement] of [['resolve', /dsh-ops-pro ladder/u], ['status', /status --profile/u], ['build', /build-ptc/u], ['provision', /provision-shells/u]]) {
     const run = runCli({ home: TEST_HOME, user: TEST_HOME, args: [], command })
     assert.equal(run.status, 2, `${command}: ${run.stderr}`)
     assert.match(run.stderr, /was removed together with the FastCtx background component/u)
@@ -214,11 +214,11 @@ await test('the commands removed with the FastCtx background component say what 
   const help = runCli({ home: TEST_HOME, user: TEST_HOME, args: [], command: 'help' })
   assert.equal(help.status, 0)
   for (const removed of ['dsh-ops resolve', 'dsh-ops build [', 'dsh-ops provision [']) assert.equal(help.stdout.includes(removed), false, `help no longer lists ${removed}`)
-  assert.match(help.stdout, /dsh-ops status --profile/u)
+  assert.match(help.stdout, /dsh-ops-pro status --profile/u)
 })
 
 // ---------------------------------------------------------------------------
-// `dsh-ops ladder`: the resolution report and the rungs the prompt renders
+// `dsh-ops-pro ladder`: the resolution report and the rungs the prompt renders
 // ---------------------------------------------------------------------------
 
 /**
@@ -492,7 +492,7 @@ await test('ladder fails loud on a config the plugin would refuse', async () => 
 })
 
 // ---------------------------------------------------------------------------
-// `dsh-ops provision-shells`: the pinned upstream copies, with no download
+// `dsh-ops-pro provision-shells`: the pinned upstream copies, with no download
 // ---------------------------------------------------------------------------
 
 /** Windows' own bsdtar: it writes and reads the zip shape the pwsh pin names. */

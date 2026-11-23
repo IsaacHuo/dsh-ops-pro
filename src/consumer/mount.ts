@@ -1,7 +1,7 @@
 /** One assembly path: consumers supply policy, publishers own registration and execution. */
 import type { Agent, Context } from '../adapter/dsh/types.js'
 import { resolveShells } from '../shells.js'
-import { mountSessionBash } from '../session-shells.js'
+import { mountSessionBash } from '../shells/session-shells.js'
 import { mountWorkspacePreparation } from '../workspace-preparation.js'
 import { mountNative } from '../publication/native.js'
 import { mountReplacements } from '../publication/replacements.js'

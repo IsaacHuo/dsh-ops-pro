@@ -1,10 +1,10 @@
 /** Empty operator guidance needs no prompt construction merely to choose its owner (#792). */
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { mountNative } from '../lib/publication/native.js'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { selectExecutor, prepareStep } from './lib/executor.mjs'
 import { mountConsumer } from '../lib/consumer/mount.js'
-import { resolveDiscoveryConfig, resolvePtcConfig } from '../lib/config.js'
+import { resolveDiscoveryConfig, resolvePtcConfig } from '../lib/config/resolve.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 

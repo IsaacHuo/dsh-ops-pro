@@ -51,8 +51,8 @@ reclaimed. `MAX_SESSION_BYTES` stays a per-nonce quota for one cache root and is
 global budget: the aggregate limits are `resultCache.maxRoots` and `resultCache.maxTotalBytes`,
 both 0. They are reporting thresholds, not deletion budgets — a root that still holds snapshot data
 is classified as blocked (age, live set or over budget) and is never removed by the sweep; only the
-authorized session purge or its deferred retry may reclaim that data. `dsh-ops result-cache status`
-reports the inventory and `dsh-ops result-cache reclaim [--apply]` previews or performs the same
+authorized session purge or its deferred retry may reclaim that data. `dsh-ops-pro result-cache status`
+reports the inventory and `dsh-ops-pro result-cache reclaim [--apply]` previews or performs the same
 bounded pass.
 
 ## Native and PTC reference pages

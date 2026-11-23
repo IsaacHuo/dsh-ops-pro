@@ -2,7 +2,7 @@
  * Locating a Rust toolchain and running a release build of a crate.
  *
  * The native worker is a Rust executable, so a source checkout needs one
- * explicit, reproducible build step (`dsh-ops build-ptc`). This module owns it:
+ * explicit, reproducible build step (`dsh-ops-pro build-ptc`). This module owns it:
  * find `cargo` without guessing, run the release build, and report the exact
  * toolchain that produced the binary.
  *

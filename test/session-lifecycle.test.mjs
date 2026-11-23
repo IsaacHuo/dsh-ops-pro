@@ -1,7 +1,7 @@
 import { selectExecutor, executeCall, prepareStep } from './lib/executor.mjs'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { SessionStore } from '@deepseek-ai/dsh-session'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 import * as ptcModule from '../lib/publication/ptc.js'
 import * as discoveryModule from '../lib/discovery/index.js'
 import { mountReplacements } from '../lib/publication/replacements.js'

@@ -14,9 +14,9 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { bashIpcInventory, currentBashIpcIdentity, reclaimBashGenerations } from '../bash-ipc.js'
-import { QUARANTINE_RETAIN } from '../bash-ipc.js'
-import { hasLiveLease, plainTree } from '../bash-ipc-lifecycle.js'
+import { bashIpcInventory, currentBashIpcIdentity, reclaimBashGenerations } from '../shells/bash-ipc.js'
+import { QUARANTINE_RETAIN } from '../shells/bash-ipc.js'
+import { hasLiveLease, plainTree } from '../shells/bash-ipc-lifecycle.js'
 import { dshHome, PACKAGE_ROOT } from '../paths.js'
 import { spawnSync } from 'node:child_process'
 import { provisionedShellStore } from '../shells.js'
@@ -453,7 +453,7 @@ export function formatCacheItem(item: CacheItem): string {
 }
 
 /**
- * "dsh-ops cache": report what OPS can reproduce on disk, and with --yes reclaim it.
+ * "dsh-ops-pro cache": report what OPS can reproduce on disk, and with --yes reclaim it.
  * @param action - "status" or "reclaim".
  * @param options - the CLI flags.
  * @returns the exit code: 0 success or preview, 1 a deletion failed, 2 a safety refusal.
@@ -487,13 +487,13 @@ export function commandCache(action: string, {
     }, null, 2))
     return errors > 0 ? 1 : 0
   }
-  if (items.length === 0) console.log('dsh-ops cache: nothing to report')
+  if (items.length === 0) console.log('dsh-ops-pro cache: nothing to report')
   for (const item of items) console.log(formatCacheItem(item))
   console.log('')
   console.log('reclaimable: ' + (report.totals.reclaimableBytes / (1024 * 1024)).toFixed(1) + ' MiB; kept: '
     + (report.totals.keptBytes / (1024 * 1024)).toFixed(1) + ' MiB; unverified: '
     + (report.totals.unverifiedBytes / (1024 * 1024)).toFixed(1) + ' MiB')
-  if (!apply) console.log('Preview only. Reclaim after stopping all OPS hosts: dsh-ops cache reclaim --yes --all-hosts-stopped')
+  if (!apply) console.log('Preview only. Reclaim after stopping all OPS hosts: dsh-ops-pro cache reclaim --yes --all-hosts-stopped')
   else console.log('reclaimed: ' + (deletedBytes / (1024 * 1024)).toFixed(1) + ' MiB; failed entries: ' + errors)
   return errors > 0 ? 1 : 0
 }

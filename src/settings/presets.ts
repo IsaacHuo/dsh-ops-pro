@@ -1,5 +1,5 @@
 /** Explicit single-row consumers. Unknown presets remain untouched unless listed here. */
-import { ConfigError } from '../config-error.js'
+import { ConfigError } from '../config/error.js'
 import { resolveIntegrationConfig, type IntegrationOptions } from '../consumer/options.js'
 export interface CustomPreset {
   readonly options: IntegrationOptions

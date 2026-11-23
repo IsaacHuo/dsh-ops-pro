@@ -4,10 +4,10 @@ import path from 'node:path'
 import os from 'node:os'
 import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
-import { PACKAGE_ROOT, dshHome } from './paths.js'
-import { PLATFORMS } from './execution/runtime.js'
-import { reportDefaultReset, resetStaleDefault } from './profile-default-reset.js'
-import { PACKAGE_NAME } from './identity.js'
+import { PACKAGE_ROOT, dshHome } from '../paths.js'
+import { PLATFORMS } from '../execution/runtime.js'
+import { reportDefaultReset, resetStaleDefault } from './default-reset.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 /**
  * Architectures this fork will run its profile commands on.
@@ -191,7 +191,7 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
     if (code !== 0) return code
   }
   console.log(operation === 'install'
-    ? 'Installed through the official profile manager. Reload/restart the target application if needed. On Windows the pinned Bash payload ships as an optional dependency; run dsh-ops bash-runtime install to repair a missing payload. No postinstall downloads.'
+    ? 'Installed through the official profile manager. Reload/restart the target application if needed. On Windows the pinned Bash payload ships as an optional dependency; run dsh-ops-pro bash-runtime install to repair a missing payload. No postinstall downloads.'
     : 'Removed through the official profile manager, including its runtime dependency references. Package-manager shared caches are not deleted.')
   return 0
 }

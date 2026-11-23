@@ -1,6 +1,6 @@
 /** Stable Native discovery definitions with next-step conditional admission. */
 import type { Agent, Context, Fiber, ToolDefinition } from '../adapter/dsh/types.js'
-import { resolveDiscoveryConfig } from '../config.js'
+import { resolveDiscoveryConfig } from '../config/resolve.js'
 import { NativeFileTools } from '../projections/native/runtime.js'
 import { ownScopes } from '../publication/ownership.js'
 import { activationIsPtc, isNativePresentation, isPresentationProbe } from '../publication/presentation.js'

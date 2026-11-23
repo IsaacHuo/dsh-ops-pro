@@ -1,5 +1,5 @@
 /** Reviewed replacement policy independent of consumer identity. */
-import { OFFICIAL_REPLACEMENTS } from '../official-tool-catalog.js'
+import { OFFICIAL_REPLACEMENTS } from '../official-tools/catalog.js'
 import { SHELL_OFFICIAL_NAMES } from '../capabilities/profiles.js'
 import { BASH_TOOL } from '../policy.js'
 export function replacementTargets(files: boolean, hidePwsh: boolean, platform = process.platform): ReadonlyMap<string, string> {

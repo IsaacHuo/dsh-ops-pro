@@ -17,7 +17,7 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import { PACKAGE_ROOT } from '../lib/paths.js'
-import { profileCommand } from '../lib/profile-install.js'
+import { profileCommand } from '../lib/profile/install.js'
 import { cargoBuild, findCargo } from '../lib/rust.js'
 import { commandLadder } from '../lib/cli/report.js'
 import { commandProvisionShells } from '../lib/cli/provision-shells.js'
@@ -39,36 +39,36 @@ function usage() {
 Usage:
   dsh-ops install --profile <desktop|web|tui> [--dsh-cli <path>]
                                   Install this version using the official target-profile manager
-  dsh-ops uninstall --profile <desktop|web|tui> [--dsh-cli <path>]
+  dsh-ops-pro uninstall --profile <desktop|web|tui> [--dsh-cli <path>]
                                   Remove the profile plugin and its binary dependency references
-  dsh-ops status --profile <desktop|web|tui>
+  dsh-ops-pro status --profile <desktop|web|tui>
                                   Report target-profile installation (tui maps to dsh-tui)
-  dsh-ops repair-default --profile <desktop|web|tui> [--dry-run]
+  dsh-ops-pro repair-default --profile <desktop|web|tui> [--dry-run]
                                   After removing the plugin from the GUI, clear a profile
                                   default that still names ops-ptc (uninstall does this itself)
-  dsh-ops build-ptc [--target <rust-triple>]
+  dsh-ops-pro build-ptc [--target <rust-triple>]
                                   Build the independent native Rust worker (all platforms).
                                   --target stages a cross build from native/target/<rust-triple>/release,
                                   e.g. x86_64-unknown-linux-musl for a static Linux x64 worker.
   dsh-ops review snapshot --repo <owner/name> --prs <1,2> [--base main] [--checkout <path>]
                                   Collect bounded PR/CI evidence; optionally probe local commit objects
-  dsh-ops uninstall [--yes] [--purge-fastctx]
+  dsh-ops-pro uninstall [--yes] [--purge-fastctx]
                                   Report files older versions left under <DSH_HOME>/dsh-ops and,
                                   with --yes, remove them; --purge-fastctx also removes leftover
                                   ~/.fastctx state from the removed background component
-  dsh-ops ladder [--json] [--config <file>]
+  dsh-ops-pro ladder [--json] [--config <file>]
                                   Report the native worker, both shells, and the rungs the
                                   prompt ladder renders; Windows labels are inspected read-only
-  dsh-ops disk status [--json] [--config <file>]
+  dsh-ops-pro disk status [--json] [--config <file>]
                                   Report every disk resource OPS may create: owner, category,
                                   bytes, age and why it is or is not reclaimable. Read-only; deletes nothing
   dsh-ops panel [--serve] [dir] [--port <n>]
                                   Serve the panel viewer and capture reports over loopback
                                   (default: ./.dsh-ops/panel, latest session preselected)
-  dsh-ops provision-shells [--bash] [--pwsh] [--force] [--dry-run] [--pin <file>]
+  dsh-ops-pro provision-shells [--bash] [--pwsh] [--force] [--dry-run] [--pin <file>]
                                   Download the pinned upstream bash and/or PowerShell 7, verify
                                   their digests, and install them under <DSH_HOME>/dsh-ops/shells
-  dsh-ops bash-runtime [status|install|remove|git|niubash|clean-cache|spill-report] [--path <exe>] [--yes] [--dry-run]
+  dsh-ops-pro bash-runtime [status|install|remove|git|niubash|clean-cache|spill-report] [--path <exe>] [--yes] [--dry-run]
                                   Manage optional Bash; install provisions the pinned Niubash
                                   payload. git/niubash print the bashPath facts for the host
                                   config editor (git also takes --path).
@@ -77,20 +77,20 @@ Usage:
                                   after stopping all OPS hosts with --yes --all-hosts-stopped.
                                   spill-report reports the ledger of host spill files; preview
                                   deletions unless --sweep --yes. --json prints the raw report.
-  dsh-ops result-cache [status|reclaim] [--apply] [--json] [--config <file>]
+  dsh-ops-pro result-cache [status|reclaim] [--apply] [--json] [--config <file>]
                                   Report result-cache roots under the temp directory; reclaim
                                   previews unless --apply. Stop every OPS host before applying.
   dsh-ops upgrade-host-pwsh [--yes] [--dry-run]
                                   Preview/run standard Windows PowerShell 7 installation through
                                   WinGet. Restart DSH; custom host pwshPath remains authoritative.
-  dsh-ops cache <status|reclaim> [--yes --all-hosts-stopped] [--kind <kind>]... [--root <dir>]... [--json]
+  dsh-ops-pro cache <status|reclaim> [--yes --all-hosts-stopped] [--kind <kind>]... [--root <dir>]... [--json]
                                   Report (status) the temporary resources OPS can reproduce: kept
                                   provision downloads, Niubash staging siblings, quarantined Bash IPC
                                   generations, audit-store writer temporaries and per-call Niubash
                                   execution trees. reclaim previews by default and deletes only with
                                   --yes after every host and shell stopped. Kinds:
                                   ${CACHE_KINDS.join(", ")}; --root names an audit-store root.
-  dsh-ops help                    This text
+  dsh-ops-pro help                    This text
 
 Environment:
   DSH_OPS_WORKER_BIN   Explicit native worker executable
@@ -112,10 +112,10 @@ use --yes to confirm that separate cleanup. No system shell or shared npm cache 
  * or habit gets told where to go.
  */
 const REMOVED_COMMANDS = Object.freeze({
-  resolve: 'use `dsh-ops ladder` to see what this deployment resolves',
-  status: 'use `dsh-ops ladder` for this deployment, or `dsh-ops status --profile <desktop|web|tui>` for a profile install',
-  build: 'use `dsh-ops build-ptc` to build the native worker',
-  provision: 'the native worker ships in the package (or `dsh-ops build-ptc` from a checkout); use `dsh-ops provision-shells` for the shells',
+  resolve: 'use `dsh-ops-pro ladder` to see what this deployment resolves',
+  status: 'use `dsh-ops-pro ladder` for this deployment, or `dsh-ops-pro status --profile <desktop|web|tui>` for a profile install',
+  build: 'use `dsh-ops-pro build-ptc` to build the native worker',
+  provision: 'the native worker ships in the package (or `dsh-ops-pro build-ptc` from a checkout); use `dsh-ops-pro provision-shells` for the shells',
 })
 
 /**

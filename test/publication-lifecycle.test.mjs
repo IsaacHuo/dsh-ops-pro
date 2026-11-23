@@ -1,6 +1,6 @@
 /** Direct shared-helper contracts; no replacement controller or agent notification is mounted. */
 import { createScope } from '@deepseek-ai/dsh-scope'
-import { publicationRegistration, publicationReady, publicationPending } from '../lib/publication/reentry.js'
+import { publicationRegistration, publicationReady, publicationLeaseState, publicationPending } from '../lib/publication/reentry.js'
 import { acquire } from '../lib/publication/registrar.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report } from './lib/harness.mjs'
@@ -51,6 +51,7 @@ await test('a disposed scope returns cancelled readiness without applying or sto
     const rejected = publicationReady(cancelled)
     assert.equal(publicationReady(cancelled), rejected, 'the cancelled handle must retain its failed work')
     await assert.rejects(rejected, /Publication owner inactive/)
+    assert.equal(publicationLeaseState(cancelled), 'cancelled')
     assert.equal(publicationPending(cancelled), false)
     cancelled()
     cancelled()
@@ -59,6 +60,7 @@ await test('a disposed scope returns cancelled readiness without applying or sto
     assert.equal(tools.get('dead-publication', stale), undefined)
     dispose = publicationRegistration(live.ctx, () => live.ctx.get('tools').register(definition('healthy-publication')))
     await ready(dispose)
+    assert.equal(publicationLeaseState(dispose), 'settled')
     assert.equal(publicationPending(dispose), false)
     assert.ok(tools.get('healthy-publication', healthy))
     dispose()
@@ -82,6 +84,7 @@ await test('disposal between queue setup and lease creation returns cancelled re
   try {
     const cancelled = publicationRegistration(scope.ctx, () => { ++attempts; return () => {} })
     await assert.rejects(publicationReady(cancelled), /Publication owner inactive/)
+    assert.equal(publicationLeaseState(cancelled), 'cancelled')
     assert.equal(publicationPending(cancelled), false)
     cancelled()
     assert.equal(reached, true)
@@ -182,6 +185,7 @@ await test('a deferred registry failure rejects the exact ready promise and does
     locked = false
     await ready(sibling)
     await assert.rejects(first, error => error === failure)
+    assert.equal(publicationLeaseState(failed), 'failed')
     assert.equal(publicationPending(failed), false)
     assert.equal(attempts, 1)
     assert.ok(tools.get('deferred-healthy', healthy))
@@ -225,6 +229,7 @@ await test('queued apply skips a dead owner before its delayed lease cancellatio
     await ready(sibling)
     await assert.rejects(publicationReady(pending), /Publication owner inactive/)
     assert.equal(attempts, 0, 'dead owners must not reach even a callback without its own liveness guard')
+    assert.equal(publicationLeaseState(pending), 'cancelled')
     assert.equal(publicationPending(pending), false)
     assert.equal(tools.get('queued-dead', stale), undefined)
     assert.ok(tools.get('queued-healthy', healthy))
@@ -253,6 +258,7 @@ await test('disposing the root rejects queued readiness and never applies work a
     await shutdown(ctx)
     await assert.rejects(publicationReady(pending), /Publication root disposed|Publication cancelled before registration/)
     await assert.rejects(publicationReady(blocker), /Publication root disposed|Publication cancelled before registration/)
+    assert.equal(publicationLeaseState(pending), 'cancelled')
     assert.equal(publicationPending(pending), false)
     assert.equal(attempts, 0)
   } finally { pending?.(); blocker?.(); await shutdown(ctx) }
@@ -271,7 +277,7 @@ await test('synchronous owner disposal after apply rejects readiness and runs th
       return () => { ++undos; undo() }
     })
     await assert.rejects(publicationReady(registration), /Publication owner inactive/)
-    assert.equal(publicationPending(registration), false)
+    assert.equal(publicationLeaseState(registration), 'cancelled')
     assert.equal(attempts, 1)
     assert.equal(undos, 1, 'the callback returned an undo which remains owed after owner disposal')
     assert.equal(tools.get('disposed-after-apply', agent), undefined)
@@ -300,7 +306,7 @@ await test('owner disposal during apply contains only INACTIVE_EFFECT and preser
         else {
           registration = publish()
           await assert.rejects(publicationReady(registration), /Publication owner inactive/)
-          assert.equal(publicationPending(registration), false)
+          assert.equal(publicationLeaseState(registration), 'cancelled')
         }
       } finally { await disposal; registration?.() }
     }

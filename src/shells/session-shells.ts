@@ -1,20 +1,20 @@
 /** Plugin-owned bash layers; permission changes never mutate the shared registry. */
 import path from 'node:path'
-import type { Context, Fiber } from './adapter/dsh/types.js'
-import type { Agent } from './adapter/dsh/types.js'
-import type { ResolvedConfig } from './config.js'
-import type { ShellResolution } from './shells/paths.js'
-import type { HostShellDefinition, ShellJobs, ShellResult } from './shells/types.js'
-import { errorMessage } from './shells/types.js'
-import { BASH_TOOL } from './policy.js'
-import { bashToolDefinition, DEFAULT_BASH_TIMEOUT_MS } from './shells.js'
-import { BashArgumentError } from './shells/argument-error.js'
-import { MODES } from './permissions.js'
-import { hostBashDefinition } from './shells/host-tool.js'
-import { withToolChange } from './publication/changes.js'
-import { publicationPending, publicationReady, publicationRegistration } from './publication/reentry.js'
-import { startSessionBash } from './shells/session-execution.js'
-import { resolveSessionDirectory } from './adapter/dsh/working-directory.js'
+import type { Context, Fiber } from '../adapter/dsh/types.js'
+import type { Agent } from '../adapter/dsh/types.js'
+import type { ResolvedConfig } from '../config/resolve.js'
+import type { ShellResolution } from './paths.js'
+import type { HostShellDefinition, ShellJobs, ShellResult } from './types.js'
+import { errorMessage } from './types.js'
+import { BASH_TOOL } from '../policy.js'
+import { bashToolDefinition, DEFAULT_BASH_TIMEOUT_MS } from '../shells.js'
+import { BashArgumentError } from './argument-error.js'
+import { MODES } from '../permissions.js'
+import { hostBashDefinition } from './host-tool.js'
+import { withToolChange } from '../publication/changes.js'
+import { publicationLeaseError, publicationLeaseState, publicationReady, publicationRegistration } from '../publication/reentry.js'
+import { startSessionBash } from './session-execution.js'
+import { resolveSessionDirectory } from '../adapter/dsh/working-directory.js'
 
 /**
  * Whether a session workspace is written in a Windows form.
@@ -240,39 +240,31 @@ export function mountSessionBash(ctx: Context, config: Pick<ResolvedConfig, 'pub
     admit(entry, dispose, definition, attemptGeneration)
   }
 
-  /**
-   * Mark one registration attempt live, or report and restore on rejection.
-   *
-   * A queued attempt exists only once the host admits it: the entry stays
-   * pending, never published, so a later rejection cannot leave a session
-   * looking served while its layer is gone (#873).
-   * @param entry - the entry the attempt belongs to.
-   * @param dispose - the attempt's queue handle; also its settle identity.
-   * @param definition - the definition the attempt registers.
-   * @param attemptGeneration - the reconcile generation of the attempt.
-   */
+  /** Only the current attempt can publish this entry or latch a failure for its generation. */
   const admit = (entry: Entry, dispose: () => void, definition: HostShellDefinition, attemptGeneration: number) => {
     const live = () => {
+      if (entry.dispose !== dispose) return
+      entry.pending = false
       entry.definition = definition
       entry.published = true
       entry.generation = attemptGeneration
       entry.failed = undefined
     }
-    if (!publicationPending(dispose)) { live(); return }
-    entry.pending = true
-    void publicationReady(dispose).then(() => {
-      // A superseded attempt no longer speaks for this entry.
+    const reject = (error: unknown) => {
       if (entry.dispose !== dispose) return
-      entry.pending = false
-      live()
-    }, error => {
-      if (entry.dispose !== dispose) return
-      entry.pending = false
-      entry.published = undefined
-      entry.generation = undefined
-      if (bashOwners.get(entry.agent)?.entry === entry) bashOwners.delete(entry.agent)
-      reportRejected(entry, attemptGeneration, definition, error)
-    })
+      const failed = publicationLeaseState(dispose) === 'failed'
+      clear(entry)
+      if (failed) reportRejected(entry, attemptGeneration, definition, error)
+      else ctx.logger?.warn?.(`dsh-ops: bash publication cancelled for agent ${entry.agent.id}: ${errorMessage(error)}`)
+    }
+    const state = publicationLeaseState(dispose)
+    if (state === 'settled') { live(); return }
+    if (state === 'pending') {
+      entry.pending = true
+      void publicationReady(dispose).then(live, reject)
+      return
+    }
+    reject(publicationLeaseError(dispose))
   }
 
   /**
@@ -367,6 +359,8 @@ export function mountSessionBash(ctx: Context, config: Pick<ResolvedConfig, 'pub
     entries.set(agent, entry)
     entry.fiber = agent.ctx.plugin(child => {
       child.inject(['tools'], toolsCtx => {
+        // Cordis withdraws the previous injection's layer even when the preset and policy stay the same.
+        if (entry.ctx) clear(entry)
         entry.ctx = toolsCtx
         scheduleReconcile()
       })

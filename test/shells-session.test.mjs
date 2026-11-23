@@ -23,7 +23,7 @@ import { bootHost, shutdown } from './lib/host.mjs'
 import { resolveShells } from '../lib/shells.js'
 import { hostForeground } from '../lib/shells/host-contract.js'
 import { BASH_ARGUMENT_ERROR_CODE } from '../lib/shells/argument-error.js'
-import { bashRefusalValue, mountSessionBash } from '../lib/session-shells.js'
+import { bashRefusalValue, mountSessionBash } from '../lib/shells/session-shells.js'
 
 const bash = resolveShells(process.env.DSH_OPS_TEST_BASH ? { bashPath: process.env.DSH_OPS_TEST_BASH } : {}).bash
 if (!bash.available) {

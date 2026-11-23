@@ -5,8 +5,8 @@
  * write-back bakes the composed rows into the profile root file, which made the
  * `ui-theme` settings row echo its previous `preference`/`fontSize` and bounce.
  */
-import { updatedConfig, mountConfigUpdates, CONFIG_UPDATE_VERSION } from '../lib/config-updates.js'
-import { LEGACY_FASTCTX_KEYS, resolveConfig } from '../lib/config.js'
+import { updatedConfig, mountConfigUpdates, CONFIG_UPDATE_VERSION } from '../lib/config/updates.js'
+import { LEGACY_FASTCTX_KEYS, resolveConfig } from '../lib/config/resolve.js'
 import { assert, report, test, tick, waitFor } from './lib/harness.mjs'
 
 /**

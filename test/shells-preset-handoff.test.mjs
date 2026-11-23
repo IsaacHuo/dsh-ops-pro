@@ -1,7 +1,7 @@
 /** Real registry ownership transfer when an earlier preset takes over Bash (#489). */
 import Subprocess from '@deepseek-ai/dsh-subprocess-local'
 import { createScope } from '@deepseek-ai/dsh-scope'
-import { mountSessionBash } from '../lib/session-shells.js'
+import { mountSessionBash } from '../lib/shells/session-shells.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, report, test, withTempDir } from './lib/harness.mjs'
 

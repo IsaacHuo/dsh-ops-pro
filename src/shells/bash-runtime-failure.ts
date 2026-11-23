@@ -22,7 +22,7 @@
  * @module dsh-ops/bash-runtime-failure
  */
 
-import { errorMessage } from './shells/types.js'
+import { errorMessage } from './types.js'
 
 /**
  * The named stages a confined-Bash preparation can fail at.
@@ -72,7 +72,7 @@ const REMEDIES: Readonly<Record<BashRuntimeFailureCode, FailureRemedy>> = Object
   'bash-runtime-missing': {
     retryable: false,
     remedy: 'Restore the pinned Bash payload from the profile dependencies, or run '
-      + '`dsh-ops provision-shells --bash` to fetch it; retrying this call cannot create a missing payload.',
+      + '`dsh-ops-pro provision-shells --bash` to fetch it; retrying this call cannot create a missing payload.',
   },
   'bash-runtime-incompatible': {
     retryable: false,
@@ -86,7 +86,7 @@ const REMEDIES: Readonly<Record<BashRuntimeFailureCode, FailureRemedy>> = Object
   'bash-staging-failed': {
     retryable: true,
     remedy: 'Retry this call once: the next attempt stages a fresh private copy automatically. If it fails again, '
-      + 'run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped` while no confined shell is running, '
+      + 'run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped` while no confined shell is running, '
       + 'then retry. Do not switch shells to bypass confinement.',
   },
   'bash-generation-quarantine-failed': {
@@ -97,7 +97,7 @@ const REMEDIES: Readonly<Record<BashRuntimeFailureCode, FailureRemedy>> = Object
   'bash-lifecycle-lock-busy': {
     retryable: false,
     remedy: 'Retrying does not repair this: the lock is never stolen from an owner that may still be alive. '
-      + 'Stop every OPS host and confined Bash, run `dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped`, '
+      + 'Stop every OPS host and confined Bash, run `dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped`, '
       + 'then retry.',
   },
   'bash-cache-unusable': {
@@ -168,7 +168,7 @@ export function executorUnavailableMessage(error: unknown): string {
   if (suspectedQuarantine(error, reason)) {
     return prefix + 'Windows answers an unknown error when endpoint security (for example Microsoft Defender) holds or '
       + 'has quarantined a runtime file, and a retry cannot restore it (#771). Check the security software\'s protection '
-      + 'history, restore or allow the named file, then run `dsh-ops bash-runtime status`; do not switch shells to bypass confinement.'
+      + 'history, restore or allow the named file, then run `dsh-ops-pro bash-runtime status`; do not switch shells to bypass confinement.'
   }
   return prefix + 'If this was a transient filesystem refusal, one retry may complete the '
     + 'private copy; do not switch shells to bypass confinement.'

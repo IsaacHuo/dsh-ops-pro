@@ -19,7 +19,7 @@ From 0.5.3, consumer replacements select the official fallback and the OPS count
 
 Replacement controllers isolate `tools/change` and reconcile refreshes per agent (#953). A disposed Cordis fiber (`uid = null`) causes cached state to be removed and replacement shadows withdrawn even if `agent/disposed` has not arrived. Synchronous disposal during registration and queued callbacks cannot retain an inactive shadow. Ordinary errors for live agents emit a warning with the mode, agent and safely formatted error; other agents continue refreshing, and the affected agent can recover on a later refresh.
 
-Shared publication also checks disposed and unloading fibers before setup, before queued execution and after registration (#953). Cancelled handles retain rejected readiness and report `pending: false`; ordinary errors still propagate synchronously for rollback. Registration during the legitimate loading phase remains allowed. Returned undo operations remain owed until withdrawal succeeds. If the root refuses lifetime effects, every caller fiber retains the shared queue so unloading one caller cannot discard a live sibling's withdrawal. Failed lifetime setup removes the cached queue; stopping the last owner cancels new publication while still draining owed withdrawals.
+Shared publication also checks disposed and unloading fibers before setup, before queued execution and after registration (#953). Cancelled handles retain rejected readiness and report `pending: false`; ordinary errors still propagate synchronously for rollback. Controllers read the explicit `pending` / `settled` / `cancelled` / `failed` lease verdict rather than treating `pending: false` as landed: a cancelled registration is never cached as a live replacement shadow, bash layer or official-tool restriction. Replacement refresh and hide-official fail open on a cancelled lease (the official tools stay visible and callable) and retry on a later pass; bash admission clears the attempt without the per-generation failure latch, so a restarted inject republishes at the same generation. Registration during the legitimate loading phase remains allowed. Returned undo operations remain owed until withdrawal succeeds. If the root refuses lifetime effects, every caller fiber retains the shared queue so unloading one caller cannot discard a live sibling's withdrawal. Failed lifetime setup removes the cached queue; stopping the last owner cancels new publication while still draining owed withdrawals.
 
 Publication refusals distinguish `PUBLICATION_IDENTITY_MISMATCH` (stale definition or missing step admission) from `PUBLICATION_GRANT_UNAVAILABLE` (missing eligible grants or conflicting dispatch). Capture the exact code alongside the scoped request tools and toolSet when investigating #784; these diagnostics do not establish that report's root cause.
 
@@ -33,11 +33,13 @@ PTC guidance is filled only after the public text waterfall confirms the executo
 
 ## Agent variables during presentation inspection (#954)
 
-Presentation inspection passes the inspected agent as both `scope` and `agent`,
-along with the caller's cancellation signal. Agent-dependent prompt variables
-such as `{{model}}`, `{{provider}}` and `{{cwd}}` therefore resolve for the inspected
-session during Native/PTC detection and integration diagnostics. Probe identity
-remains limited to that assembly and is retired even if assembly fails.
+Presentation inspection passes the target agent as both `scope` and `agent`, with
+the caller's cancellation signal. During tool activation, the SDK and official
+replacement checks share the probe for that activation's `modelSelection`.
+The host uses this selection to resolve `model` and `provider`. Independent
+diagnostics omit the selection and use the agent defaults. Other variables,
+including `cwd`, require a host variable provider. Probe identity ends when
+assembly completes or throws.
 
 ## Source ownership
 

@@ -7,7 +7,7 @@ import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
 import { mountNative } from '../lib/publication/native.js'
 import { mountReplacements } from '../lib/publication/replacements.js'
 import { mountDiscovery } from '../lib/discovery/controller.js'
-import { resolveConfig } from '../lib/config.js'
+import { resolveConfig } from '../lib/config/resolve.js'
 import { publicToolName } from '../lib/policy.js'
 import { DISCOVERY_TOOL_NAME } from '../lib/capabilities/registry.js'
 import { DESCRIPTIONS } from '../lib/capabilities/file.js'
@@ -55,6 +55,11 @@ await test('Native guidance follows readiness, dynamic publication, hiding and m
     unavailable.dispose()
     active = true; refresh()
     await waitFor(() => Boolean(ctx.tools.get(target, agent)), { what: 'Native reader publication' })
+    // Hiding the replaced official tool is a separate asynchronous step after publication.
+    await waitFor(async () => {
+      const step = await prepareStep(ctx, agent)
+      try { return !step.assembly.tools.some(tool => tool.name === 'read') } finally { step.dispose() }
+    }, { what: 'official read hidden' })
     const hidden = await capture()
     assert.ok(hidden.names.includes(target)); assert.ok(!hidden.names.includes('read'))
     assert.match(hidden.own, new RegExp(`Bounded UTF-8 lines / hex \\| ${target}`))

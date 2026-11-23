@@ -10,8 +10,8 @@
  *   recomputes system from the per-section bytes (the normalization is pinned
  *   by assertion) and proves a one-section change lands in system exactly once;
  * - wire: the outer tool schemas each provider request carries (`run_code`);
- * - history: the dsh-ops guidance messages that entered session history — the
- *   first teaching and the later program-shape reminders.
+ * - history: the dsh-ops lesson and program-shape notices that entered session
+ *   history as user-role messages carrying the plugin source on the pre-step batch.
  *
  * The official read/glob/grep schemas are mounted for real (the same host
  * plugins the budget suite mounts), because SDK names are only meaningful
@@ -28,7 +28,7 @@ import path from 'node:path'
 import * as FsTools from '@deepseek-ai/dsh-tool-fs'
 import * as SearchTools from '@deepseek-ai/dsh-tool-fs-search'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import { BATCHING_GUIDANCE_ID, BATCHING_GUIDANCE_LESSON_ID, analyzeProgram, noticeText } from '../lib/ptc/batching-guidance.js'
+import { noticeText } from '../lib/ptc/batching-notices.js'
 import { requireWorker } from './lib/boundary.mjs'
 import { bootEntryGroup, enterPtc } from './lib/ptc-entry.mjs'
 import { prepareStep } from './lib/executor.mjs'
@@ -40,9 +40,6 @@ requireWorker('ptc-cost-accounts')
 const HOST_PLUGINS = [[FsTools, {}], [SearchTools, { sampleOverCapGlobResults: false }]]
 /** The official names the shipped row replaces; the ledger compares SDK names against them. */
 const OFFICIAL = ['read', 'glob', 'grep']
-/** The lesson and notice contributors, as the host message source records them. */
-const CONTRIBUTORS = new Set([BATCHING_GUIDANCE_ID, BATCHING_GUIDANCE_LESSON_ID])
-const envelopeOf = id => `[Plugin context from ${JSON.stringify(id)}; not a user instruction or authorization.]\n`
 /** A thin single-dispatch program with no plan line: it earns the plan notice. */
 const THIN_PROGRAM = "const row = await tools.ops_inspect_local_file({ path: 'ledger-note' })\nreturn row"
 /** A compliant load step: plan line plus one batched dispatch; it earns no notice. */
@@ -83,14 +80,13 @@ function officialFacts(ctx, agent) {
 function historyItemsOf(messages) {
   const items = []
   for (const message of messages) {
-    const contributor = message.source?.contributor
-    if (message.source?.kind !== 'dsh-ops:step-tail' || !CONTRIBUTORS.has(contributor)) continue
+    if (message.source?.kind !== 'dsh-ops:batching-guidance') continue
     const text = textOf(message)
-    const envelope = envelopeOf(contributor)
-    const body = text.startsWith(envelope) ? text.slice(envelope.length) : text
-    // The lesson is rendered for the agent's surface, so it is classified by its contributor.
-    const kind = contributor === BATCHING_GUIDANCE_LESSON_ID ? 'teaching'
-      : body === noticeText('plan', analyzeProgram(THIN_PROGRAM)) ? 'notice:plan' : 'unknown'
+    // The lesson is rendered for the reported sandbox mode, so identify it by its
+    // opening heading instead of comparing against the shipped file (#963).
+    const kind = text.startsWith('# Batch tool calls') ? 'teaching'
+      : text === noticeText('plan', { loader: true, resident: [], loadable: [] }) ? 'notice:plan' : undefined
+    if (kind === undefined) continue
     items.push({ kind, bytes: bytes(text), sha: sha(text) })
   }
   return items
@@ -177,7 +173,7 @@ function printLedger(ledger) {
   console.log(JSON.stringify({ fourAccounts: { ...marker, history: after.history, officialSchema: ledger.official } }))
 }
 
-await test('the four accounts of one OPS-PTC group: system, its SDK subset, the wire, and the guidance history', async () => {
+await test('the four accounts of one OPS-PTC group: system, its SDK subset, the wire, and the notice history', async () => {
   const first = await withTempDir('ptc-cost-accounts-a', root => runScenario(root, { hostPlugins: HOST_PLUGINS }))
   assert.equal(first.invalid, undefined, 'the routing gate failed: ' + JSON.stringify(first.invalid ?? {}))
   const { official, snapshots, requests } = first
@@ -196,8 +192,9 @@ await test('the four accounts of one OPS-PTC group: system, its SDK subset, the 
       'normalization pinned: system = per-section bytes joined by \'\n\n\', exactly renderPrompt')
     assert.ok(snapshot.sdk.bytes > 0 && snapshot.sdk.bytes < snapshot.system.bytes, 'SDK is a strict subset of system')
   }
-  // The teaching and the notice enter history only; the system account never moves.
-  assert.equal(snapshots.steady.system.sha, snapshots.baseline.system.sha, 'the plan notice is history, not a prompt change')
+  // The lesson and the notices are user-role messages on the pre-step batch, so
+  // both enter history; the system account never moves either way.
+  assert.equal(snapshots.steady.system.sha, snapshots.baseline.system.sha, 'the guidance is history, not a prompt change')
   assert.equal(snapshots.steady.sdk.sha, snapshots.baseline.sdk.sha)
   // B: the hand-computed example — loading three APIs changes only tools:sdk, exactly once.
   const nonSdk = snapshot => snapshot.system.items.filter(item => item.name !== 'tools:sdk').map(item => item.sha)
@@ -207,24 +204,30 @@ await test('the four accounts of one OPS-PTC group: system, its SDK subset, the 
   assert.notEqual(delta, 0)
   assert.equal(delta, snapshots.loaded.sdk.bytes - snapshots.steady.sdk.bytes,
     'the system delta equals the SDK-section delta: counted once, never double-added')
-  // D: SDK names against the real official schemas. PR #961 is absorbed: the
-  // shipped row removes the official bindings from the PTC SDK once their ops
-  // replacements are declared, so the ledger counts each capability once.
+  // D: SDK names against the real official schemas. On this baseline the shipped
+  // row does not yet remove the official bindings from the PTC SDK (PR #961 is
+  // open; the #978 contrast numbers were taken at its head, not here). The
+  // ledger records both name lists, and the assertion pins the current baseline:
+  // when #961 lands, this turns red on purpose and the accounts must be re-run.
   for (const name of ['ops_inspect_local_file', 'ops_load_sdk']) assert.ok(snapshots.steady.sdk.names.includes(name), name)
   for (const name of ['ops_glob', 'ops_grep', 'ops_read_files']) assert.ok(snapshots.loaded.sdk.names.includes(name), name)
+  // #961 has landed: the replaced official bindings are withdrawn from the PTC
+  // SDK whenever their ops replacement is servable, so the ledger pins the hidden
+  // state. The official provider is still mounted, which the unmeasurable branch
+  // below keeps honest when it is not.
   for (const name of OFFICIAL) {
-    assert.ok(!snapshots.loaded.sdk.names.includes(name),
-      'the official ' + name + ' must not be declared beside its ops replacement (#961)')
+    assert.equal(snapshots.loaded.sdk.names.includes(name), false,
+      '#961 landed: the official ' + name + ' is withdrawn from the PTC SDK')
   }
   // C: run_code stays the only wire transport on every request.
   for (const request of requests) assert.deepEqual(request.wireNames, ['run_code'])
   assert.equal(new Set(requests.map(request => request.wireSha)).size, 1, 'wire is byte-identical on every request')
   assert.equal(requests[0].wireSha, snapshots.baseline.wire.sha, 'the idle snapshot wire is the delivered wire')
-  // D: the history account — the lesson arrives with the first root result, together
-  // with the plan notice that thin program earns; both once, cumulative thereafter.
+  // D: the history account — the opening lesson is the first guidance the model
+  // reads, then exactly one plan notice, and nothing is appended thereafter.
   const kindsAt = label => requests.find(request => request.label === label).history.map(item => item.kind)
-  assert.deepEqual(kindsAt('first'), [], 'the first request carries no guidance: nothing in the user batch')
-  assert.deepEqual(kindsAt('after-notice'), ['teaching', 'notice:plan'], 'the first result teaches once and the thin program earns one plan notice')
+  assert.deepEqual(kindsAt('first'), ['teaching'], 'the first request opens with the lesson in history')
+  assert.deepEqual(kindsAt('after-notice'), ['teaching', 'notice:plan'], 'the thin program earns exactly one plan notice')
   assert.deepEqual(kindsAt('before-load'), ['teaching', 'notice:plan'])
   assert.deepEqual(kindsAt('after-load'), ['teaching', 'notice:plan'], 'a compliant load step earns no new notice')
   assert.deepEqual(kindsAt('repeat'), ['teaching', 'notice:plan'], 'no re-teaching, no duplicate notice')

@@ -23,7 +23,7 @@ Plugin authors can also mount the [public integration API](integration-api.md) i
 | `disk` | Read-only ownership report; `status.includeRepository` false and `status.maxEntries` 5000 by default; the `retention` block is a validated contract only (no eviction in this release) |
 
 `disk.status.*` and the reserved `disk.retention.*` keys are YAML-only. See [Disk and cache](disk-and-cache.md) for
-the resource inventory, the read-only `dsh-ops disk status` report and what it deliberately never scans.
+the resource inventory, the read-only `dsh-ops-pro disk status` report and what it deliberately never scans.
 
 The page uses native Switch controls. Built-in cards start collapsed. Disabling a card greys its
 switches without erasing saved values. Standard/PTC/OPS PTC/Cordis have `residentTools` (default true),
@@ -74,7 +74,8 @@ the row's status card, which sets it once when pressed. Generation and the manua
 | `hidePwsh` | true | Hide the official Windows shell while Bash is available; disabled entirely when `global.hidePwsh` is false |
 | `hideOfficialTools` | true | Hide the official file tools this mode replaces, including PTC presentation: when the projection can serve the matching `ops_*` API, official `read/glob/grep` leave the tool surface and the SDK declaration. `write`/`edit`/`read_image` stay; a name the projection cannot serve keeps its official tool (an unattached projection, `glob`/`grep` under `dynamicTools: false`, or a name excluded by a narrowed `allowedTools`). Disabled entirely when `global.hideOfficialTools` is false |
 | `dynamicTools` | true | Publish the progressive SDK loader `ops_load_sdk`; effective only while `global.dynamicTools` is also on (AND gate) |
-| `batchingGuidance` | true for `ops-ptc`, false otherwise | Teach once at session start (logged history, system prompt untouched), then correct the shape of root `run_code` programs: `bypass`, `plan` and `shape` each latch once per turn and re-arm when the program complies; the notice rides the triggering result as `additionalContexts` and never blocks or rewrites the program. Text lives in the editable `prompts/batching-guidance.md`. YAML-only; an omitted `ops-ptc` section in a legacy whole-row profile override retains true; explicit false disables it |
+| `disclosurePolicy` | `on-demand` | YAML-only explicit first-round disclosure tier: `on-demand` keeps the legacy progressive path (resident + loader); `full` publishes the whole `allowedTools` pool plus `result` in the first round with no loader (implemented; see the D3 addendum in docs/design-decisions-20261119.md). Effective only while `global.dynamicTools` is on — the explicit opt-in never overrides the bundle switch; while it is off the row keeps its legacy resident/always-loaded surface and the saved choice is preserved. Rejected on non-PTC rows; illegal values are errors naming the key and the received value or type. No upgrade, settings save or switch flip ever writes this key for you |
+| `batchingGuidance` | true for `ops-ptc`, false otherwise | Teach once, as a user-role message on the first accepted pre-step batch (source kind `dsh-ops:batching-guidance`, `role: user`, no plugin envelope, logged history; system prompt untouched), then correct the shape of root `run_code` programs: `bypass`, `plan` and `shape` each latch once per turn and re-arm when the program complies; the notice is queued by the triggering result and appended to the next pre-step as a plain user message, and never blocks or rewrites the program. Text lives in the editable `prompts/batching-guidance.md`. YAML-only; an omitted `ops-ptc` section in a legacy whole-row profile override retains true; explicit false disables it |
 | `spillRetentionDays` | 30 | Host subprocess spill retention window; `0` reports only and never deletes |
 | `spillTotalBudgetMiB` | 256 | Total retained spill budget in MiB; `0` disables the budget |
 | `spillSweepEnabled` | true | Run one bounded sweep on activation and every 256 settlements |
@@ -85,32 +86,41 @@ Native guidance; `allowedTools`/`alwaysLoaded` accept loadable raw API names onl
 [Progressive PTC SDK loading](ptc-sdk-loading.md)). The three `spill*` keys bound host subprocess spill
 retention, described under built-in advanced configuration below.
 
+The exact first-round `ops_*` name sets for the five legacy inputs — defaults,
+`global.dynamicTools:false`, row `dynamicTools:false`, that row plus `alwaysLoaded:[stat]`, and
+`residentTools:false` — are locked letter by letter in the
+[D1 truth table](design-decisions-20261119.md). Old `dynamicTools:false` publishes only the
+resident/always-loaded surface and must not be read as a full selection; the explicit full tier
+is a separate `disclosurePolicy` opt-in whose parsing contract and conservative precedence are
+recorded in the same document's D2 addendum, with publication owned by the D3 slice.
+
 ### Batch-call guidance (`batchingGuidance`)
 
-Off contributes no extra context. The code default is on for `ops-ptc` only, even when a legacy profile replaces the whole row config without that section; explicit `batchingGuidance: false` still disables it. On, the guidance is delivered in two places, from an
+Off contributes no extra context. The code default is on for `ops-ptc` only, even when a legacy profile replaces the whole row config without that section; explicit `batchingGuidance: false` still disables it. On, two kinds of guidance ride the pre-step batch as user-role messages carrying the plugin source, rendered from one
 external English Markdown file:
 
-- **Once at session start**: one plugin-context message joins the session's first accepted non-empty
-  user-message batch (step-tail, source `dsh-ops:step-tail` / `batching-guidance`). It enters logged history,
-  so the model's first request already sees the whole procedure: the first-line `// plan:` comment, the
-  dependency split, the load-before-call step (only while dynamic loading publishes the loader) and four
-  copyable trajectories.
+- **Once per agent entry**: one user-role message rides the first accepted pre-step batch (source kind `dsh-ops:batching-guidance`, no plugin envelope)
+  and enters logged history, so the model sees the whole procedure on the first request: the first-line `// plan:` comment, the dependency split, the
+  load-before-call step (only while dynamic loading publishes the loader) and four copyable trajectories.
+  The first-round text teaches each rule once (revision 9): the anti-pattern rewrite and the prose that
+  repeated the dependency split are gone, the core rules state load-only-missing and recheck-after-a-mode-change
+  explicitly, the four trajectories ship byte-identical, and one short section states the shared session
+  scope — a top-level name outlives its program, so a second declaration discards the whole program.
 - **On a thin program**: when a **root** `run_code` program breaks one of three latched categories, a short
-  notice is appended to that call's own result as `additionalContexts`. The tool result keeps its value, its
-  content and its existing contexts; the program is never blocked or rewritten.
-- The three categories are `bypass` (file work through the shell or `node:fs`), `plan` (no `// plan:` on the
-  first physical line) and `shape` (a single operation in its own round trip). Each is latched once per turn,
-  and a program that complies with a category re-arms it, so a regression inside the same turn speaks again;
-  there is no per-turn cap.
+  notice is queued by that call and appended to the next pre-step as a user-role message. The tool result keeps
+  its value, its content and its existing contexts; the program is never blocked or rewritten.
+- The three categories are `bypass` (Node file or process modules imported by the program, or a shell call whose
+  actual command did file work), `plan` (no `// plan:` on the first physical line) and `shape` (two programs in a
+  row that each dispatched a single non-waiting call). Each is latched once per turn, a program that complies
+  with a category re-arms it, and at most 3 notices are sent per agent session (#1027).
 - Delivery priority is `bypass`, then `plan`, then `shape`: one program earns at most one notice.
-- Only the root call is inspected (`exec.parent === undefined`). Nested `tools.ops_*` calls belong to the PTC
-  execution and say nothing about the shape of the step.
-- The analysis is a literal heuristic over the program text: a loop or `map` counts one dispatch site, not its
-  runtime fan-out, and strings or comments can mislead it. Notices say so, nothing claims a measured dispatch
-  count, and a cancelled or never-dispatched call is not analysed.
-- Everything is plugin-context history and the tool schema is untouched, so the system prompt and its cache
-  survive. The lesson counts as spent only once it appears as a durable `user/message`; a batch withdrawn
-  before admission (cancellation, rejection) leaves the next accepted batch free to teach it again.
+- A root program is judged by what it really dispatched: every nested call (it carries a parent token) is
+  recorded under the root's call id, and the root reads that trace when it settles. A program that dispatched
+  nothing is never accused, a loop counts its real calls, and strings or comments cannot trigger the shell rule.
+  A cancelled call is not analysed.
+- Everything rides the pre-step user batch and the tool schema is untouched, so the system prompt and its
+  cache survive. The lesson is spent only once the host commits the delivered message; a batch that is rejected
+  or cancelled commits nothing, so the next accepted batch still teaches it.
 - The text follows the published surface. While dynamic loading publishes `ops_load_sdk`, the lesson ships
   byte for byte, load step included. With `dynamicTools: false` the scope publishes no loader, so that step and
   its table row are replaced by a direct-call section that lists the APIs this scope actually publishes; a
@@ -133,7 +143,11 @@ observation only: no context, no message, no extra dependency.
 The text file is `prompts/batching-guidance.md` (shipped with the package, English, editable). It is read
 once per path and cached in the process, so restart to apply edits; an unreadable file logs one warning and
 skips delivery, an empty file also skips, and a failed delivery only logs a warning without rewriting the
-tool result.
+tool result. Its "Sandbox permissions" section follows the mode the host `sandboxPolicy` reports:
+`danger-full-access` keeps only "this is the widest tier, never send `sandbox_permissions` or
+`justification`", while `workspace-write` and `read-only` keep their own escalation advice; without a host
+policy the shipped three-tier text is delivered unchanged. Only `workspace-write` and `danger-full-access`
+are legal values, and an invalid one rejects the program before it runs (#963).
 
 **Contrast-arm usage.** To compare the guidance on one shared PTC surface, keep `ptc` and `ops-ptc` on the same
 API configuration and set `batchingGuidance: true` only on the `ops-ptc` section (the packaged default), or
@@ -184,6 +198,7 @@ falling back to the built-in surface; scoped diagnostics remain accessible.
 | `discovery` | true except shell profile; false removes the selector/SDK loader, not explicit startup selections |
 | `allowedTools` | all supported loadable tools when discovery is enabled, otherwise empty |
 | `alwaysLoaded` | empty; must be allowed; separate from the Native residentNames profile |
+| `disclosurePolicy` | `on-demand`; explicit first-round disclosure tier for PTC-presentation rows: `full` publishes the whole `allowedTools` pool plus `result` in the first round with no loader — the same tier the builtin rows parse since D3. Native-presentation rows reject the key; illegal values are errors naming the key and the received value or type; nothing ever writes it for you |
 | `replaceOfficial` | false; replaces only ready, admitted file counterparts; conditional official tools may remain visible |
 | `promptPolicy` | true; guidance names only actually published tools |
 | `extraGuidance` | empty; Native-only guidance, rejected in PTC |
@@ -218,7 +233,7 @@ Built-in sections retain validated worker/Shell settings (`binaryPath`, `require
 `resultCache` is a YAML section: the default sweep only reclaims roots with no snapshot data left
 (empty roots, or scope directories holding just the lock). The aggregate root/byte budgets default
 to 0 and mark over-budget roots as blocked in the report; the sweep never deletes a root that still
-holds snapshot data. `dsh-ops result-cache status|reclaim [--apply]` reports and runs the same
+holds snapshot data. `dsh-ops-pro result-cache status|reclaim [--apply]` reports and runs the same
 bounded pass.
 
 Host subprocess spill retention is bounded by three more built-in keys. `spillRetentionDays`
@@ -228,7 +243,7 @@ evicting the oldest first. `spillSweepEnabled` (default true) controls the autom
 component activation and every 256 settlements. Only paths recorded at a settlement in
 `<DSH_HOME>/ops-spill-ledger.jsonl` are eligible, at most 64 files are removed per pass, and the
 host's `dsh-subprocess-*` directories are never removed. Inspect and sweep from the CLI with
-`dsh-ops bash-runtime spill-report` (see [usage](usage.md)).
+`dsh-ops-pro bash-runtime spill-report` (see [usage](usage.md)).
 
 The bundle's `discovery.enabled` controls built-in **Native** dynamic entry publication, not the
 PTC SDK loader. PTC loading follows `ptc.dynamicTools` and `global.dynamicTools`. The Native keys
@@ -277,7 +292,12 @@ OPS does not bundle or override the host PowerShell executable.
 legacy false remains off. `textLimit` is 64–100000 (default 2000), `maxSessionBytes` is
 65536–268435456 (default 8388608). Capture writes only to the session workspace's `.dsh-ops/panel/`,
 never the real DSH home. Reports can contain conversation/tool text; ignore that directory in Git.
-An enabled collector logs a skipped-working-directory warning once per activation.
+Capture stores PTC arguments and results, job details, spliced inbox text and todo items in
+plaintext up to `textLimit`. This includes pending inbox text that is later withdrawn.
+Set `capture: false` to omit these records. The panel links Bash jobs to their Native or PTC
+tool calls and shows the replacement of a pruned result.
+Closing a session folds its queued events once. Concurrent folds to the same viewer share its
+update, and live reports describe the exact log bytes used by that fold.
 Stopping cancels queued I/O and waits for issued work, retaining recoverable NDJSON rather than
 starting a final fold. `tui` accepts `maxSessions`, `maxActive`, `recentLimit` only; it grants no tool
 execution. See [sidebar limits](tui-panel.md#limits).

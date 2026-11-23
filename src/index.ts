@@ -5,7 +5,7 @@ import { resolveModeConfig } from './presets/config.js'
 import { resolveMergedConfig, effectiveMode, dynamicForMode } from './settings/merged.js'
 import { MODE_IDS } from './presets/types.js'
 import { beginMergedRow, endMergedRow } from './settings/legacy.js'
-import { mountIntegration } from './integration/index.js'
+import { mountIntegration, mountModeDiagnostics } from './integration/index.js'
 import { gateConsumer } from './consumer/gates.js'
 import { resolveIntegrationConfig } from './consumer/options.js'
 import { mountRuntimeSettings } from './settings/runtime-host.js'
@@ -16,6 +16,7 @@ import * as downloadGuardModule from './components/download-guard/index.js'
 import { configureResultCacheGc } from './kernel/result-cache-gc.js'
 import { registerOpsPtcPreset } from './presets/ops-ptc/register.js'
 import { PACKAGE_NAME } from './identity.js'
+import { assertHostFloor } from './adapter/dsh/host-floor.js'
 export { Config } from './settings/merged.js'
 export { applyComponent } from './legacy/host.js'
 export const name = PACKAGE_NAME
@@ -32,6 +33,11 @@ export const name = PACKAGE_NAME
 
 export async function apply(root: Context, rawConfig: unknown): Promise<void> {
   const config = resolveMergedConfig(rawConfig)
+  // Activation-time host support boundary (#701): an older host hears one named
+  // diagnosis here instead of loading halfway and failing with TypeError scope
+  // errors backstage and EXECUTOR_UNAVAILABLE in front. An unknown host version
+  // cannot be proven below the floor, so it loads as before.
+  await assertHostFloor(root)
   const host = root
   const mount = async (module: { apply(...args: unknown[]): unknown }, state: { enabled: boolean; raw?: Record<string, unknown>; config: unknown }, slice?: Record<string, unknown>): Promise<void> => {
     if (!state.enabled) return
@@ -61,10 +67,13 @@ export async function apply(root: Context, rawConfig: unknown): Promise<void> {
     for (const mode of MODE_IDS) {
       const state = config[mode]
       const effective = resolveModeConfig(effectiveMode(state, config.global, linked), mode)
-      await host.plugin({ name: `dsh-ops/consumer-${mode}`, apply(ctx: Context) {
+      await host.plugin({ name: `dsh-ops/consumer-${mode}`, async apply(ctx: Context) {
         applyResolvedMode(ctx, effective, mode, { enabled: state.enabled,
           discovery: { ...config.discovery.config, enabled: config.discovery.enabled },
           dynamic: dynamicForMode(state, config.global) })
+        // Built-in modes answer ops_status too (#753): the named diagnosis used
+        // to exist only behind an external preset row.
+        await mountModeDiagnostics(ctx, mode)
       } })
     }
     for (const row of Object.values(config.presets)) {

@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from 'node:util'
 import { COMPONENTS, componentEntry, componentEnabled } from '../../lib/components/defaults.js'
 import { CAPABILITIES } from '../../lib/capabilities/registry.js'
 import { publicToolName } from '../../lib/policy.js'
-import { platformSurface } from '../../lib/official-tool-catalog.js'
+import { platformSurface } from '../../lib/official-tools/catalog.js'
 import { residentTools } from '../../lib/presets/defaults.js'
 import { PACKAGE_NAME } from '../../lib/identity.js'
 

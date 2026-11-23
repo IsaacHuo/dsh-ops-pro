@@ -13,7 +13,7 @@
  * `- id: agent-preset-registry` with a `config:` map indented by two and its
  * keys by four spaces). Anything else is reported as `unrecognised` and the
  * file is left untouched, with manual instructions.
- * @module dsh-ops/profile-default-reset
+ * @module dsh-ops/profile/default-reset
  */
 import fs from 'node:fs'
 import path from 'node:path'

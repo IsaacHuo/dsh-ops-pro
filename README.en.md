@@ -64,7 +64,7 @@ Supported: Windows x64, Linux x64, and macOS 13+ on Apple Silicon or Intel
   **official Niubash 1.5.0 portable payload** and downloads no Git Bash optional package; the
   settings page's **Bash executor** card switches between that payload and a Git Bash/MSYS
   executable you scan or type in (saved as `bashPath`). Linux/macOS use the distribution's own
-  Bash, overridable with `config.bashPath`. `dsh-ops bash-runtime install` remains the path for
+  Bash, overridable with `config.bashPath`. `dsh-ops-pro bash-runtime install` remains the path for
   installing, repairing and selecting a managed copy. PowerShell stays host-managed; its upgrade
   command previews the standard installation and requires `--yes` to execute.
 
@@ -130,7 +130,7 @@ npx --yes dsh-ops-pro@latest status --profile desktop
 npx --yes dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
+Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops-pro bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
 
 Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
 
@@ -152,7 +152,7 @@ Enable `tui.enabled` on the `dsh-ops` row in dsh-TUI and restart to add the OPS 
 
 ## Windows Bash diagnostics
 
-Windows Bash diagnostics: `dsh-ops ladder` reports image and ancestor integrity
+Windows Bash diagnostics: `dsh-ops-pro ladder` reports image and ancestor integrity
 labels separately from static MSYS hash compatibility. A Low-labelled executable
 can start a Low child even in full access, preventing writes to existing
 Medium/unlabeled files. Unreadable labels remain unknown. See

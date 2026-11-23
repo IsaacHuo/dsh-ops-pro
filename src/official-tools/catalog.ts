@@ -4,10 +4,10 @@
  * OPS glob excludes hidden/link/reparse traversal and takes relative glob arrays.
  * See the paired component references before opting into a different workflow.
  */
-import { publicToolName } from './policy.js'
-import { RAW_OFFICIAL_REPLACEMENTS } from './capabilities/replacements.js'
-import type { OfficialReplacement } from './capabilities/replacements.js'
-export type { OfficialReplacement } from './capabilities/replacements.js'
+import { publicToolName } from '../policy.js'
+import { RAW_OFFICIAL_REPLACEMENTS } from '../capabilities/replacements.js'
+import type { OfficialReplacement } from '../capabilities/replacements.js'
+export type { OfficialReplacement } from '../capabilities/replacements.js'
 
 // Only reviewed, implemented replacements belong here. A similarly named ops_*
 // registration is NOT evidence of equivalent capability. In particular replace

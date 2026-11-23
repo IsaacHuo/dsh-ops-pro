@@ -1,8 +1,8 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { ResolvedConfig } from '../../src/config.js'
+import type { ResolvedConfig } from '../../src/config/resolve.js'
 import type { TuiPanels } from '../../src/components/tui/index.js'
-import { resolveConfig } from '../../src/config.js'
-import { updatedConfig, mountConfigUpdates } from '../../src/config-updates.js'
+import { resolveConfig } from '../../src/config/resolve.js'
+import { updatedConfig, mountConfigUpdates } from '../../src/config/updates.js'
 import { apply as applyTui } from '../../src/components/tui/index.js'
 import { apply as applyBackground } from '../../src/components/background/index.js'
 

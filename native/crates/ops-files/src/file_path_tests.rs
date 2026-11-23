@@ -39,15 +39,11 @@ fn near_audit_names_are_not_reserved_components() {
 
 #[test]
 fn asar_file_components_are_archive_members_not_traversal_bypasses() {
-    // macOS temp_dir() routes through the /var -> /private/var symlink, which the
-    // no-follow walk rightly refuses before it reaches the archive; Windows
-    // canonical paths are verbatim, which worker paths never are.
-    #[cfg(not(windows))]
-    let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
-    #[cfg(windows)]
-    let base = std::env::temp_dir();
-    let root = base.join(format!("dsh-ops-asar-{}", uuid::Uuid::new_v4()));
+    let root = std::env::temp_dir().join(format!("dsh-ops-asar-{}", uuid::Uuid::new_v4()));
     std::fs::create_dir(&root).unwrap();
+    // macOS reaches the temp directory through /var -> /private/var, and checked_leaf
+    // refuses a symlinked component, so pin the canonical spelling before walking.
+    let root = std::fs::canonicalize(&root).unwrap();
     std::fs::write(root.join("bundle.asar"), b"archive bytes").unwrap();
     // #836: Electron presents a real .asar FILE as a directory only through its
     // own patched filesystem; the worker names the archive member instead of

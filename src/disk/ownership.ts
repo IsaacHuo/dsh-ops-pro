@@ -3,7 +3,7 @@
  *
  * The registry is data, not policy: it names each resource family, where it
  * lives, who owns it, which category it belongs to and which cleanup entry (if
- * any) may reclaim it. `dsh-ops disk status` measures it read-only; this module
+ * any) may reclaim it. `dsh-ops-pro disk status` measures it read-only; this module
  * never creates, deletes or renames anything.
  *
  * Ids R1-R13 follow the cross-cutting report on issue #714
@@ -13,7 +13,7 @@
  * @module dsh-ops/disk/ownership
  */
 import path from 'node:path'
-import { ConfigError } from '../config-error.js'
+import { ConfigError } from '../config/error.js'
 import type { MeasureTarget } from './measure.js'
 
 /** What the resource is, in the retention vocabulary of issue #723. */
@@ -248,7 +248,7 @@ export const RESOURCES: readonly ResourceSpec[] = Object.freeze([
   },
   {
     id: 'R8', name: 'bash-ipc-generations', category: 'renewable', owner: 'dsh-ops',
-    action: 'explicit-command', cleanupEntry: 'dsh-ops bash-runtime clean-cache --yes --all-hosts-stopped',
+    action: 'explicit-command', cleanupEntry: 'dsh-ops-pro bash-runtime clean-cache --yes --all-hosts-stopped',
     description: 'Private confined-Bash runtime generations under the DSH home.',
     blocked: {
       reason: 'current-generation-unknown',
@@ -261,11 +261,11 @@ export const RESOURCES: readonly ResourceSpec[] = Object.freeze([
   },
   {
     id: 'R9', name: 'installed-shells', category: 'renewable', owner: 'dsh-ops',
-    action: 'explicit-command', cleanupEntry: 'dsh-ops bash-runtime remove --yes',
+    action: 'explicit-command', cleanupEntry: 'dsh-ops-pro bash-runtime remove --yes',
     description: 'Receipt-owned shell payloads provisioned under the DSH home.',
     blocked: {
       reason: 'explicit-operator-command',
-      evidence: 'remove only the receipt-owned copies listed by dsh-ops bash-runtime remove --dry-run',
+      evidence: 'remove only the receipt-owned copies listed by dsh-ops-pro bash-runtime remove --dry-run',
     },
     resolve: (ctx: DiskContext) => {
       const managed = path.join(ctx.home, 'dsh-ops')

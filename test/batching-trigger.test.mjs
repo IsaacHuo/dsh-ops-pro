@@ -1,243 +1,140 @@
 /**
- * The program-shape analyzer behind the batching trigger.
+ * The trace-driven batching notices.
  *
- * The module is a pure kernel: literal rules over the program text, no host, no
- * worker, no disk. These cases pin the rules the trigger relies on, including the
- * ones a naive implementation gets wrong: the plan comment must be the first
- * physical line, a full-width semicolon separates entries too, a program that
- * dispatches nothing has no call shape to correct, and comment or string text is
- * never mistaken for raw file IO.
+ * A root run_code program is judged by the calls it really dispatched (recorded
+ * from nested tools/post-execute events) plus its first line, never by parsing
+ * its text. These cases pin the rules: no call means no accusation, a shell call
+ * is judged by the command it actually ran, the single-call notice needs two
+ * single-call programs in a row, waits are barriers, and the session cap holds.
  */
 import { assert, test, report } from './lib/harness.mjs'
-import { analyzeProgram, parsePlan, violationsOf, createProgramLatch, SESSION_NOTICE_LIMIT, noticeText, CATEGORY_PRIORITY, PLAN_DIRECTIVE, THIN_CODE_CHARS } from '../lib/ptc/batching-guidance.js'
+import { parsePlan, findingsOf, singleCall, tracedCall, createTraceRecorder, createProgramLatch, noticeText,
+  CATEGORY_PRIORITY, PLAN_DIRECTIVE, SESSION_NOTICE_LIMIT } from '../lib/ptc/batching-notices.js'
 
 /** A scope that publishes the loader and keeps the pool loadable. */
 const LOADER = { loader: true, resident: [], loadable: ['ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file', 'ops_edit_file'] }
 
+/** A trace: the program text and the calls it dispatched ([name, args] or a bare name). */
+const trace = (code, ...calls) => ({ code, calls: calls.map(call => typeof call === 'string' ? tracedCall(call, {}) : tracedCall(call[0], call[1])) })
+/** One unplanned single call. */
+const THIN = trace('const row = await tools.ops_stat({ path: "a" })\nreturn row', 'ops_stat')
+/** A planned program with two batched calls. */
+const GOOD = trace('// plan: list the sources; read the manifest\nreturn await Promise.all([a(), b()])', 'ops_glob', 'ops_read_files')
+/** An unplanned shell listing. */
+const BYPASS = trace('return await tools.ops_bash({ description: "list", command: "ls -la" })', ['ops_bash', { command: 'ls -la' }])
+const NONE = { plan: false, bypass: false, shape: false }
+
 await test('the plan comment is read from the first physical line only', () => {
   assert.deepEqual(parsePlan('// plan: read the config; read the test'), ['read the config', 'read the test'])
-  // The full-width semicolon separates entries as well; both are typed on a CJK layout.
   assert.deepEqual(parsePlan('// plan: 读取配置；运行测试'), ['读取配置', '运行测试'])
-  // Indentation and a UTF-8 BOM are tolerated; neither hides the first line.
   assert.deepEqual(parsePlan('  // plan: one ; two'), ['one', 'two'])
   assert.deepEqual(parsePlan('\ufeff// plan: one'), ['one'])
-  // A blank line or any code before it makes the declaration late, so it does not count.
   assert.deepEqual(parsePlan('\n// plan: late'), [])
   assert.deepEqual(parsePlan('const x = 1\n// plan: late'), [])
-  // A plan line with no entries declares nothing.
   assert.deepEqual(parsePlan('// plan:'), [])
   assert.deepEqual(parsePlan(undefined), [])
   assert.equal(PLAN_DIRECTIVE, '// plan:')
 })
 
-await test('the analyzer counts dispatch sites and reads structure from the text', () => {
-  const single = analyzeProgram('const row = await tools.ops_stat({ path: "a" })\nreturn row.status')
-  assert.equal(single.dispatchSites, 1)
-  assert.equal(single.hasBatchingStructure, false)
-  assert.equal(single.hasFirstLinePlan, false)
-
-  // A bracket call is the same dispatch site as a dotted one.
-  assert.equal(analyzeProgram('return await tools["ops_read_files"]({ path: "a" })').dispatchSites, 1)
-  // A loop or a map is one site, not its runtime fan-out: this is a text heuristic.
-  const mapped = analyzeProgram('const rows = await Promise.all(paths.map(p => tools.ops_stat({ path: p })))\nreturn rows')
-  assert.equal(mapped.dispatchSites, 1)
-  assert.equal(mapped.hasBatchingStructure, true)
-
-  assert.equal(analyzeProgram('const r = await tools.job_output({ job_id: "b", wait: true })').isWaiting, true)
-  assert.equal(analyzeProgram('if (x) { await tools.ops_stat({ path: "a" }) }').hasBranching, true)
-  assert.equal(analyzeProgram(undefined).dispatchSites, 0)
-  assert.equal(analyzeProgram('').chars, 0)
+await test('a traced call keeps only the command and the wait flag', () => {
+  assert.deepEqual(tracedCall('ops_bash', { description: 'x', command: 'npm test' }), { name: 'ops_bash', command: 'npm test', waits: false })
+  assert.deepEqual(tracedCall('job_output', { job_id: 'b', wait: true }), { name: 'job_output', waits: true })
+  assert.deepEqual(tracedCall('ops_stat', undefined), { name: 'ops_stat', waits: false })
 })
 
-await test('the bypass rule separates shell file work from shell process work', () => {
-  // A shell call that only starts a process is not a bypass.
-  assert.equal(analyzeProgram('const r = await tools.ops_bash({ description: "build", command: "npm run build" })').bypassesFileTools, false)
-  // The same shell tool listing files is, because the listing API exists.
-  assert.equal(analyzeProgram('const r = await tools.ops_bash({ description: "list", command: "ls -la" })').bypassesFileTools, true)
-  assert.equal(analyzeProgram('const r = await tools.ops_bash({ description: "cat", command: "cat package.json" })').bypassesFileTools, true)
-  assert.equal(analyzeProgram('const raw = require("node:fs").readFileSync("a")').bypassesFileTools, true)
+await test('the recorder groups calls by root and drains them on take', () => {
+  const recorder = createTraceRecorder()
+  recorder.record('root-1', tracedCall('ops_stat', {}))
+  recorder.record('root-2', tracedCall('ops_glob', {}))
+  recorder.record('root-1', tracedCall('ops_grep', {}))
+  assert.deepEqual(recorder.take('root-1', 'code').calls.map(call => call.name), ['ops_stat', 'ops_grep'])
+  assert.deepEqual(recorder.take('root-1', 'code').calls, [], 'a taken root is drained')
+  recorder.clear()
+  assert.deepEqual(recorder.take('root-2', 'code'), { code: 'code', calls: [] }, 'clear drops every root')
 })
 
-await test('comments and strings are not a bypass, while real module IO still is', () => {
-  // The rule text itself names node:fs; mentioning it is not doing it.
-  assert.equal(analyzeProgram('// plan: read the manifest\n// never call node:fs or fs.readFileSync directly\nconst r = await tools.ops_read_files({ files: [{ path: "a" }] })\nreturn r').bypassesFileTools, false)
-  assert.equal(analyzeProgram('/* node:fs and node:child_process are forbidden */\nconst r = await tools.ops_stat({ path: "a" })\nreturn r').bypassesFileTools, false)
-  assert.equal(analyzeProgram('const r = await tools.ops_stat({ path: "a" })\nreturn { rule: "node:fs is forbidden" }').bypassesFileTools, false)
-  assert.equal(analyzeProgram('const note = \x60use ops_read_files, not node:fs\x60\nconst r = await tools.ops_stat({ path: "a" })\nreturn note').bypassesFileTools, false)
-  // A comment that names a shell listing is not the program running one.
-  assert.equal(analyzeProgram('const r = await tools.ops_bash({ description: "build", command: "npm run build" })\n// ls -la would be a bypass\nreturn r').bypassesFileTools, false)
-  // Real module access still counts: import, require, the fs namespace, and an
-  // interpolated expression that really reads a file.
-  assert.equal(analyzeProgram('import fs from "node:fs"\nconst r = await tools.ops_stat({ path: "a" })\nreturn fs.readFileSync("a", "utf8")').bypassesFileTools, true)
-  assert.equal(analyzeProgram('const cp = require("node:child_process")\nconst r = await tools.ops_stat({ path: "a" })\nreturn cp').bypassesFileTools, true)
-  assert.equal(analyzeProgram('const r = await tools.ops_stat({ path: "a" })\nreturn fs.readFileSync("a")').bypassesFileTools, true)
-  assert.equal(analyzeProgram('const r = await tools.ops_stat({ path: "a" })\nreturn \x60\x24{fs.readFileSync("a")}\x60').bypassesFileTools, true)
-})
-
-await test('stdin filters do not accuse command output of bypassing file APIs', () => {
-  const shape = command => analyzeProgram(`await tools.ops_bash({ command: ${JSON.stringify(command)} })`)
-  for (const command of ['git diff | head -20', 'git diff | grep TODO | sed -n \'1,20p\'',
-    'printf "hello" | grep hello', 'printf "cat file" | tail -n 2', 'npm test | tail -20',
-    'git diff 2>&1 | head -20', 'git diff | grep --include "*.ts" TODO', 'git diff | Select-String TODO',
-    'git diff | grep -m 1 TODO', 'git diff | grep --max-count 1 TODO',
-    "git diff | sed --posix -n '1,8p'", 'sed --version', 'printf x | grep x <<< text',
-    'git diff | grep --unknown-option value TODO']) {
-    assert.equal(shape(command).bypassesFileTools, false, command)
+await test('a program that dispatched nothing earns only the module-I/O bypass', () => {
+  for (const code of ['return 1', '// tools.ops_stat({ path: "a" })\nreturn 1']) {
+    assert.deepEqual(findingsOf(trace(code), true), NONE, code)
   }
-  for (const command of ['grep TODO src/file.ts', 'cat file | head -20', 'git diff | grep TODO file',
-    'printf x | sed -i s/x/y/ file', 'head -n 2 file', 'cat < file', 'git diff > output.txt',
-    'Get-Content file | Select-String TODO', 'Select-String -Path file -Pattern TODO']) {
-    assert.equal(shape(command).bypassesFileTools, true, command)
-  }
-  assert.equal(analyzeProgram('await tools.ops_bash({ description: "grep file", command: "git diff" })').bypassesFileTools, false)
-  assert.equal(analyzeProgram('const example = "tools.ops_bash({ command: \'cat file\' })"; return example').dispatchSites, 0)
-  assert.equal(analyzeProgram('// tools.ops_bash({ command: "cat file" })').bypassesFileTools, false)
-  assert.doesNotMatch(noticeText('bypass', shape('cat file'), LOADER), /Only .* resident|load the others/)
-})
-
-await test('a program with no dispatch site earns no category', () => {
-  // A value program and a comment-only program have no call shape to correct.
-  for (const code of ['return 1', '// plan: read nothing\n// a note about node:fs\nreturn 1', '// tools.ops_stat({ path: "a" })\nreturn 1']) {
-    assert.equal(analyzeProgram(code).dispatchSites, 0, 'a commented-out call is not a dispatch site')
-    assert.deepEqual(violationsOf(analyzeProgram(code)), { plan: false, bypass: false, shape: false })
-  }
-  // The latch stays silent, so the model is never accused of a shape it did not take.
+  // Reading files through node:fs needs no tool call, so it must not hide behind an empty trace.
+  assert.deepEqual(findingsOf(trace('const fs = await import("node:fs")\nreturn fs.readdirSync(".")'), true),
+    { plan: false, bypass: true, shape: false })
   const latch = createProgramLatch(() => LOADER), agent = {}
-  assert.equal(latch.observe(agent, 'return 1'), undefined)
-  assert.equal(latch.observe(agent, '// plan: read nothing\n// a note\nreturn 1'), undefined)
+  assert.equal(latch.observe(agent, trace('return 1')), undefined)
   assert.equal(latch.stats(agent).total, 0, 'no category was spent')
-  // One dispatch site restores the normal verdict: the gate is not a blanket silence.
-  assert.deepEqual(violationsOf(analyzeProgram('const r = await tools.ops_stat({ path: "a" })\nreturn r')),
-    { plan: true, bypass: false, shape: true })
+  assert.equal(latch.observe(agent, trace('import fs from "node:fs"\nreturn 1'))?.category, 'bypass')
 })
 
-await test('each of the three categories is decided independently', () => {
-  const good = analyzeProgram('// plan: list the sources; read the manifest\nconst [a, b] = await Promise.all([tools.ops_glob({ pattern: ["src/**"] }), tools.ops_read_files({ files: [{ path: "package.json" }] })])\nreturn { a, b }')
-  assert.deepEqual(violationsOf(good), { plan: false, bypass: false, shape: false })
-
-  // One program can break two categories at once; a single verdict would hide one.
-  const both = analyzeProgram('const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r')
-  assert.deepEqual(violationsOf(both), { plan: true, bypass: true, shape: true })
-
-  // Waiting on a job is a legitimate non-batched shape, so only the plan is missing.
-  const waiting = analyzeProgram('const r = await tools.ops_bash({ description: "run", command: "npm test" })\nconst j = await tools.job_output({ job_id: "b", wait: true })\nreturn j.text')
-  assert.equal(violationsOf(waiting).shape, false)
-
-  // A long unstructured program is not judged from its text alone.
-  const long = analyzeProgram('const pad = "' + 'x'.repeat(THIN_CODE_CHARS) + '"\nreturn pad.length')
-  assert.equal(violationsOf(long).shape, false)
+await test('the plan finding reads only the first line of a program that dispatched', () => {
+  assert.equal(findingsOf(THIN, false).plan, true)
+  assert.equal(findingsOf(GOOD, false).plan, false)
+  assert.deepEqual(findingsOf(GOOD, true), NONE, 'a planned batch is compliant')
 })
 
-await test('waiting on an agent is a dependency barrier, read only from a real dispatch site (#893)', () => {
-  // Dot and bracket calls to wait_agent are both waits, so no shape notice.
-  for (const code of [
-    '// plan: wait for the verification agent\nreturn await tools.wait_agent({ timeout_ms: 30000 })',
-    '// plan: wait for the verification agent\nreturn await tools["wait_agent"]({ timeout_ms: 30000 })',
-  ]) {
-    const shape = analyzeProgram(code)
-    assert.equal(shape.dispatchSites, 1, code)
-    assert.equal(shape.isWaiting, true, code)
-    assert.deepEqual(violationsOf(shape), { plan: false, bypass: false, shape: false }, code)
+await test('bypass is real module IO or a shell call whose actual command did file work', () => {
+  const shell = command => findingsOf(trace('// plan: run\nawait run()', ['ops_bash', { command }]), false).bypass
+  assert.equal(shell('npm run build'), false, 'starting a process is not a bypass')
+  assert.equal(shell('ls -la'), true)
+  assert.equal(shell('cat package.json'), true)
+  for (const command of ['git diff | head -20', "git diff | grep TODO | sed -n '1,20p'", 'printf "hello" | grep hello',
+    'npm test | tail -20', 'git diff 2>&1 | head -20', 'git diff | Select-String TODO', 'sed --version']) {
+    assert.equal(shell(command), false, command)
   }
-  // The name inside a comment or a message string is not a call and exempts nothing.
-  for (const code of [
-    'const r = await tools.ops_read_files({ files: [{ path: "a" }] })\n// tools.wait_agent({})\nreturn r',
-    'const r = await tools.ops_read_files({ files: [{ path: "a" }] })\nreturn { r, note: "tools.wait_agent( later" }',
-    'const r = await tools.ops_read_files({ files: [{ path: "a" }] })\n// job_output({ job_id: "b", wait: true })\nreturn r',
-    'const r = await tools.ops_read_files({ files: [{ path: "a" }] })\nreturn { r, note: "job_output( or wait: true" }',
-  ]) {
-    const shape = analyzeProgram(code)
-    assert.equal(shape.isWaiting, false, code)
-    assert.equal(violationsOf(shape).shape, true, code)
+  for (const command of ['grep TODO src/file.ts', 'cat file | head -20', 'head -n 2 file', 'cat < file', 'git diff > output.txt',
+    'Get-Content file | Select-String TODO']) {
+    assert.equal(shell(command), true, command)
   }
-  // A wait does not exempt the plan or bypass checks.
-  assert.equal(violationsOf(analyzeProgram('return await tools.wait_agent({ timeout_ms: 1 })')).plan, true)
-  const shellWait = analyzeProgram('await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn await tools.wait_agent({})')
-  assert.equal(violationsOf(shellWait).bypass, true)
+  // The text no longer accuses: a commented or quoted shell listing is not what ran.
+  assert.equal(findingsOf(trace('// ls -la would be a bypass\nawait run()', ['ops_bash', { command: 'npm run build' }]), false).bypass, false)
+  const io = code => findingsOf(trace(code, 'ops_stat'), false).bypass
+  assert.equal(io('import fs from "node:fs"\nreturn fs'), true)
+  assert.equal(io('const cp = require("node:child_process")\nreturn cp'), true)
+  assert.equal(io('// never call node:fs directly\nreturn 1'), false, 'naming the module is not importing it')
 })
 
-await test('only a single dispatch site earns the single-operation shape notice (#893)', () => {
-  // A search whose result picks the next read cannot be batched ahead of time.
-  const dependent = analyzeProgram('// plan: search; read the matching file\nconst hits = await tools.grep({ pattern: "needle" })\nreturn await tools.read({ file_path: hits.matches[0].path })')
-  assert.equal(dependent.dispatchSites, 2)
-  assert.equal(dependent.isWaiting, false)
-  assert.deepEqual(violationsOf(dependent), { plan: false, bypass: false, shape: false })
-  // Bracket sites count the same way.
-  assert.equal(violationsOf(analyzeProgram('const a = await tools["ops_stat"]({ path: "a" })\nreturn await tools["ops_stat"]({ path: a.path })')).shape, false)
-  // Two sites do not exempt the plan or bypass checks.
-  const twoNoPlan = analyzeProgram('const a = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn await tools.ops_stat({ path: "a" })')
-  assert.deepEqual(violationsOf(twoNoPlan), { plan: true, bypass: true, shape: false })
-  // A commented-out second call does not lift a real single site out of the notice.
-  assert.equal(violationsOf(analyzeProgram('// plan: read\nconst r = await tools.read({ file_path: "a" })\n// await tools.read({ file_path: "b" })\nreturn r')).shape, true)
-  // The single read keeps its original notice.
-  assert.equal(violationsOf(analyzeProgram('// plan: read\nreturn await tools.read({ file_path: "a" })')).shape, true)
+await test('the shape finding needs two single-call programs in a row', () => {
+  assert.equal(singleCall(THIN), true)
+  assert.equal(findingsOf(THIN, false).shape, false, 'one single call is not yet a pattern')
+  assert.equal(findingsOf(THIN, true).shape, true)
+  // A dependent pair, a cursor walk and waits are not single calls.
+  const dependent = trace('// plan: search; read\nawait x()', 'grep', 'read')
+  const walk = trace('// plan: page the log\nawait x()', 'ops_inspect_local_file', 'ops_inspect_local_file', 'ops_inspect_local_file')
+  const agentWait = trace('// plan: wait\nawait x()', 'wait_agent')
+  const jobWait = trace('// plan: wait\nawait x()', ['job_output', { job_id: 'b', wait: true }])
+  for (const shaped of [dependent, walk, agentWait, jobWait]) {
+    assert.equal(singleCall(shaped), false)
+    assert.deepEqual(findingsOf(shaped, true), NONE)
+  }
 })
 
-/** The cursor walk body: one dispatch site inside a while loop, many pages read. */
-const WALK_BODY = 'const parts = []\nlet offset = 1\nwhile (offset > 0) {\n  const part = await tools.ops_inspect_local_file({ path: "log.txt", offset, limit: 200 })\n  parts.push(part)\n  offset = part.nextOffset || 0\n}\nreturn parts.length'
-
-await test('cursor pagination loops read many pages without earning a shape notice (#999)', () => {
-  // A cursor walk is one static dispatch site inside a loop: many reads, one program.
-  const walk = analyzeProgram('// plan: page through the log with the cursor\n' + WALK_BODY)
-  assert.equal(walk.dispatchSites, 1, 'the loop body is one static site, not its fan-out')
-  assert.equal(walk.hasBatchingStructure, true)
-  assert.deepEqual(violationsOf(walk), { plan: false, bypass: false, shape: false })
-  // The same walk over an explicit page list is the same shape.
-  const pages = analyzeProgram('// plan: read every page the cursor yields\nconst rows = []\nfor (const cursor of [1, 201, 401]) {\n  rows.push(await tools.read({ file_path: "log.txt", offset: cursor }))\n}\nreturn rows')
-  assert.equal(violationsOf(pages).shape, false)
-  // The loop exemption is not a blanket silence: without the plan line only the plan speaks.
-  assert.deepEqual(violationsOf(analyzeProgram(WALK_BODY)), { plan: true, bypass: false, shape: false })
-})
-
-// ---- the per-turn latch (option 4a: re-armed by compliance, no per-turn cap, capped per session) ----
-
-/** One program that breaks every category: no plan line, shell listing, one dispatch. */
-const BYPASS = 'const r = await tools.ops_bash({ description: "list", command: "ls -la" })\nreturn r'
-/** No plan line and a single dispatch, but no bypass. */
-const THIN = 'const r = await tools.ops_read_files({ files: [{ path: "a" }] })\nreturn r'
-/** A compliant program: plan line, batched reads, no bypass. */
-const GOOD = '// plan: list the sources; read the manifest\nconst [a, b] = await Promise.all([tools.ops_glob({ pattern: ["src/**"] }), tools.ops_read_files({ files: [{ path: "package.json" }] })])\nreturn { a, b }'
-/** A compliant cursor walk: a plan line and one dispatch site inside a loop. */
-const WALK = '// plan: page through the log with the cursor\n' + WALK_BODY
-
-await test('one category delivers once per turn and stays silent until it is re-armed', () => {
-  const latch = createProgramLatch(() => LOADER), agent = {}
+await test('one category speaks once until compliance re-arms it', () => {
+  const latch = createProgramLatch(() => LOADER, { sessionLimit: Infinity }), agent = {}
   assert.equal(latch.observe(agent, THIN).category, 'plan', 'the first program earns the plan notice')
-  assert.equal(latch.isArmed(agent, 'plan'), false)
-  // THIN breaks two categories, so the second one speaks before the turn falls silent.
-  assert.equal(latch.observe(agent, THIN).category, 'shape', 'the other broken category speaks once too')
-  assert.equal(latch.observe(agent, THIN), undefined, 'both categories are spent for this turn')
-})
-
-await test('a compliant program re-arms its category, so a regression speaks again', () => {
-  const latch = createProgramLatch(() => LOADER), agent = {}
-  assert.equal(latch.observe(agent, THIN).category, 'plan')
-  assert.equal(latch.observe(agent, THIN).category, 'shape', 'the other broken category still speaks')
-  assert.equal(latch.observe(agent, THIN), undefined, 'both categories are spent')
+  assert.equal(latch.observe(agent, THIN).category, 'shape', 'the second single call earns the shape notice')
+  assert.equal(latch.observe(agent, THIN), undefined, 'plan is spent and the shape run restarted')
   assert.equal(latch.observe(agent, GOOD), undefined, 'the compliant program earns nothing')
   assert.equal(latch.isArmed(agent, 'plan'), true, 'compliance re-arms the category')
-  assert.equal(latch.isArmed(agent, 'shape'), true, 'and the shape category too')
-  // No per-turn cap: the regression earns a fresh notice inside the same turn.
-  assert.equal(latch.observe(agent, THIN).category, 'plan', 'the regression speaks again in the same turn')
+  assert.equal(latch.observe(agent, THIN).category, 'plan', 'the regression speaks again')
 })
 
-await test('wait, dependent and cursor programs never spend the shape latch (#999)', () => {
-  // Four notices in one session: lift the #1027 cap, which has its own check.
+await test('waits between single calls never spend the shape latch (#893, #999)', () => {
   const latch = createProgramLatch(() => LOADER, { sessionLimit: Infinity }), agent = {}
-  // Both speakable categories start spent on a thin single call.
-  assert.equal(latch.observe(agent, THIN).category, 'plan')
-  assert.equal(latch.observe(agent, THIN).category, 'shape')
-  // A real wait, a dependent pair and a cursor walk are legitimate shapes, so the
-  // violation to compliance to re-violation order spends nothing on them.
-  const wait = '// plan: wait for the verification agent\nreturn await tools.wait_agent({ timeout_ms: 30000 })'
-  const dependent = '// plan: search; read the matching file\nconst hits = await tools.grep({ pattern: "needle" })\nreturn await tools.read({ file_path: hits.matches[0].path })'
-  for (const code of [wait, dependent, WALK]) {
-    assert.equal(latch.observe(agent, code), undefined, 'no category is spent on a legitimate shape')
+  const planned = trace('// plan: stat\nawait x()', 'ops_stat')
+  const wait = trace('// plan: wait\nawait x()', 'wait_agent')
+  for (const step of [planned, wait, planned, wait, planned]) assert.equal(latch.observe(agent, step), undefined)
+})
+
+await test('the session cap holds across turns (#1027)', () => {
+  assert.equal(SESSION_NOTICE_LIMIT, 3)
+  const latch = createProgramLatch(() => LOADER), agent = {}
+  for (const turn of [1, 2, 3]) {
+    latch.noteTurn(agent, turn)
+    assert.equal(latch.observe(agent, THIN).category, 'plan', 'turn ' + turn)
   }
-  assert.equal(latch.isArmed(agent, 'shape'), true, 'the compliant shapes re-armed it')
-  // ...so the thin regression inside the same turn is accused again.
-  assert.equal(latch.observe(agent, THIN).category, 'plan')
-  assert.equal(latch.observe(agent, THIN).category, 'shape', 'the regression speaks again in the same turn')
+  latch.noteTurn(agent, 4)
+  assert.equal(latch.observe(agent, THIN), undefined, 'the fourth notice is never sent')
+  assert.equal(latch.stats(agent).session, 3)
 })
 
 await test('priority orders the categories and the others stay armed', () => {
@@ -246,7 +143,6 @@ await test('priority orders the categories and the others stay armed', () => {
   assert.equal(latch.observe(agent, BYPASS).category, 'bypass', 'a bypass outranks the other two')
   assert.equal(latch.isArmed(agent, 'plan'), true, 'the plan notice was not spent')
   assert.equal(latch.observe(agent, THIN).category, 'plan')
-  assert.equal(latch.observe(agent, THIN).category, 'shape', 'the shape notice still speaks')
 })
 
 await test('a new turn re-arms every category and a repeated turn does not', () => {
@@ -267,93 +163,66 @@ await test('state never leaks between agents and forget drops it', () => {
   assert.equal(latch.isArmed(first, 'plan'), true, 'a forgotten agent starts clean')
 })
 
-await test('the latch counts deliveries per turn for the optional telemetry line', () => {
+await test('the latch counts deliveries per turn and per session for telemetry', () => {
   const latch = createProgramLatch(() => LOADER), agent = {}
   latch.noteTurn(agent, 4)
   assert.deepEqual(latch.stats(agent), { turn: 4, plan: 0, bypass: 0, shape: 0, total: 0, session: 0 })
   latch.observe(agent, THIN)
   latch.observe(agent, THIN)
   assert.deepEqual(latch.stats(agent), { turn: 4, plan: 1, bypass: 0, shape: 1, total: 2, session: 2 })
-  // A new turn resets the per-turn counters; the session total survives.
   latch.noteTurn(agent, 5)
-  assert.deepEqual(latch.stats(agent), { turn: 5, plan: 0, bypass: 0, shape: 0, total: 0, session: 2 })
+  assert.deepEqual(latch.stats(agent), { turn: 5, plan: 0, bypass: 0, shape: 0, total: 0, session: 2 }, 'the session count survives the turn')
 })
 
-await test('one agent session earns at most SESSION_NOTICE_LIMIT notices across turns (#1027)', () => {
-  assert.equal(SESSION_NOTICE_LIMIT, 3)
-  const latch = createProgramLatch(() => LOADER), agent = {}
-  let delivered = 0
-  // Every turn re-arms all three categories, so an uncapped latch would keep speaking.
-  for (let turn = 1; turn <= 20; turn++) {
-    latch.noteTurn(agent, turn)
-    for (let i = 0; i < 3; i++) if (latch.observe(agent, BYPASS) !== undefined) delivered++
-  }
-  assert.equal(delivered, SESSION_NOTICE_LIMIT, 'the latch goes quiet after the session limit')
-  assert.equal(latch.stats(agent).session, SESSION_NOTICE_LIMIT)
-  // The cap is per agent: another session still gets its lessons.
-  assert.equal(latch.observe({}, BYPASS).category, 'bypass')
-  // forget starts the session over.
-  latch.forget(agent)
-  assert.equal(latch.observe(agent, BYPASS).category, 'bypass')
-  // The limit is configurable.
-  const one = createProgramLatch(() => LOADER, { sessionLimit: 1 }), a = {}
-  assert.equal(one.observe(a, BYPASS).category, 'bypass')
-  assert.equal(one.observe(a, THIN), undefined, 'a second category is refused once the limit is spent')
-})
-
-await test('the notices name the fix and never claim a runtime dispatch count', () => {
-  const shape = analyzeProgram(BYPASS)
-  assert.match(noticeText('plan', shape, LOADER), /first line/, 'the plan notice names the first line')
-  assert.doesNotMatch(noticeText('plan', shape, LOADER), /Promise\.all/, 'the plan notice stays about the comment')
-  assert.match(noticeText('bypass', shape, LOADER), /ops_glob/)
-  assert.match(noticeText('bypass', shape, LOADER), /ops_load_sdk/)
-  assert.match(noticeText('shape', shape, LOADER), /program text alone/, 'the shape notice states its own limit')
+await test('the notices name the fix', () => {
+  assert.match(noticeText('plan', LOADER), /first line/)
+  assert.doesNotMatch(noticeText('plan', LOADER), /Promise\.all/)
+  assert.match(noticeText('bypass', LOADER), /ops_glob/)
+  assert.match(noticeText('bypass', LOADER), /ops_load_sdk/)
+  assert.match(noticeText('shape', LOADER), /single tool call/)
+  assert.match(noticeText('shape', LOADER), /Promise\.all/)
 })
 
 await test('the bypass notice names only the APIs its scope publishes', () => {
-  const shape = analyzeProgram(BYPASS)
   // With a loader the notice keeps teaching the load step.
-  assert.match(noticeText('bypass', shape, LOADER), /ops_load_sdk/)
+  assert.match(noticeText('bypass', LOADER), /ops_load_sdk/)
   // Without one it must not name a call that cannot succeed, and every other line
   // must stay inside the published surface too.
-  const direct = noticeText('bypass', shape, { loader: false, resident: ['ops_glob'], loadable: [] })
+  const direct = noticeText('bypass', { loader: false, resident: ['ops_glob'], loadable: [] })
   assert.equal(direct.includes('ops_load_sdk'), false, 'the unreachable loader is gone')
   assert.match(direct, /ops_glob/, 'the published API is named')
   for (const absent of ['ops_read_files', 'ops_grep', 'ops_edit_file']) {
     assert.equal(direct.includes(absent), false, 'an unpublished API is not named: ' + absent)
   }
   // A scope that publishes nothing points at the official tools only.
-  const none = noticeText('bypass', shape, { loader: false, resident: [], loadable: [] })
+  const none = noticeText('bypass', { loader: false, resident: [], loadable: [] })
   assert.match(none, /official tools/)
   assert.equal(/ops_[a-z_]+/.test(none), false, 'no OPS name survives an empty surface')
 })
 
 await test('a narrow pool is not told to load an API it cannot reach', () => {
-  const shape = analyzeProgram(BYPASS)
   // The pool holds stat only: naming edit_file would cost the same failed round trip.
-  const narrow = noticeText('bypass', shape, { loader: true, resident: [], loadable: ['ops_stat'] })
+  const narrow = noticeText('bypass', { loader: true, resident: [], loadable: ['ops_stat'] })
   for (const absent of ['ops_edit_file', 'ops_read_files', 'ops_glob']) {
     assert.equal(narrow.includes(absent), false, 'an unloadable API is not named: ' + absent)
   }
   assert.match(narrow, /official tools/, 'an empty file-api intersection points at the official tools')
   // The shipped wording survives while the whole list is loadable.
-  assert.match(noticeText('bypass', shape, LOADER), /List with `ops_glob`/)
+  assert.match(noticeText('bypass', LOADER), /List with `ops_glob`/)
   // A narrow pool must not invite a load with the old catch-all sentence.
   assert.doesNotMatch(narrow, /load only missing names/, 'the load sentence follows the pool too')
 })
 
 await test('a resident file API is named even when the pool cannot load it', () => {
-  const shape = analyzeProgram(BYPASS)
   // read_files is resident and callable without loading; the hint must not claim that
   // no file API exists just because the pool holds stat alone.
-  const mixed = noticeText('bypass', shape, { loader: true, resident: ['ops_read_files'], loadable: ['ops_stat'] })
+  const mixed = noticeText('bypass', { loader: true, resident: ['ops_read_files'], loadable: ['ops_stat'] })
   assert.match(mixed, /ops_read_files/, 'the resident file API is named')
   assert.doesNotMatch(mixed, /No OPS file API is available/, 'the fallback does not fire while one is reachable')
 })
 
 await test('the file-work line never names the shell it just accused', () => {
-  const shape = analyzeProgram(BYPASS)
-  const mixed = noticeText('bypass', shape, { loader: false, resident: ['ops_bash', 'ops_glob'], loadable: [] })
+  const mixed = noticeText('bypass', { loader: false, resident: ['ops_bash', 'ops_glob'], loadable: [] })
   assert.match(mixed, /ops_glob/, 'the file API is named')
   assert.equal(mixed.includes('ops_bash'), false, 'the bypass vector is never offered as the fix')
 })
@@ -368,19 +237,17 @@ await test('the latch resolves the surface per agent', () => {
 })
 
 await test('a scope with no file API does not refer to them', () => {
-  const shape = analyzeProgram(BYPASS)
   // A resident non-file API leaves the hint pointing at the official tools; the next
   // line must not then invite a call to "those APIs".
-  const statOnly = noticeText('bypass', shape, { loader: false, resident: ['ops_stat'], loadable: [] })
+  const statOnly = noticeText('bypass', { loader: false, resident: ['ops_stat'], loadable: [] })
   assert.match(statOnly, /official tools/, 'the official tools are named')
   assert.doesNotMatch(statOnly, /call those APIs/, 'the pronoun has no referent here')
 })
 
 await test('a narrow pool with a loadable file API is told the load order', () => {
-  const shape = analyzeProgram(BYPASS)
   // The acceptance scope: the loader is published and grep is loadable, so the notice
   // must teach load first and call next; a same-program call to grep would throw.
-  const narrow = noticeText('bypass', shape, { loader: true, resident: ['ops_inspect_local_file'], loadable: ['ops_grep'] })
+  const narrow = noticeText('bypass', { loader: true, resident: ['ops_inspect_local_file'], loadable: ['ops_grep'] })
   assert.match(narrow, /ops_grep/, 'the loadable file API is named')
   assert.match(narrow, /for the next program/, 'the load lands before the call')
   assert.equal(narrow.includes('ops_edit_file'), false, 'an unauthorized write API is not named')

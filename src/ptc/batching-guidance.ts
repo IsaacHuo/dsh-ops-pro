@@ -1,23 +1,43 @@
 /**
- * Repeated-write detection and the model-facing batch-call guidance it loads.
+ * The model-facing batch-call lesson: loading and rendering it for one scope's surface.
  *
  * The guidance text lives in an editable Markdown file (prompts/batching-guidance.md)
  * so wording changes never require a code change. The module imports no host
  * values, so a unit test can drive it with plain objects and a fake agent. The
- * caller owns delivery.
+ * caller owns delivery; the corrective notices live in batching-notices.ts.
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Agent } from '../adapter/dsh/types.js'
-import { literalShellFileWork } from './shell-file-work.js'
+import type { Agent, SandboxMode } from '../adapter/dsh/types.js'
 
 /** Identity of the guidance in the host message source. */
 export const BATCHING_GUIDANCE_ID = 'batching-guidance'
-/** Contributor of the one-time full lesson; the per-violation notices keep the base id. */
-export const BATCHING_GUIDANCE_LESSON_ID = `${BATCHING_GUIDANCE_ID}:lesson`
 /** Revision of the guidance text; bump it when the wording or the file format changes. */
-export const BATCHING_GUIDANCE_REVISION = '6'
+export const BATCHING_GUIDANCE_REVISION = '9'
+/**
+ * Host source kind for guidance delivered as a user-role message.
+ *
+ * The message keeps `role: 'user'`, so the model still reads it as the
+ * instruction that governs the task. The plugin kind is what tells the client
+ * this injection is not human input: Chat files an unknown kind under its
+ * producer and draws no user bubble for it.
+ */
+export const BATCHING_GUIDANCE_SOURCE_KIND = 'dsh-ops:batching-guidance'
+
+// Merge-extensible host sum type: declare the producer's own kind once, so
+// createUserMessage accepts it without widening the host's known sources.
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    'dsh-ops:batching-guidance': {
+      readonly kind: 'dsh-ops:batching-guidance'
+      readonly contributor: string
+      readonly revision: string
+      readonly turn: number
+      readonly step: number
+    }
+  }
+}
 
 /** The shipped guidance file, resolved from this module's own location (src or lib). */
 const DEFAULT_GUIDANCE_FILE = new URL('../../prompts/batching-guidance.md', import.meta.url)
@@ -79,80 +99,13 @@ export interface GuidanceSurface {
   readonly resident: readonly string[]
   /** Public names the loader can add, empty when the scope publishes no loader. */
   readonly loadable: readonly string[]
-}
-
-/** The file-work APIs the guidance names, in the order it names them. */
-const FILE_APIS: readonly string[] = Object.freeze([
-  'ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file', 'ops_edit_file',
-])
-
-/**
- * One sentence naming the file-work APIs the scope really publishes.
- *
- * The shipped wording is kept when every name it mentions is available, so the
- * common loader scope reads exactly as before; a narrower scope gets the subset and
- * a scope with none of them is pointed at the official tools instead.
- * @param names - public names available for file work in this scope.
- * @returns the sentence for the bypass notice.
- */
-function fileWorkHint(names: readonly string[]): string {
-  const usable = FILE_APIS.filter(name => names.includes(name))
-  if (usable.length === 0) return 'No OPS file API is available here: do file work with the official tools.'
-  if (usable.length === FILE_APIS.length) {
-    return 'List with `ops_glob`, search with `ops_grep`, read with `ops_read_files` or `ops_inspect_local_file`, edit with `ops_edit_file`.'
-  }
-  return 'Do file work with the APIs this scope publishes: `' + usable.join('`, `') + '`.'
-}
-
-/** The shipped rule-6 clause that names every file-work API, whitespace-tolerant. */
-const FILE_RULE = /(\*\*OPS first for file work\*\*: )list with ops_glob,\s+search with ops_grep,\s+read with\s+ops_read_files or ops_inspect_local_file,\s+edit with ops_edit_file\./u
-
-/**
- * Name only the file-work APIs the scope publishes in the lesson's file-work rule.
- *
- * The lesson rides the same result as a bypass notice, so a read-only scope must not
- * be told to edit through the lesson while the notice keeps the mutating API out.
- * The shipped clause stays byte for byte when every API it names is available.
- * @param text - guidance text.
- * @param surface - what the scope publishes.
- * @returns the text with the file-work clause narrowed to the published APIs.
- */
-function narrowFileRule(text: string, surface: GuidanceSurface): string {
-  const names = [...surface.resident, ...(surface.loadable ?? [])]
-  const usable = FILE_APIS.filter(name => names.includes(name))
-  if (usable.length === FILE_APIS.length) return text
-  const has = (name: string) => usable.includes(name)
-  const readers = ['ops_read_files', 'ops_inspect_local_file'].filter(has)
-  const clauses = [
-    ...(has('ops_glob') ? ['list with ops_glob'] : []),
-    ...(has('ops_grep') ? ['search with ops_grep'] : []),
-    ...(readers.length > 0 ? ['read with ' + readers.join(' or ')] : []),
-    ...(has('ops_edit_file') ? ['edit with ops_edit_file'] : []),
-  ]
-  const clause = clauses.length > 0 ? clauses.join(', ') + '.' : 'no OPS file API is published here, so do file work with the official tools.'
-  const narrowed = text.replace(FILE_RULE, (_match, lead: string) => lead + clause)
-  return has('ops_edit_file') ? narrowed : dropEditExamples(narrowed)
-}
-
-/**
- * Drop every section whose example program calls the editor.
- *
- * A scope without `ops_edit_file` would otherwise be shown a write it cannot make.
- * @param text - guidance text.
- * @returns the text without sections that call `ops_edit_file`.
- */
-function dropEditExamples(text: string): string {
-  const lines = text.split('\n')
-  const kept: string[] = []
-  let at = nextHeading(lines, 0)
-  kept.push(...lines.slice(0, at))
-  while (at < lines.length) {
-    const end = sectionEnd(lines, at)
-    const section = lines.slice(at, end)
-    if (!section.some(row => row.includes('tools.ops_edit_file('))) kept.push(...section)
-    at = end
-  }
-  return kept.join('\n')
+  /**
+   * The session's current sandbox mode, read from the host policy.
+   *
+   * When present, the lesson states this mode and keeps only its own tier; when
+   * absent, the shipped three-tier lesson is delivered unchanged.
+   */
+  readonly sandbox?: SandboxMode
 }
 
 /**
@@ -232,6 +185,8 @@ function stripLoader(rows: readonly string[]): string[] {
 
 /** The heading that starts the loader lesson in the guidance file. */
 export const LOAD_SECTION_HEADING = '## Step 3 - load before you call'
+/** The heading that starts the sandbox-authority lesson in the guidance file. */
+export const SANDBOX_SECTION_HEADING = '## Sandbox permissions'
 /** A heading that names loading, by word: "payload" is not a load step. */
 const LOAD_HEADING = /\bload(?:ing|er)?\b/i
 
@@ -293,14 +248,15 @@ function directSteps(surface: GuidanceSurface): string[] {
  * @returns the next heading index, or the line count when the section is last.
  */
 /**
- * The index of the load-step heading, ignoring anything inside a fence.
+ * The index of one exact heading line, ignoring anything inside a fence.
  *
  * A fenced example that quotes the heading is text, not structure: taking it for the
  * anchor would cut the document in the wrong place.
  * @param lines - the guidance lines.
+ * @param heading - the exact heading line to find.
  * @returns the heading index, or -1 when the file lost it.
  */
-function anchorIndex(lines: readonly string[]): number {
+function headingIndex(lines: readonly string[], heading: string): number {
   let fence: string | null = null
   for (let index = 0; index < lines.length; index += 1) {
     const row = lines[index]!
@@ -313,9 +269,14 @@ function anchorIndex(lines: readonly string[]): number {
       fence = opening[1]!
       continue
     }
-    if (row.trim() === LOAD_SECTION_HEADING) return index
+    if (row.trim() === heading) return index
   }
   return -1
+}
+
+/** The index of the load-step heading; -1 when the file lost it. */
+function anchorIndex(lines: readonly string[]): number {
+  return headingIndex(lines, LOAD_SECTION_HEADING)
 }
 
 function nextHeading(lines: readonly string[], from: number): number {
@@ -347,21 +308,79 @@ function sectionEnd(lines: readonly string[], start: number): number {
 }
 
 /**
- * Render the guidance for one published surface.
+ * The sandbox lesson for the mode the host reports.
  *
- * A scope with the loader receives the file byte for byte when it can reach every
- * file-work API, so the default path is unchanged; the file-work rule otherwise names
- * only what the scope publishes. A loader-less scope receives the same lesson with the load step
- * replaced: the prose that tells the model to load cannot be true there.
+ * The shipped file carries all three tiers because it is also delivered without a
+ * host policy; when the mode is known, only the active tier's rule is kept, so a
+ * full-access session is never primed with a request it must not make.
+ * @param mode - the session's current sandbox mode.
+ * @returns the replacement lines, heading included.
+ */
+function sandboxLesson(mode: SandboxMode): string[] {
+  const common = [
+    '`sandbox_permissions` accepts only `workspace-write` or `danger-full-access`, and',
+    '`justification` must accompany it. Never invent a tier name: an invalid value rejects',
+    'the whole program before any line runs.',
+    '',
+  ]
+  switch (mode) {
+    case 'read-only':
+      return [SANDBOX_SECTION_HEADING + ' - current mode: read-only', '', ...common,
+        'This session runs at read-only: reads and searches only. To write, send',
+        '`sandbox_permissions: \"workspace-write\"` (or `\"danger-full-access\"`) with a',
+        '`justification`.']
+    case 'workspace-write':
+      return [SANDBOX_SECTION_HEADING + ' - current mode: workspace-write', '', ...common,
+        'This session runs at workspace-write: work inside the workspace needs no request.',
+        'Send `sandbox_permissions: \"danger-full-access\"` with a `justification` only to',
+        'leave the workspace.']
+    default:
+      return [SANDBOX_SECTION_HEADING + ' - current mode: danger-full-access', '', ...common,
+        'This session runs at the widest tier: never send `sandbox_permissions` or',
+        '`justification`. No wider target exists, and any value would invent one.']
+  }
+}
+
+/** Reported once: the shipped file lost the sandbox anchor the renderer rewrites. */
+let warnedSandboxAnchor = false
+
+/**
+ * Replace the sandbox section with the lesson for the reported mode.
+ *
+ * A drifted file keeps its lesson: the replacement is inserted before the first
+ * section rather than dropped, and the drift is reported once.
+ * @param text - the guidance file.
+ * @param mode - the session's current sandbox mode.
+ * @returns the file with the active tier substituted.
+ */
+function replaceSandboxLesson(text: string, mode: SandboxMode): string {
+  const lines = text.split('\n')
+  const replacement = sandboxLesson(mode)
+  const start = headingIndex(lines, SANDBOX_SECTION_HEADING)
+  if (start < 0) {
+    if (!warnedSandboxAnchor) {
+      warnedSandboxAnchor = true
+      console.warn('dsh-ops: the batching guidance lost its "' + SANDBOX_SECTION_HEADING
+        + '" anchor; the sandbox lesson is inserted before the first section instead.')
+    }
+    const at = nextHeading(lines, 0)
+    return [...lines.slice(0, at), ...replacement, '', ...lines.slice(at)].join('\n')
+  }
+  return [...lines.slice(0, start), ...replacement, '', ...lines.slice(sectionEnd(lines, start))].join('\n')
+}
+
+/**
+ * Replace the load step for a scope that publishes no loader.
+ *
+ * The default path does not call this: a loader scope keeps the shipped file
+ * byte for byte unless the sandbox lesson was also substituted. A loader-less scope
+ * cannot load, so the prose and the table row that teach loading are removed.
  * @param text - the loaded guidance file.
  * @param surface - what the scope publishes.
  * @returns the model-facing guidance text.
  */
-export function renderBatchingGuidance(text: string, surface: GuidanceSurface): string {
-  if (text === '') return text
-  const narrowed = narrowFileRule(text, surface)
-  if (surface.loader) return narrowed
-  const lines = narrowed.split('\n')
+function replaceLoaderLesson(text: string, surface: GuidanceSurface): string {
+  const lines = text.split('\n')
   const start = anchorIndex(lines)
   // Lines that teach loading, and the table row that points at it, never reach a
   // scope without a loader. The replacement is inserted after this filter, so the
@@ -385,398 +404,19 @@ export function renderBatchingGuidance(text: string, surface: GuidanceSurface): 
   return [...before, ...directSteps(surface), '', ...after].join('\n')
 }
 
-// ---- program shape: what one run_code program says about its step ----
-
-/** A program shorter than this is treated as single-step unless it is structured. */
-export const THIN_CODE_CHARS = 800
-
-/** The directive every program opens with: its declared operation list. */
-export const PLAN_DIRECTIVE = '// plan:'
-
 /**
- * Only the first physical line may carry the plan comment.
+ * Render the guidance for one published surface.
  *
- * The rule is what makes the declaration binding: a comment parked further down
- * is written after the step was already decided, so it cannot constrain the step.
+ * A scope with the loader receives the shipped file unchanged unless the host
+ * reports a sandbox mode, in which case only the active tier's rule is kept. A
+ * loader-less scope additionally receives the same lesson with the load step
+ * replaced: the prose that tells the model to load cannot be true there.
+ * @param text - the loaded guidance file.
+ * @param surface - what the scope publishes.
+ * @returns the model-facing guidance text.
  */
-const PLAN_LINE = /^[\t ]*\/\/\s*plan\s*:\s*(.*)$/u
-/** Entries inside one plan line; the full-width semicolon separates them too. */
-const PLAN_ENTRY_SEPARATOR = /[;；]/u
-/** One dispatch site: dot access or bracket access on `tools`. */
-const DISPATCH = /\btools\s*(?:\.\s*([A-Za-z_$][\w$]*)|\[\s*['"]([^'"]+)['"]\s*\])\s*\(/gu
-const BATCHED = /Promise\.all|Promise\.allSettled|\.map\s*\(|for\s*\(|while\s*\(|forEach\s*\(|\[\s*\.\.\./u
-const BRANCHING = /\bif\s*\(|\btry\s*\{|\bswitch\s*\(|\?\s*[^:]{1,80}:/u
-const WAITING = /\bwait\s*:\s*true\b/u
-/** Tools whose call is itself a wait on other work, recognised only at a real dispatch site. */
-const WAITING_TOOL = /^(?:wait_agent|job_output)$/u
-const BYPASS = /node:fs|node:child_process|\bfs\./u
-const SHELL_TOOL = /^(?:pwsh|bash|shell|ops_bash|pwsh_persistent|bash_persistent)$/u
-
-/** Program text with comments and string bodies separated from executable tokens. */
-interface ReadableProgram {
-  /** Comments blanked; string bodies intact, so dispatch names and shell commands stay visible. */
-  readonly code: string
-  /** Comments blanked as well, with string bodies blanked except module specifiers and template expressions. */
-  readonly bare: string
-}
-
-/**
- * Whether one string literal opens in a module-specifier position.
- *
- * A real import of `node:fs` must stay visible to the bypass rule, while the same
- * text inside a message or a comment must not.
- * @param code - the program text.
- * @param open - index of the opening quote.
- * @returns whether the quote follows `from`, `import`, `require(` or `import(`.
- */
-function isModuleSpecifier(code: string, open: number): boolean {
-  let index = open - 1
-  while (index >= 0 && /\s/u.test(code[index]!)) index -= 1
-  if (index < 0) return false
-  if (code[index] === '(') {
-    index -= 1
-    while (index >= 0 && /\s/u.test(code[index]!)) index -= 1
-    const end = index
-    while (index >= 0 && /[\w$]/u.test(code[index]!)) index -= 1
-    const callee = code.slice(index + 1, end + 1)
-    return callee === 'require' || callee === 'import'
-  }
-  if (!/[\w$]/u.test(code[index]!)) return false
-  const end = index
-  while (index >= 0 && /[\w$]/u.test(code[index]!)) index -= 1
-  const keyword = code.slice(index + 1, end + 1)
-  return keyword === 'from' || keyword === 'import'
-}
-
-/**
- * Separate executable program text from comments and string bodies.
- *
- * A false bypass is worse than a missed one: a program that only mentions
- * `node:fs` in a comment or a message must not be accused of raw file IO. Module
- * specifiers and template expressions stay readable, so real imports and real
- * `fs.readFileSync(...)` calls still count.
- * @param code - the program text.
- * @returns the comment-free view and the comment-and-string-free view.
- */
-function readProgram(code: string): ReadableProgram {
-  const comments = [...code]
-  const bare = [...code]
-  const blank = (target: string[], from: number, to: number): void => {
-    for (let index = from; index < to; index += 1) {
-      const char = target[index]
-      if (char !== '\n' && char !== '\r') target[index] = ' '
-    }
-  }
-  const stringEnd = (open: number, quote: string): number => {
-    let index = open + 1
-    while (index < code.length) {
-      const char = code[index]
-      if (char === '\\') { index += 2; continue }
-      if (char === quote) return index + 1
-      if (char === '\n') return index
-      index += 1
-    }
-    return code.length
-  }
-  const commentEnd = (open: number, block: boolean): number => {
-    let end: number
-    if (block) {
-      const close = code.indexOf('*/', open + 2)
-      end = close === -1 ? code.length : close + 2
-    } else {
-      end = code.indexOf('\n', open)
-      if (end === -1) end = code.length
-    }
-    blank(comments, open, end)
-    blank(bare, open, end)
-    return end
-  }
-  const quotedEnd = (open: number, quote: string): number => {
-    const end = stringEnd(open, quote)
-    if (!isModuleSpecifier(code, open)) {
-      const close = end > open && code[end - 1] === quote ? end - 1 : end
-      blank(bare, open + 1, close)
-    }
-    return end
-  }
-  const templateEnd = (open: number): number => {
-    let index = open + 1
-    let literal = index
-    while (index < code.length) {
-      const char = code[index]
-      if (char === '\\') { index += 2; continue }
-      if (char === '\x60') { blank(bare, literal, index); return index + 1 }
-      if (char === '$' && code[index + 1] === '{') {
-        blank(bare, literal, index)
-        index = expressionEnd(index + 2)
-        literal = index
-        continue
-      }
-      index += 1
-    }
-    blank(bare, literal, code.length)
-    return code.length
-  }
-  const expressionEnd = (open: number): number => {
-    let depth = 1
-    let index = open
-    while (index < code.length) {
-      const char = code[index]
-      if (char === '/' && code[index + 1] === '/') { index = commentEnd(index, false); continue }
-      if (char === '/' && code[index + 1] === '*') { index = commentEnd(index, true); continue }
-      if (char === "'" || char === '"') { index = quotedEnd(index, char); continue }
-      if (char === '\x60') { index = templateEnd(index); continue }
-      if (char === '{') depth += 1
-      else if (char === '}' && --depth === 0) return index + 1
-      index += 1
-    }
-    return code.length
-  }
-  let index = 0
-  while (index < code.length) {
-    const char = code[index]
-    if (char === '/' && code[index + 1] === '/') { index = commentEnd(index, false); continue }
-    if (char === '/' && code[index + 1] === '*') { index = commentEnd(index, true); continue }
-    if (char === "'" || char === '"') { index = quotedEnd(index, char); continue }
-    if (char === '\x60') { index = templateEnd(index); continue }
-    index += 1
-  }
-  return { code: comments.join(''), bare: bare.join('') }
-}
-
-/** Features observable in the program text alone. */
-export interface ProgramShape {
-  /** Whether the first physical line carries a nonempty plan comment. */
-  readonly hasFirstLinePlan: boolean
-  /** Operations the plan line declares; 0 when there is no plan line. */
-  readonly declaredOperations: number
-  /** Static dispatch sites; a loop or map counts one, not its runtime fan-out. */
-  readonly dispatchSites: number
-  readonly hasBatchingStructure: boolean
-  readonly hasBranching: boolean
-  readonly isWaiting: boolean
-  /** File work routed through the shell or raw Node IO instead of the OPS APIs. */
-  readonly bypassesFileTools: boolean
-  readonly chars: number
-}
-
-/**
- * Read the operations a program declared on its first line.
- * @param code - the `run_code` program text.
- * @returns the declared entries; empty when the first line carries no plan comment.
- */
-export function parsePlan(code: unknown): string[] {
-  if (typeof code !== 'string' || code.length === 0) return []
-  // A leading BOM must not hide the first line from the anchor.
-  const body = code.charCodeAt(0) === 0xfeff ? code.slice(1) : code
-  const newline = body.search(/\r?\n/u)
-  const firstLine = newline === -1 ? body : body.slice(0, newline)
-  const match = PLAN_LINE.exec(firstLine)
-  if (match === null) return []
-  return match[1].split(PLAN_ENTRY_SEPARATOR).map(entry => entry.trim()).filter(entry => entry.length > 0)
-}
-
-/**
- * Read the static shape of one program.
- * @param code - the `run_code` program text, or anything that is not a string.
- * @returns the observable features; an absent program has zero of each.
- */
-export function analyzeProgram(code: unknown): ProgramShape {
-  if (typeof code !== 'string' || code.length === 0) {
-    return { hasFirstLinePlan: false, declaredOperations: 0, dispatchSites: 0, hasBatchingStructure: false,
-      hasBranching: false, isWaiting: false, bypassesFileTools: false, chars: 0 }
-  }
-  const readable = readProgram(code)
-  // A commented-out call is not a call: dispatch sites are read from comment-free
-  // text, which is also what lets a truly dispatch-free program earn no notice.
-  const sites = [...readable.code.matchAll(DISPATCH)].filter(match => readable.bare.slice(match.index, match.index + 5) === 'tools')
-  const plan = parsePlan(code)
-  const shellForFiles = sites.some(match => SHELL_TOOL.test(match[1] ?? match[2] ?? '')
-    && literalShellFileWork(readable.code, match.index + match[0].length))
-  return {
-    hasFirstLinePlan: plan.length > 0,
-    declaredOperations: plan.length,
-    dispatchSites: sites.length,
-    hasBatchingStructure: BATCHED.test(code),
-    hasBranching: BRANCHING.test(code),
-    // Waiting on an agent or job is a dependency barrier; tool waits count only at a
-    // real dispatch site and `wait: true` only in executable code, so comments and
-    // strings never exempt a program.
-    isWaiting: WAITING.test(readable.bare) || sites.some(match => WAITING_TOOL.test(match[1] ?? match[2] ?? '')),
-    // Comments and message text are not file work; module specifiers stay readable
-    // so a real import of node:fs still bypasses.
-    bypassesFileTools: BYPASS.test(readable.bare) || shellForFiles,
-    chars: code.length,
-  }
-}
-
-/** Which of the three tracked categories one program breaks. */
-export interface ProgramViolations {
-  /** The first line declares no operations. */
-  readonly plan: boolean
-  /** File work bypassed the OPS APIs. */
-  readonly bypass: boolean
-  /** The program spent a round trip on one operation it could have batched. */
-  readonly shape: boolean
-}
-
-/**
- * Classify one program into the three independently latched categories.
- *
- * They are kept separate on purpose: a write window or a single verdict would let
- * one category mask another, and the notice for each one names a different fix.
- * @param shape - the parsed shape of the program.
- * @returns whether each category was violated.
- */
-export function violationsOf(shape: ProgramShape): ProgramViolations {
-  // No dispatch site means there is no call shape to correct: a value program or a
-  // comment-only program must never earn a plan, bypass or shape notice.
-  if (shape.dispatchSites === 0) return { plan: false, bypass: false, shape: false }
-  return {
-    plan: !shape.hasFirstLinePlan,
-    bypass: shape.bypassesFileTools,
-    // Waiting on a job and branching are legitimate non-batched shapes, and a long
-    // program is not judged from its text alone. The notice claims a single operation,
-    // so it needs exactly one dispatch site: two sequential sites may be dependent, and
-    // the text alone cannot prove they could have run in parallel.
-    shape: shape.dispatchSites === 1 && !shape.hasBatchingStructure && !shape.hasBranching && !shape.isWaiting
-      && shape.chars < THIN_CODE_CHARS,
-  }
-}
-
-// ---- per-turn latch: one notice per category, re-armed by compliance ----
-
-/** The three independently latched categories. */
-export type BatchingCategory = 'plan' | 'bypass' | 'shape'
-
-/** Delivery priority when one program breaks several categories at once. */
-export const CATEGORY_PRIORITY: readonly BatchingCategory[] = Object.freeze(['bypass', 'plan', 'shape'])
-
-/** One notice to deliver, attributed to the category that earned it. */
-export interface ProgramNotice {
-  readonly category: BatchingCategory
-  /** Host turn the notice belongs to; 0 until the host reported one. */
-  readonly turn: number
-  readonly text: string
-}
-
-/** Shape notices one agent session can receive before the latch goes quiet (#1027). */
-export const SESSION_NOTICE_LIMIT = 3
-
-/** Per-agent latch over the three categories. */
-export interface ProgramLatch {
-  /** Start a host turn: every category re-arms. Repeating the same turn is a no-op. */
-  noteTurn(agent: Agent, turn: number): void
-  /** Record one program and return the notice it earns, if any. */
-  observe(agent: Agent, code: unknown): ProgramNotice | undefined
-  /** Whether a category may still deliver in this turn. */
-  isArmed(agent: Agent, category: BatchingCategory): boolean
-  /** Deliveries so far this turn, plus the session total, for the optional telemetry line. */
-  stats(agent: Agent): { turn: number; plan: number; bypass: number; shape: number; total: number; session: number }
-  /** Drop all state for one agent. */
-  forget(agent: Agent): void
-}
-
-/**
- * The text one category delivers.
- *
- * Each notice names one fix, because the teacher trajectory already carries the full
- * procedure: repeating it here would spend the same words on every turn. The plan
- * notice says only that the comment is missing, which is all that category asks for.
- * @param category - the category that earned the notice.
- * @param shape - the program shape the notice describes.
- * @returns the model-facing text, without the plugin-context envelope.
- */
-export function noticeText(category: BatchingCategory, shape: ProgramShape, surface: GuidanceSurface): string {
-  if (category === 'plan') {
-    return [
-      'Your last program did not open with a plan line.',
-      'Start the next program on its first line with `// plan: <operation>; <operation>`, one entry per tool call.',
-      'A plan comment further down does not count.',
-    ].join('\n')
-  }
-  if (category === 'bypass') {
-    // Every line names only what this scope publishes: a hardcoded tool list would
-    // contradict the sentence that explains the scope two lines below it.
-    // Resident APIs need no load, so they count as reachable beside the pool.
-    const available = surface.loader
-      ? [...new Set([...surface.resident, ...surface.loadable])]
-      : [...surface.resident]
-    const fileUsable = FILE_APIS.filter(name => available.includes(name)).length
-    const coversFiles = fileUsable === FILE_APIS.length
-    return [
-      'Your last program did file work through the shell or Node IO, which bypasses path policy and the audit trail.',
-      // A pool that cannot load `ops_edit_file` must not be told to load it either.
-      fileWorkHint(available),
-      surface.loader
-        ? coversFiles
-          ? 'Use the APIs in the current SDK; load only missing names with `tools.ops_load_sdk` for the next program.'
-          : fileUsable === 0
-            ? 'The loadable pool holds no file API either, so loading adds nothing here.'
-            : 'Load only names this scope publishes with `tools.ops_load_sdk` for the next program; an API outside that pool is not reachable.'
-        : fileUsable === 0
-          ? 'There is no loader here, and retrying a name will not publish one.'
-          : 'There is no loader here: call those APIs directly in the next program.',
-    ].join('\n')
-  }
-  return [
-    'Your last program spent a round trip on a single operation.',
-    'Put independent operations in one program under `Promise.all`; keep a dependent call as a second `await` in the same program.',
-    'This is read from the program text alone: a loop or map counts as one dispatch site, so state the intended shape in the plan line.',
-  ].join('\n')
-}
-
-/**
- * Create the per-agent latch used by the root `run_code` trigger.
- *
- * Compliance re-arms its own category, so a model that fixes a category and then
- * regresses earns a fresh notice instead of staying silent for the rest of the turn.
- * There is no per-turn cap, but one agent session earns at most `sessionLimit` notices
- * in total: every notice enters history and is re-sent on each later request, and an
- * uncapped latch reached 80 notices in one session (#1027). A model that has not
- * adopted the rule after that many corrections will not adopt it from the next one.
- * @param surfaceOf - the tool surface the agent's scope publishes, resolved at delivery.
- * @param options.sessionLimit - notices per agent session; defaults to {@link SESSION_NOTICE_LIMIT}.
- * @returns the latch; state is keyed by agent identity and never serialized.
- */
-export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface, options: { sessionLimit?: number } = {}): ProgramLatch {
-  const limit = options.sessionLimit ?? SESSION_NOTICE_LIMIT
-  const states = new WeakMap<Agent, { turn: number; session: number; armed: Record<BatchingCategory, boolean>; sent: Record<BatchingCategory, number> }>()
-  const fresh = (turn: number, session = 0) => ({ turn, session, armed: { plan: true, bypass: true, shape: true }, sent: { plan: 0, bypass: 0, shape: 0 } })
-  const stateFor = (agent: Agent) => {
-    let state = states.get(agent)
-    if (state === undefined) { state = fresh(0); states.set(agent, state) }
-    return state
-  }
-  return {
-    noteTurn(agent, turn) {
-      const normalised = Number.isSafeInteger(turn) ? turn : 0
-      const state = states.get(agent)
-      // The host may announce one turn more than once; only a change starts a new turn.
-      if (state !== undefined && state.turn === normalised) return
-      // A new turn re-arms the categories but keeps the session total.
-      states.set(agent, fresh(normalised, state?.session ?? 0))
-    },
-    observe(agent, code) {
-      const state = stateFor(agent)
-      const shape = analyzeProgram(code)
-      const violations = violationsOf(shape)
-      // A compliant program in a category restores that category's right to speak.
-      for (const entry of CATEGORY_PRIORITY) if (!violations[entry]) state.armed[entry] = true
-      const category = CATEGORY_PRIORITY.find(entry => violations[entry] && state.armed[entry])
-      if (category === undefined || state.session >= limit) return undefined
-      state.armed[category] = false
-      state.sent[category] += 1
-      state.session += 1
-      // Read-only policy is per agent, so the surface is resolved at delivery time.
-      return { category, turn: state.turn, text: noticeText(category, shape, surfaceOf(agent)) }
-    },
-    isArmed(agent, category) { return stateFor(agent).armed[category] },
-    stats(agent) {
-      const state = stateFor(agent)
-      const { plan, bypass, shape } = state.sent
-      return { turn: state.turn, plan, bypass, shape, total: plan + bypass + shape, session: state.session }
-    },
-    forget(agent) { states.delete(agent) },
-  }
+export function renderBatchingGuidance(text: string, surface: GuidanceSurface): string {
+  if (text === '') return text
+  const withSandbox = surface.sandbox === undefined ? text : replaceSandboxLesson(text, surface.sandbox)
+  return surface.loader ? withSandbox : replaceLoaderLesson(withSandbox, surface)
 }
