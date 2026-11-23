@@ -2,7 +2,7 @@
 import { createScope } from '@deepseek-ai/dsh-scope'
 import { mountReplacements } from '../lib/publication/replacements.js'
 import { acquire } from '../lib/publication/registrar.js'
-import { OFFICIAL_REPLACEMENTS } from '../lib/official-tool-catalog.js'
+import { OFFICIAL_REPLACEMENTS } from '../lib/official-tools/catalog.js'
 import { bootHost, shutdown } from './lib/host.mjs'
 import { assert, test, report, wait } from './lib/harness.mjs'
 import { prepareStep, executeCall } from './lib/executor.mjs'

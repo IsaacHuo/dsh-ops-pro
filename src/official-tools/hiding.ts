@@ -2,19 +2,19 @@
  * Only explicit reviewed selections are masked. Missing selected counterparts
  * block the affected scope and restore its official tools until readiness returns.
  */
-import type { Context } from './adapter/dsh/types.js'
-import type { ToolGuard } from './adapter/dsh/types.js'
-import type { OfficialReplacement } from './official-tool-catalog.js'
-import { nativeProviders } from './publication/providers.js'
-import { isPresentationProbe } from './publication/presentation.js'
-import { resolveHidingConfig } from './config.js'
-export { resolveHidingConfig } from './config.js'
-import { OFFICIAL_REPLACEMENTS } from './official-tool-catalog.js'
-import { surfaceOf, visibleNames } from './publication/surface.js'
-import { safeDispose } from './teardown.js'
-import { retired as retiredLegacyRow } from './settings/legacy.js'
-import { publicationLeaseError, publicationLeaseState, publicationRegistration } from './publication/reentry.js'
-import { ownsPublication } from './publication/registrar.js'
+import type { Context } from '../adapter/dsh/types.js'
+import type { ToolGuard } from '../adapter/dsh/types.js'
+import type { OfficialReplacement } from './catalog.js'
+import { nativeProviders } from '../publication/providers.js'
+import { isPresentationProbe } from '../publication/presentation.js'
+import { resolveHidingConfig } from '../config.js'
+export { resolveHidingConfig } from '../config.js'
+import { OFFICIAL_REPLACEMENTS } from './catalog.js'
+import { surfaceOf, visibleNames } from '../publication/surface.js'
+import { safeDispose } from '../teardown.js'
+import { retired as retiredLegacyRow } from '../settings/legacy.js'
+import { publicationLeaseError, publicationLeaseState, publicationRegistration } from '../publication/reentry.js'
+import { ownsPublication } from '../publication/registrar.js'
 
 interface Entry { context: Context; lifts: (() => void)[]; cleanupError?: string; error?: string; reported?: string
   /** Set only when this scope's restrictions were registered and verified this pass. */
@@ -58,7 +58,7 @@ export function apply(root: Context, raw?: unknown): void {
     }
     // Readiness examines the unmasked scope. It never accepts ops_<same-name>
     // as an equivalence claim, nor uses run_code as a native replacement.
-    const readiness = (agent: object, toolSet?: import('./adapter/dsh/types.js').ResolvedToolSet): boolean[] => {
+    const readiness = (agent: object, toolSet?: import('../adapter/dsh/types.js').ResolvedToolSet): boolean[] => {
       const owned = new Set(typeof tools.get === 'function' ? nativeProviders(ctx, agent).map(provider => provider.definition) : [])
       return replaceTools.map(tool => {
         const counterpart = OFFICIAL_REPLACEMENTS[tool]

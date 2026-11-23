@@ -1,4 +1,4 @@
-import { profileCommand } from '../../src/profile-install.js'
+import { profileCommand } from '../../src/profile/install.js'
 import { ensureSessionTemp, sessionTempDir } from '../../src/session-temp.js'
 const directory: string = sessionTempDir('session-id')
 const result = ensureSessionTemp(directory)

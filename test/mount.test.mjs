@@ -362,7 +362,7 @@ await test('selected replacements fail closed when the file row publishes only i
   try {
     await fileMount(ctx)
     for (const name of ['read', 'glob', 'grep']) ctx.tools.register(foreignTool(name))
-    const { apply: hideOfficial } = await import('../lib/official-tool-hiding.js')
+    const { apply: hideOfficial } = await import('../lib/official-tools/hiding.js')
     const hiding = await ctx.plugin(legacyComponent({ name: 'selected-file-takeover', apply: hideOfficial }), { replaceTools: ['read', 'glob', 'grep'] })
     const current = await agent(ctx, 'selected-file-takeover')
     await assert.rejects(() => ctx.get('systemPrompt').assemble({ scope: current }), /READINESS_BLOCKED/)

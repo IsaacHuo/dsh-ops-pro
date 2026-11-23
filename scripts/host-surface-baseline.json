@@ -77,7 +77,7 @@
     "service:agents": 1,
     "service:tools": 1
   },
-  "official-tool-hiding.ts": {
+  "official-tools/hiding.ts": {
     "event:agent/created": 1,
     "event:agent/disposed": 1,
     "event:system-prompt/assemble": 1,

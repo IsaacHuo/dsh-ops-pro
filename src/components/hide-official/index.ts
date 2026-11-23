@@ -1,4 +1,4 @@
-import { apply, resolveHidingConfig } from '../../official-tool-hiding.js'
+import { apply, resolveHidingConfig } from '../../official-tools/hiding.js'
 import { editable, settingsConfig, configObject } from '../../settings/schema.js'
 export const name = 'dsh-ops-hide-official'
 export { apply }

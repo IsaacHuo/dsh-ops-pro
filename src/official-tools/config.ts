@@ -1,7 +1,7 @@
 /** Explicit reviewed replacements. Legacy blanket settings are validated but inert. */
-import { ConfigError } from './config-error.js'
-import { OFFICIAL_REPLACEMENTS } from './official-tool-catalog.js'
-import type { OfficialReplacement } from './official-tool-catalog.js'
+import { ConfigError } from '../config-error.js'
+import { OFFICIAL_REPLACEMENTS } from './catalog.js'
+import type { OfficialReplacement } from './catalog.js'
 export interface HidingConfig { replaceTools: OfficialReplacement[] }
 export function resolveHidingConfig(raw: unknown = {}): HidingConfig {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) throw new ConfigError('hiding config must be an object')

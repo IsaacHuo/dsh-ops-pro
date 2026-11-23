@@ -340,7 +340,7 @@ export function resolveResultCacheConfig(rawConfig: unknown): ResultCacheConfig 
   }
 }
 
-export { resolveHidingConfig } from './official-tool-config.js'
+export { resolveHidingConfig } from './official-tools/config.js'
 
 /** Independent PTC row configuration uses the same central validation entry point. */
 export { parsePtcConfig as resolvePtcConfig } from './ptc/config.js'

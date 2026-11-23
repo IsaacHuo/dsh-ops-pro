@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
-import { resetStaleDefaultText } from '../lib/profile-default-reset.js'
-import { profileCommand } from '../lib/profile-install.js'
+import { resetStaleDefaultText } from '../lib/profile/default-reset.js'
+import { profileCommand } from '../lib/profile/install.js'
 
 const ROW = ['- id: agent-preset-registry', '  name: "@deepseek-ai/dsh-agent-preset-registry"', '  config:']
 const patch = (...config) => ['- id: other', '  config:', '    selectedDefault: ops-ptc', ...ROW, ...config, '- id: tail', '  name: x', ''].join('\n')

@@ -4,10 +4,10 @@ import path from 'node:path'
 import os from 'node:os'
 import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
-import { PACKAGE_ROOT, dshHome } from './paths.js'
-import { PLATFORMS } from './execution/runtime.js'
-import { reportDefaultReset, resetStaleDefault } from './profile-default-reset.js'
-import { PACKAGE_NAME } from './identity.js'
+import { PACKAGE_ROOT, dshHome } from '../paths.js'
+import { PLATFORMS } from '../execution/runtime.js'
+import { reportDefaultReset, resetStaleDefault } from './default-reset.js'
+import { PACKAGE_NAME } from '../identity.js'
 
 /**
  * Architectures this fork will run its profile commands on.

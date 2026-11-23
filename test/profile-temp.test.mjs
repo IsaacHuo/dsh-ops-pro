@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
-import { profileCommand } from '../lib/profile-install.js'
+import { profileCommand } from '../lib/profile/install.js'
 import { ensureSessionTemp, sessionTempDir } from '../lib/session-temp.js'
 
 const capture = body => {
