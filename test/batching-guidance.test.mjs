@@ -7,7 +7,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { assert, test, report, PACKAGE_ROOT } from './lib/harness.mjs'
-import { BATCHING_GUIDANCE_ID, BATCHING_GUIDANCE_REVISION, LOAD_PROSE_ANCHOR, LOAD_SECTION_HEADING, LOAD_TABLE_ROW_PREFIX, loadBatchingGuidance, renderBatchingGuidance } from '../lib/ptc/batching-guidance.js'
+import { BATCHING_GUIDANCE_ID, BATCHING_GUIDANCE_REVISION, LOAD_PROSE_ANCHOR, LOAD_SECTION_HEADING, LOAD_TABLE_ROW_PREFIX, SANDBOX_SECTION_HEADING, loadBatchingGuidance, renderBatchingGuidance } from '../lib/ptc/batching-guidance.js'
 
 /** The editable guidance file shipped at the package root, outside the build output. */
 const GUIDANCE_FILE = path.join(PACKAGE_ROOT, 'prompts', 'batching-guidance.md')
@@ -20,7 +20,7 @@ await test('the shipped guidance is English Markdown with its host-source identi
   }
   assert.equal(BATCHING_GUIDANCE_ID, 'batching-guidance')
   // A wording or format change is a product change and must bump the revision.
-  assert.equal(BATCHING_GUIDANCE_REVISION, '6')
+  assert.equal(BATCHING_GUIDANCE_REVISION, '8')
 })
 
 await test('the guidance loader returns exactly the shipped Markdown file', () => {
@@ -106,29 +106,86 @@ await test('the teacher trajectory pins the first-line plan and a runnable load 
   assert.ok(text.length > 2500 && text.length < 9000, 'guidance stays bounded: ' + text.length)
 })
 
+await test('the trim removed repeated prose and the anti-pattern demo', () => {
+  // The first-round lesson enters message history, so it must not repeat itself: the
+  // anti-pattern section and the trailing prose that restated Step 1 are gone, while
+  // the four executable trajectories and their contracts stay byte-identical.
+  const text = loadBatchingGuidance()
+  assert.equal(text.includes('## Anti-pattern, and its rewrite'), false, 'the anti-pattern demo is gone')
+  assert.equal(text.includes('The search is the dependency, so it is awaited first'), false)
+  assert.equal(text.includes('The revision and the context are independent'), false)
+  assert.equal(text.includes('A loop of dispatches is batched work'), false)
+})
+
+await test('the trimmed lesson keeps the four trajectories and restores the two rules', () => {
+  const text = loadBatchingGuidance()
+  for (const heading of [
+    '## Trajectory 1 - reconnaissance', '## Trajectory 2 - search, then read the hits',
+    '## Trajectory 3 - a verified edit', '## Trajectory 4 - paging',
+  ]) assert.ok(text.includes(heading), heading)
+  assert.ok(text.includes('**Load only missing APIs**'), 'load only what the SDK lacks is a core rule')
+  assert.ok(text.includes('**Recheck the SDK after a mode change**'), 'the post-mode-change recheck is a core rule')
+})
+
+await test('the shipped lesson measures its declared trimmed size', () => {
+  // The trim record in the PR declares this size; a wording edit must bump the
+  // revision and this number together. The 84 B delivery prefix is counted separately.
+  assert.equal(Buffer.byteLength(loadBatchingGuidance(), 'utf8'), 8169)
+})
+
 await test('a scope with the loader receives the shipped file unchanged', () => {
   // The default path must not pay for a branch it never needs: byte identity is the contract.
   const text = loadBatchingGuidance()
-  const every = ['ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file', 'ops_edit_file']
-  assert.equal(renderBatchingGuidance(text, { loader: true, resident: [], loadable: every }), text)
+  assert.equal(renderBatchingGuidance(text, { loader: true, resident: [] }), text)
   // An unreadable file stays empty, so delivery is skipped instead of failing a tool result.
   assert.equal(renderBatchingGuidance('', { loader: false, resident: ['ops_glob'], loadable: [] }), '')
 })
 
-await test('the file-work rule names only the file APIs the scope publishes', () => {
-  // A read-only loader scope cannot reach the editor: the lesson rides the same result
-  // as the bypass notice, so it must not teach the mutation the notice keeps out.
-  const readOnly = renderBatchingGuidance(loadBatchingGuidance(), { loader: true, resident: [], loadable: ['ops_glob', 'ops_grep', 'ops_read_files', 'ops_inspect_local_file'] })
-  const rule = readOnly.slice(readOnly.indexOf('**OPS first for file work**'), readOnly.indexOf('The shell starts'))
-  assert.ok(rule.length > 0, 'the rule is still present')
-  assert.equal(rule.includes('ops_edit_file'), false, rule)
-  assert.match(rule, /list with ops_glob, search with ops_grep, read with ops_read_files or ops_inspect_local_file\./)
-  assert.equal(readOnly.includes('ops_edit_file'), false, 'no example shows a write the scope cannot make')
-  assert.match(readOnly, /Trajectory 4/, 'the other examples stay')
-  // A scope with no OPS file API is sent to the official tools instead of an unreachable name.
-  const none = renderBatchingGuidance(loadBatchingGuidance(), { loader: true, resident: [], loadable: ['ops_stat'] })
-  assert.match(none, /no OPS file API is published here/)
-  assert.equal(/ops_edit_file|ops_glob/.test(none.slice(none.indexOf('**OPS first for file work**'), none.indexOf('The shell starts'))), false)
+await test('the sandbox lesson names both legal values and the full-access prohibition', () => {
+  // #963: a full-access program that invents a wider tier is rejected before it runs,
+  // so the lesson must state the closed vocabulary and forbid the request at the top.
+  const text = loadBatchingGuidance()
+  assert.match(text, /## Sandbox permissions/, 'the shipped lesson carries the sandbox rules')
+  assert.match(text, /accepts only `workspace-write` or `danger-full-access`/, 'the vocabulary is closed')
+  assert.match(text, /Never invent a tier name/, 'inventing a value is called out')
+  assert.match(text, /\*\*danger-full-access\*\*: the widest tier\. Never send `sandbox_permissions` or/, 'full access forbids the request')
+})
+
+await test('a reported sandbox mode keeps only its own tier', () => {
+  const text = loadBatchingGuidance()
+  const full = renderBatchingGuidance(text, { loader: true, resident: [], sandbox: 'danger-full-access' })
+  assert.match(full, /## Sandbox permissions - current mode: danger-full-access/)
+  assert.match(full, /widest tier: never send `sandbox_permissions` or/)
+  assert.equal(full.includes('**read-only**'), false, 'inactive tiers are not primed')
+  const readOnly = renderBatchingGuidance(text, { loader: true, resident: [], sandbox: 'read-only' })
+  assert.match(readOnly, /## Sandbox permissions - current mode: read-only/)
+  assert.match(readOnly, /To write, send/)
+  assert.equal(readOnly.includes('**danger-full-access**'), false, 'inactive tiers are gone here too')
+  const workspace = renderBatchingGuidance(text, { loader: true, resident: [], sandbox: 'workspace-write' })
+  assert.match(workspace, /## Sandbox permissions - current mode: workspace-write/)
+  assert.match(workspace, /leave the workspace/)
+  assert.equal(workspace.includes('**read-only**'), false)
+  // Substituting one section must not disturb the rest of the lesson.
+  for (const rendered of [full, readOnly, workspace]) {
+    assert.ok(rendered.includes('## Step 0 - the plan line'), 'the rest of the lesson survives')
+    assert.ok(rendered.includes('## Common mistakes'), 'the closing table survives')
+    assert.ok(rendered.includes('## Trajectory 4 - paging'), 'the trajectories survive')
+  }
+})
+
+await test('a loader-less scope keeps the sandbox tier and drops the load step together', () => {
+  const rendered = renderBatchingGuidance(loadBatchingGuidance(), { loader: false, resident: ['ops_glob'], loadable: [], sandbox: 'read-only' })
+  assert.match(rendered, /## Sandbox permissions - current mode: read-only/)
+  assert.equal(rendered.includes('ops_load_sdk'), false, 'the load step is still gone')
+  assert.ok(rendered.includes('ops_glob'), 'the published surface is still listed')
+})
+
+await test('a drifted sandbox anchor inserts the tier instead of silently dropping it', () => {
+  const drifted = '# Batch tool calls\n\nintro\n## Step 0 - the plan line\nbody\n'
+  const out = renderBatchingGuidance(drifted, { loader: true, resident: [], sandbox: 'danger-full-access' })
+  assert.match(out, /## Sandbox permissions - current mode: danger-full-access/)
+  assert.ok(out.includes('## Step 0 - the plan line'), 'the following section survives')
+  assert.ok(out.startsWith('# Batch tool calls'), 'the H1 stays first')
 })
 
 await test('a loader-less scope is never taught to load', () => {
@@ -219,6 +276,7 @@ await test('the shipped file still carries the anchors the renderer rewrites', (
   // The loader-less rendering edits prose by anchor: moving either one must fail here, not at runtime.
   const lines = loadBatchingGuidance().split('\n')
   assert.ok(lines.some(line => line.trim() === LOAD_SECTION_HEADING), 'the load heading is present')
+  assert.ok(lines.some(line => line.trim() === SANDBOX_SECTION_HEADING), 'the sandbox heading is present')
   assert.ok(lines.some(line => line.startsWith(LOAD_TABLE_ROW_PREFIX)), 'the load row is present')
   // The Step 1 prose must sit on its own line, or the prose filter would cut a shared
   // line short and leave the split lesson truncated.

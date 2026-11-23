@@ -9,15 +9,36 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Agent } from '../adapter/dsh/types.js'
+import type { Agent, SandboxMode } from '../adapter/dsh/types.js'
 import { literalShellFileWork } from './shell-file-work.js'
 
 /** Identity of the guidance in the host message source. */
 export const BATCHING_GUIDANCE_ID = 'batching-guidance'
-/** Contributor of the one-time full lesson; the per-violation notices keep the base id. */
-export const BATCHING_GUIDANCE_LESSON_ID = `${BATCHING_GUIDANCE_ID}:lesson`
 /** Revision of the guidance text; bump it when the wording or the file format changes. */
-export const BATCHING_GUIDANCE_REVISION = '6'
+export const BATCHING_GUIDANCE_REVISION = '8'
+/**
+ * Host source kind for guidance delivered as a user-role message.
+ *
+ * The message keeps `role: 'user'`, so the model still reads it as the
+ * instruction that governs the task. The plugin kind is what tells the client
+ * this injection is not human input: Chat files an unknown kind under its
+ * producer and draws no user bubble for it.
+ */
+export const BATCHING_GUIDANCE_SOURCE_KIND = 'dsh-ops:batching-guidance'
+
+// Merge-extensible host sum type: declare the producer's own kind once, so
+// createUserMessage accepts it without widening the host's known sources.
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    'dsh-ops:batching-guidance': {
+      readonly kind: 'dsh-ops:batching-guidance'
+      readonly contributor: string
+      readonly revision: string
+      readonly turn: number
+      readonly step: number
+    }
+  }
+}
 
 /** The shipped guidance file, resolved from this module's own location (src or lib). */
 const DEFAULT_GUIDANCE_FILE = new URL('../../prompts/batching-guidance.md', import.meta.url)
@@ -79,6 +100,13 @@ export interface GuidanceSurface {
   readonly resident: readonly string[]
   /** Public names the loader can add, empty when the scope publishes no loader. */
   readonly loadable: readonly string[]
+  /**
+   * The session's current sandbox mode, read from the host policy.
+   *
+   * When present, the lesson states this mode and keeps only its own tier; when
+   * absent, the shipped three-tier lesson is delivered unchanged.
+   */
+  readonly sandbox?: SandboxMode
 }
 
 /** The file-work APIs the guidance names, in the order it names them. */
@@ -102,57 +130,6 @@ function fileWorkHint(names: readonly string[]): string {
     return 'List with `ops_glob`, search with `ops_grep`, read with `ops_read_files` or `ops_inspect_local_file`, edit with `ops_edit_file`.'
   }
   return 'Do file work with the APIs this scope publishes: `' + usable.join('`, `') + '`.'
-}
-
-/** The shipped rule-6 clause that names every file-work API, whitespace-tolerant. */
-const FILE_RULE = /(\*\*OPS first for file work\*\*: )list with ops_glob,\s+search with ops_grep,\s+read with\s+ops_read_files or ops_inspect_local_file,\s+edit with ops_edit_file\./u
-
-/**
- * Name only the file-work APIs the scope publishes in the lesson's file-work rule.
- *
- * The lesson rides the same result as a bypass notice, so a read-only scope must not
- * be told to edit through the lesson while the notice keeps the mutating API out.
- * The shipped clause stays byte for byte when every API it names is available.
- * @param text - guidance text.
- * @param surface - what the scope publishes.
- * @returns the text with the file-work clause narrowed to the published APIs.
- */
-function narrowFileRule(text: string, surface: GuidanceSurface): string {
-  const names = [...surface.resident, ...(surface.loadable ?? [])]
-  const usable = FILE_APIS.filter(name => names.includes(name))
-  if (usable.length === FILE_APIS.length) return text
-  const has = (name: string) => usable.includes(name)
-  const readers = ['ops_read_files', 'ops_inspect_local_file'].filter(has)
-  const clauses = [
-    ...(has('ops_glob') ? ['list with ops_glob'] : []),
-    ...(has('ops_grep') ? ['search with ops_grep'] : []),
-    ...(readers.length > 0 ? ['read with ' + readers.join(' or ')] : []),
-    ...(has('ops_edit_file') ? ['edit with ops_edit_file'] : []),
-  ]
-  const clause = clauses.length > 0 ? clauses.join(', ') + '.' : 'no OPS file API is published here, so do file work with the official tools.'
-  const narrowed = text.replace(FILE_RULE, (_match, lead: string) => lead + clause)
-  return has('ops_edit_file') ? narrowed : dropEditExamples(narrowed)
-}
-
-/**
- * Drop every section whose example program calls the editor.
- *
- * A scope without `ops_edit_file` would otherwise be shown a write it cannot make.
- * @param text - guidance text.
- * @returns the text without sections that call `ops_edit_file`.
- */
-function dropEditExamples(text: string): string {
-  const lines = text.split('\n')
-  const kept: string[] = []
-  let at = nextHeading(lines, 0)
-  kept.push(...lines.slice(0, at))
-  while (at < lines.length) {
-    const end = sectionEnd(lines, at)
-    const section = lines.slice(at, end)
-    if (!section.some(row => row.includes('tools.ops_edit_file('))) kept.push(...section)
-    at = end
-  }
-  return kept.join('\n')
 }
 
 /**
@@ -232,6 +209,8 @@ function stripLoader(rows: readonly string[]): string[] {
 
 /** The heading that starts the loader lesson in the guidance file. */
 export const LOAD_SECTION_HEADING = '## Step 3 - load before you call'
+/** The heading that starts the sandbox-authority lesson in the guidance file. */
+export const SANDBOX_SECTION_HEADING = '## Sandbox permissions'
 /** A heading that names loading, by word: "payload" is not a load step. */
 const LOAD_HEADING = /\bload(?:ing|er)?\b/i
 
@@ -293,14 +272,15 @@ function directSteps(surface: GuidanceSurface): string[] {
  * @returns the next heading index, or the line count when the section is last.
  */
 /**
- * The index of the load-step heading, ignoring anything inside a fence.
+ * The index of one exact heading line, ignoring anything inside a fence.
  *
  * A fenced example that quotes the heading is text, not structure: taking it for the
  * anchor would cut the document in the wrong place.
  * @param lines - the guidance lines.
+ * @param heading - the exact heading line to find.
  * @returns the heading index, or -1 when the file lost it.
  */
-function anchorIndex(lines: readonly string[]): number {
+function headingIndex(lines: readonly string[], heading: string): number {
   let fence: string | null = null
   for (let index = 0; index < lines.length; index += 1) {
     const row = lines[index]!
@@ -313,9 +293,14 @@ function anchorIndex(lines: readonly string[]): number {
       fence = opening[1]!
       continue
     }
-    if (row.trim() === LOAD_SECTION_HEADING) return index
+    if (row.trim() === heading) return index
   }
   return -1
+}
+
+/** The index of the load-step heading; -1 when the file lost it. */
+function anchorIndex(lines: readonly string[]): number {
+  return headingIndex(lines, LOAD_SECTION_HEADING)
 }
 
 function nextHeading(lines: readonly string[], from: number): number {
@@ -347,21 +332,79 @@ function sectionEnd(lines: readonly string[], start: number): number {
 }
 
 /**
- * Render the guidance for one published surface.
+ * The sandbox lesson for the mode the host reports.
  *
- * A scope with the loader receives the file byte for byte when it can reach every
- * file-work API, so the default path is unchanged; the file-work rule otherwise names
- * only what the scope publishes. A loader-less scope receives the same lesson with the load step
- * replaced: the prose that tells the model to load cannot be true there.
+ * The shipped file carries all three tiers because it is also delivered without a
+ * host policy; when the mode is known, only the active tier's rule is kept, so a
+ * full-access session is never primed with a request it must not make.
+ * @param mode - the session's current sandbox mode.
+ * @returns the replacement lines, heading included.
+ */
+function sandboxLesson(mode: SandboxMode): string[] {
+  const common = [
+    '`sandbox_permissions` accepts only `workspace-write` or `danger-full-access`, and',
+    '`justification` must accompany it. Never invent a tier name: an invalid value rejects',
+    'the whole program before any line runs.',
+    '',
+  ]
+  switch (mode) {
+    case 'read-only':
+      return [SANDBOX_SECTION_HEADING + ' - current mode: read-only', '', ...common,
+        'This session runs at read-only: reads and searches only. To write, send',
+        '`sandbox_permissions: \"workspace-write\"` (or `\"danger-full-access\"`) with a',
+        '`justification`.']
+    case 'workspace-write':
+      return [SANDBOX_SECTION_HEADING + ' - current mode: workspace-write', '', ...common,
+        'This session runs at workspace-write: work inside the workspace needs no request.',
+        'Send `sandbox_permissions: \"danger-full-access\"` with a `justification` only to',
+        'leave the workspace.']
+    default:
+      return [SANDBOX_SECTION_HEADING + ' - current mode: danger-full-access', '', ...common,
+        'This session runs at the widest tier: never send `sandbox_permissions` or',
+        '`justification`. No wider target exists, and any value would invent one.']
+  }
+}
+
+/** Reported once: the shipped file lost the sandbox anchor the renderer rewrites. */
+let warnedSandboxAnchor = false
+
+/**
+ * Replace the sandbox section with the lesson for the reported mode.
+ *
+ * A drifted file keeps its lesson: the replacement is inserted before the first
+ * section rather than dropped, and the drift is reported once.
+ * @param text - the guidance file.
+ * @param mode - the session's current sandbox mode.
+ * @returns the file with the active tier substituted.
+ */
+function replaceSandboxLesson(text: string, mode: SandboxMode): string {
+  const lines = text.split('\n')
+  const replacement = sandboxLesson(mode)
+  const start = headingIndex(lines, SANDBOX_SECTION_HEADING)
+  if (start < 0) {
+    if (!warnedSandboxAnchor) {
+      warnedSandboxAnchor = true
+      console.warn('dsh-ops: the batching guidance lost its "' + SANDBOX_SECTION_HEADING
+        + '" anchor; the sandbox lesson is inserted before the first section instead.')
+    }
+    const at = nextHeading(lines, 0)
+    return [...lines.slice(0, at), ...replacement, '', ...lines.slice(at)].join('\n')
+  }
+  return [...lines.slice(0, start), ...replacement, '', ...lines.slice(sectionEnd(lines, start))].join('\n')
+}
+
+/**
+ * Replace the load step for a scope that publishes no loader.
+ *
+ * The default path does not call this: a loader scope keeps the shipped file
+ * byte for byte unless the sandbox lesson was also substituted. A loader-less scope
+ * cannot load, so the prose and the table row that teach loading are removed.
  * @param text - the loaded guidance file.
  * @param surface - what the scope publishes.
  * @returns the model-facing guidance text.
  */
-export function renderBatchingGuidance(text: string, surface: GuidanceSurface): string {
-  if (text === '') return text
-  const narrowed = narrowFileRule(text, surface)
-  if (surface.loader) return narrowed
-  const lines = narrowed.split('\n')
+function replaceLoaderLesson(text: string, surface: GuidanceSurface): string {
+  const lines = text.split('\n')
   const start = anchorIndex(lines)
   // Lines that teach loading, and the table row that points at it, never reach a
   // scope without a loader. The replacement is inserted after this filter, so the
@@ -383,6 +426,23 @@ export function renderBatchingGuidance(text: string, surface: GuidanceSurface): 
   const before = stripLoader(lines.slice(0, start))
   const after = stripLoader(lines.slice(sectionEnd(lines, start)))
   return [...before, ...directSteps(surface), '', ...after].join('\n')
+}
+
+/**
+ * Render the guidance for one published surface.
+ *
+ * A scope with the loader receives the shipped file unchanged unless the host
+ * reports a sandbox mode, in which case only the active tier's rule is kept. A
+ * loader-less scope additionally receives the same lesson with the load step
+ * replaced: the prose that tells the model to load cannot be true there.
+ * @param text - the loaded guidance file.
+ * @param surface - what the scope publishes.
+ * @returns the model-facing guidance text.
+ */
+export function renderBatchingGuidance(text: string, surface: GuidanceSurface): string {
+  if (text === '') return text
+  const withSandbox = surface.sandbox === undefined ? text : replaceSandboxLesson(text, surface.sandbox)
+  return surface.loader ? withSandbox : replaceLoaderLesson(withSandbox, surface)
 }
 
 // ---- program shape: what one run_code program says about its step ----
@@ -660,9 +720,6 @@ export interface ProgramNotice {
   readonly text: string
 }
 
-/** Shape notices one agent session can receive before the latch goes quiet (#1027). */
-export const SESSION_NOTICE_LIMIT = 3
-
 /** Per-agent latch over the three categories. */
 export interface ProgramLatch {
   /** Start a host turn: every category re-arms. Repeating the same turn is a no-op. */
@@ -671,8 +728,8 @@ export interface ProgramLatch {
   observe(agent: Agent, code: unknown): ProgramNotice | undefined
   /** Whether a category may still deliver in this turn. */
   isArmed(agent: Agent, category: BatchingCategory): boolean
-  /** Deliveries so far this turn, plus the session total, for the optional telemetry line. */
-  stats(agent: Agent): { turn: number; plan: number; bypass: number; shape: number; total: number; session: number }
+  /** Deliveries so far this turn, for the optional telemetry line. */
+  stats(agent: Agent): { turn: number; plan: number; bypass: number; shape: number; total: number }
   /** Drop all state for one agent. */
   forget(agent: Agent): void
 }
@@ -731,18 +788,13 @@ export function noticeText(category: BatchingCategory, shape: ProgramShape, surf
  *
  * Compliance re-arms its own category, so a model that fixes a category and then
  * regresses earns a fresh notice instead of staying silent for the rest of the turn.
- * There is no per-turn cap, but one agent session earns at most `sessionLimit` notices
- * in total: every notice enters history and is re-sent on each later request, and an
- * uncapped latch reached 80 notices in one session (#1027). A model that has not
- * adopted the rule after that many corrections will not adopt it from the next one.
- * @param surfaceOf - the tool surface the agent's scope publishes, resolved at delivery.
- * @param options.sessionLimit - notices per agent session; defaults to {@link SESSION_NOTICE_LIMIT}.
+ * There is deliberately no per-turn cap: the cost of an extra short notice is bounded
+ * by the notice text, while a missed correction lasts the rest of the turn.
  * @returns the latch; state is keyed by agent identity and never serialized.
  */
-export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface, options: { sessionLimit?: number } = {}): ProgramLatch {
-  const limit = options.sessionLimit ?? SESSION_NOTICE_LIMIT
-  const states = new WeakMap<Agent, { turn: number; session: number; armed: Record<BatchingCategory, boolean>; sent: Record<BatchingCategory, number> }>()
-  const fresh = (turn: number, session = 0) => ({ turn, session, armed: { plan: true, bypass: true, shape: true }, sent: { plan: 0, bypass: 0, shape: 0 } })
+export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface): ProgramLatch {
+  const states = new WeakMap<Agent, { turn: number; armed: Record<BatchingCategory, boolean>; sent: Record<BatchingCategory, number> }>()
+  const fresh = (turn: number) => ({ turn, armed: { plan: true, bypass: true, shape: true }, sent: { plan: 0, bypass: 0, shape: 0 } })
   const stateFor = (agent: Agent) => {
     let state = states.get(agent)
     if (state === undefined) { state = fresh(0); states.set(agent, state) }
@@ -754,8 +806,7 @@ export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface,
       const state = states.get(agent)
       // The host may announce one turn more than once; only a change starts a new turn.
       if (state !== undefined && state.turn === normalised) return
-      // A new turn re-arms the categories but keeps the session total.
-      states.set(agent, fresh(normalised, state?.session ?? 0))
+      states.set(agent, fresh(normalised))
     },
     observe(agent, code) {
       const state = stateFor(agent)
@@ -764,10 +815,9 @@ export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface,
       // A compliant program in a category restores that category's right to speak.
       for (const entry of CATEGORY_PRIORITY) if (!violations[entry]) state.armed[entry] = true
       const category = CATEGORY_PRIORITY.find(entry => violations[entry] && state.armed[entry])
-      if (category === undefined || state.session >= limit) return undefined
+      if (category === undefined) return undefined
       state.armed[category] = false
       state.sent[category] += 1
-      state.session += 1
       // Read-only policy is per agent, so the surface is resolved at delivery time.
       return { category, turn: state.turn, text: noticeText(category, shape, surfaceOf(agent)) }
     },
@@ -775,7 +825,7 @@ export function createProgramLatch(surfaceOf: (agent: Agent) => GuidanceSurface,
     stats(agent) {
       const state = stateFor(agent)
       const { plan, bypass, shape } = state.sent
-      return { turn: state.turn, plan, bypass, shape, total: plan + bypass + shape, session: state.session }
+      return { turn: state.turn, plan, bypass, shape, total: plan + bypass + shape }
     },
     forget(agent) { states.delete(agent) },
   }

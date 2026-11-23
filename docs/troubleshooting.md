@@ -87,6 +87,10 @@ Long scripts, heredocs and multi-layer quotes and backslashes make the model esc
 
 A key the `ops_bash` schema does not declare is refused before execution, and the error names both the unknown keys and the accepted ones. This is deliberate — nothing is silently ignored.
 
+### The model calls `bash` instead of `ops_bash`
+
+This package publishes exactly one shell tool, named `ops_bash`; there is no `bash` alias. The tool table is assembled by the host from the names this package declares once (`publicToolName` in `src/policy.ts`), and a misnamed call never reaches this package: the host answers with its own unknown-tool message, so any did-you-mean correction also belongs to the host, not here. Point the model back to the real name — the tool table and the prompt both spell `ops_bash` — instead of expecting a silent alias.
+
 ### Bash script files, PATH precedence and empty input
 
 `script_path` always selects a Bash script; the extension does not select an
@@ -112,6 +116,28 @@ What to do:
 - Remove `bashPath` (and `allowSystemShellFallback`) from the mode row so the bundled pinned bash is used; if that payload is missing, run `npx --yes dsh-ops-pro@latest provision-shells --bash`.
 - Or switch the session to `danger-full-access`, where `bashPath` runs directly.
 - Check with the profile's own copy: `node "<profile>\node_modules\dsh-ops-pro\bin\dsh-ops.mjs" ladder --config <file>` reports `restricted: yes/no` for the resolved bash.
+
+### A full-access `ops_bash` child seems to keep the restricted Low token
+
+The session mode projects straight through in full access: the selected payload
+spawns without `sandbox.confine`, a plain `bashPath` runs directly, and the child
+carries the session's own token. Compare the tokens from the same caller before
+assigning a cause (#581):
+
+```console
+MSYS2_ARG_CONV_EXCL='*' /c/Windows/System32/whoami.exe /groups
+```
+
+The `Mandatory Label` line is the child's integrity level: `S-1-16-4096` is Low,
+`S-1-16-8192` Medium, and an elevated caller reports higher. A confined-mode child
+is expected to differ from the host shell; a full-access child must match the
+session's own level. A full-access child that still reports Low is a host
+token-construction difference, not a dsh-ops setting: collect both `whoami.exe
+/groups` outputs, the DSH core, OPS and Bash payload versions, and the exact
+executable paths, and report them with the [runtime evidence
+guide](windows-runtime-evidence.md). The plugin-side projection is guarded by
+`test/shells-full-access-confinement.test.mjs`, which fails if a full-access
+call ever routes through `confinedBash` or `sandbox.confine`.
 
 ### A full-access `ops_bash` child seems to keep the restricted Low token
 
