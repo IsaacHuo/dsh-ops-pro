@@ -44,6 +44,7 @@
    - 下载四个 artifact 分别放回 `runtime/<target>`，保留各目标 provenance。
    - 宿主 worker 单独 release build（测试用，不替换 staged 发布产物）；取 legacy MSYS fixture 并把 `DSH_OPS_TEST_BASH` / `DSH_OPS_TEST_NIUBASH` 写入环境。
    - **Release gate**：`node scripts/verify-gate.mjs --skip-install` + `node bin/check-release.mjs`。
+     - tag 运行不再重跑套件（上面的宿主 worker build 与 legacy fixture 也一起跳过）：前一步已要求该提交有绿色 `CI required`，而它就是在四个平台上对同一提交跑过的同一个 `verify-gate`。tag 运行只保留与发布字节有关的检查：tag 未被移动、版本一致、`check-release`、打包与 `SHA256SUMS`。在分支上手动 dispatch 演练时没有这个保证，仍跑完整门禁。
      - `verify-gate` 就是每个 CI 腿跑的那个门禁：它自己 stage 冻结的 Niubash 归档（所以两条 Niubash 载荷套件**真的会跑**，不是 skip），设 `DSH_OPS_REQUIRE_RUNTIME=1`，拒绝平台允许集之外的 skip，核对套件清单，并校验打包产物。
      - `check-release.mjs` 要求四个声明目标齐全、每个 receipt 哈希与 staged 字节一致、Windows IPC 二进制/源码哈希一致、manifest 与 runtime 白名单一致。
    - 之后 `build-platform-packages.mjs --dist` 打包主包与固定 Windows bash 载荷包，写 `provenance.json` / `SHA256SUMS`；`... check --dist` 只重读已记录摘要。

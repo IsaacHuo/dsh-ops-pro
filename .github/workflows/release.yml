@@ -18,6 +18,12 @@ name: Release
 # Dispatch the workflow on a branch to rehearse the whole path: it builds, gates and
 # packs, then stops at `publish` because the ref is not a tag.
 #
+# NO SECOND SUITE RUN ON A TAG. That green `CI required` already ran verify-gate on every
+# platform for exactly this commit, so a tag run does not repeat the suites: it keeps the
+# moved-tag, version, closure, receipt and checksum checks, which are about the release
+# bytes rather than the code. A branch dispatch still runs the full gate, because a branch
+# has no such guarantee.
+#
 # WHAT IT PUBLISHES: the GitHub Release for the tag — title, generated notes, the
 # installable tarballs and `SHA256SUMS`. The `npm` job then publishes the same main
 # tarball through npm Trusted Publishing (OIDC, no secret), but only once the
@@ -240,14 +246,19 @@ jobs:
       - name: Prepare the host worker for functional suites
         # Boundary suites intentionally resolve their checkout-local host build.
         # This build is test-only; the staged release runtimes remain the cold matrix artifacts.
+        # Only a branch dispatch runs the suites (see the header), so a tag skips this build.
+        if: github.ref_type != 'tag'
         shell: bash
         run: cargo build --release --locked --manifest-path native/Cargo.toml
 
-      - name: Build plugin and acquire explicit legacy Bash fixture
+      - name: Build the plugin
+        # check-release and the packer read lib/, so every run builds it.
+        run: npm run build
+
+      - name: Acquire explicit legacy Bash fixture
+        if: github.ref_type != 'tag'
         shell: pwsh
         run: |
-          npm run build
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $fixture = Join-Path $env:RUNNER_TEMP 'ops-release-gate-legacy-bash'
           $env:DSH_HOME = $fixture
           New-Item -ItemType Directory -Path $fixture -Force | Out-Null
@@ -260,7 +271,9 @@ jobs:
           "DSH_OPS_TEST_BASH=$bash" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DSH_OPS_TEST_NIUBASH=$env:GITHUB_WORKSPACE/runtime/win32-x64/niubash/niu.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Release gate (same gate as CI, plus the release closure)
+      - name: Release gate suites (same gate as CI)
+        # Skipped on a tag: the required green `CI required` on the tagged commit is this same
+        # gate, already run on every platform. A branch dispatch has no such check, so it runs here.
         # Publishing must not start before this step is green — it is the only reason the
         # `publish` job sits behind `needs`. `verify-gate.mjs` is the exact gate every CI leg
         # runs: it stages the frozen Niubash archive (so the payload suites really run instead of
@@ -270,9 +283,12 @@ jobs:
         # against the staged bytes and re-checks the Windows IPC binary and source digests. A
         # partial download, a foreign-architecture binary, a stale receipt or a manifest/target
         # disagreement fails here instead of shipping.
-        run: |
-          node scripts/verify-gate.mjs --skip-install
-          node bin/check-release.mjs
+        if: github.ref_type != 'tag'
+        run: node scripts/verify-gate.mjs --skip-install
+
+      - name: Check the release closure
+        # Runs on every ref: it is about the downloaded release bytes, not the code.
+        run: node bin/check-release.mjs
 
       - name: Assemble and pack the publish directory
         # Packs the main plugin and the pinned Windows bash payload package, and writes

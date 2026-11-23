@@ -227,6 +227,13 @@ if (release) {
   const publishRuns = (release.doc.jobs?.publish?.steps ?? []).map(step => String(step.run ?? '')).join('\n')
   check(!/--clobber/.test(publishRuns), 'release.yml: publishing is append-only (no --clobber)')
   check(/checks:\s*read/.test(text), 'release.yml: the gate may read the tagged commit\'s check runs')
+  const gateSteps = release.doc.jobs?.gate?.steps ?? []
+  const suiteStep = gateSteps.find(step => /verify-gate\.mjs/.test(String(step.run ?? '')))
+  const closureStep = gateSteps.find(step => /check-release\.mjs/.test(String(step.run ?? '')))
+  check(suiteStep !== undefined && /github\.ref_type\s*!=\s*'tag'/.test(String(suiteStep.if ?? '')),
+    'release.yml: a tag run relies on the required green CI and does not rerun the suites')
+  check(closureStep !== undefined && closureStep !== suiteStep && closureStep.if === undefined,
+    'release.yml: the release closure is checked on every ref, separately from the suites')
   // npm is published by Trusted Publishing only: an OIDC token, the tarball the gate checked,
   // and an explicit opt-in variable, so a fork without a registered publisher stays green.
   const npmJob = release.doc.jobs?.npm

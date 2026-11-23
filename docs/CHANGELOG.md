@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- Release runs on a tag no longer repeat the test suites: the gate already requires a green `CI required` on the tagged commit, which is the same `verify-gate` run on all four platforms. A tag run keeps the moved-tag, version, release-closure, packing and `SHA256SUMS` checks; a branch dispatch still runs the full gate. `scripts/check-workflows.mjs` asserts both.
+
 ## [1.0.1] — 2026-11-23 — Documentation release
 
 - The READMEs (both languages) now describe dsh-ops-pro itself: its features, 1.0 changes, install and migration, development, and a dedicated section crediting the upstream dsh-ops maintainers and contributors. Upstream-only material (upstream team pages, benchmark images, partner tables, rankings) is removed.
