@@ -14,7 +14,8 @@ import { errorMessage } from './types.js'
 import { bashRuntimeFailure } from './bash-runtime-failure.js'
 import { patchMsys } from './bash-pe.js'
 import { GENERATION_NAME, RETIRED_NAME, QUARANTINE_NAME, noLinks, assertNoLinks, plainDirectory, plainTree, withLifecycleLock, idleGeneration, markManaged, leaseGeneration, hasLiveLease } from './bash-ipc-lifecycle.js'
-const packageRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
+// lib/shells/bash-ipc.js → package root.
+const packageRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..')
 const hash=(bytes: Uint8Array)=>createHash('sha256').update(bytes).digest('hex')
 interface Runtime { file: string; env?: NodeJS.ProcessEnv; runtime?: string }
 interface TreeEntry { size: number; mtimeMs: number; sha256?: string }
@@ -46,7 +47,7 @@ const SOURCES: Record<string, string>={config:'configured bashPath',path:'system
 function msysRoot(file: string) {
   const directory=path.dirname(file)
   return path.basename(directory).toLowerCase()==='bin' && path.basename(path.dirname(directory)).toLowerCase()==='usr'
-    ? path.resolve(directory,'../../..') : path.resolve(directory,'..')
+    ? path.resolve(directory,'../..') : path.resolve(directory,'..')
 }
 /** The one actionable explanation for a bash that restricted modes cannot run (#42). */
 export function restrictedRemedy(file: string, source: string | undefined, why: string) {
