@@ -9,6 +9,7 @@ import * as slots from '@deepseek-ai/dsh-client-ui-slots'
 import { assert, test, report, PACKAGE_ROOT } from './lib/harness.mjs'
 import { shutdown } from './lib/host.mjs'
 import { en } from '../lib/client/locales.js'
+import { PACKAGE_NAME } from '../lib/identity.js'
 
 const require = createRequire(import.meta.url)
 const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url: 'http://localhost/' })
@@ -42,7 +43,7 @@ const external = name => name === '@deepseek-ai/cordis' ? Cordis
 
 const ok = value => ({ ok: true, value })
 const installed = { entryId: 'include:win-pwsh7', moduleName: 'dsh-win-pwsh7', version: '0.2.10' }
-const subject = { kind: 'bundle', pkg: { name: 'dsh-ops', enabled: true, rows: [] } }
+const subject = { kind: 'bundle', pkg: { name: PACKAGE_NAME, enabled: true, rows: [] } }
 const snapshot = { platform: 'win32', modes: [], managed: [], git: [], powerShell: { supported: true } }
 const t = key => String(en[key] ?? key)
 
