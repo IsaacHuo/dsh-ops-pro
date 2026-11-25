@@ -33,7 +33,7 @@ export const en = {
   daily: 'Calls per day',
 }
 export const zh: Record<keyof typeof en, string> = {
-  panel: 'OPS',
+  panel: '电脑操控',
   title: 'OPS 控制台',
   tabStatus: '状态', tabSettings: '电脑操控', tabUsage: '用量',
   refresh: '刷新', loading: '加载中…', updatedAt: '更新于',
