@@ -208,6 +208,7 @@ falling back to the built-in surface; scoped diagnostics remain accessible.
 | `denyCredentialReads` | true; Native-only override, PTC rejects overrides and retains its boundary |
 | `downloadGuard.template` | empty; inert until set. A suggested command with standalone unquoted `{url}` (required) and optional `{file}` arguments; never executed automatically |
 | `downloadGuard.shell` | `bash` by default; `pwsh` quotes suggested arguments for PowerShell. See [download guard](download-guard.md) for the opt-in row section and detection limits |
+| `computer-use.enabled` | false; Windows only. Publishes `ops_cu_*` in every mode; `callTimeoutMs` (90000) and `settings` are the other keys. See [computer use](computer-use.md) |
 | `allowSystemShellFallback` | false; retained for compatibility, never enables implicit Windows Bash fallback; use explicit `bashPath` |
 
 In 0.5, enabling official-tool replacement does not guarantee that a conditional official tool disappears from the model's tool table. When the OPS counterpart has conditional admission, OPS keeps the official registration visible and guards its dispatch only when the same captured step toolSet admits the counterpart and the consumer still has current authority. An absent, revoked or not-yet-ready counterpart cannot disable the official tool as well. Safe unconditional resident replacements may still use host restrictions. OPS never wraps official definitions or hides tools from inside admission conditions or prompt assembly.

@@ -7,6 +7,10 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-25 — Computer use, sidebar console, usage statistics
+
+Guide: [computer-use.md](computer-use.md) / [computer-use.zh.md](computer-use.zh.md).
+
 - The Windows computer-use runtime of [dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win) 0.6.3 (MIT, Yu-tao-Li and cgissing) is vendored in `vendor/computer-use/`, pinned file by file to upstream commit `acfb689` by SHA-256. Its four files over the 1000-line gate are stored as line-range parts; `npm run build` reassembles the exact upstream bytes into `lib/computer-use/` and refuses any digest mismatch. The upstream suites that need no live desktop run as `cu-upstream`. The size gate now also covers `.cs`.
 
 - New `computer-use` row section (off by default, Windows only): the vendored server runs as one persistent host child (`process.execPath`, `ELECTRON_RUN_AS_NODE=1`) behind a minimal stdio JSON-RPC client, and its tools are published globally as `ops_cu_*` (formerly `mcp__wincu__windows_computer_use_*` in the standalone plugin), so every mode and custom preset sees them, Native or PTC. The upstream approval rules are reused unchanged; a crashed server restarts once per minute and then reports why; timeouts, cancellations and tool errors are returned values (`CU_TIMEOUT`, `CU_CANCELLED`, `CU_TOOL_ERROR`, `CU_UNAVAILABLE`). A standalone dsh-computer-use-win install is detected and warned about, never disabled. Not ported from the upstream adapter: the activity overlay, background-desktop helper and web routes.

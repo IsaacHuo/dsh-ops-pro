@@ -21,10 +21,11 @@ if (!version) { console.error('usage: npm run release:prepare -- <version> [--no
 const changed = writeVersionSites(root, version)
 console.log(`release:prepare: ${changed.length ? `rewrote ${changed.join(', ')}` : 'version sites already match'} → ${version}`)
 
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-const steps = values['no-build'] ? [] : [[npm, ['run', 'build']], [npm, ['run', 'build:ptc']]]
+// The same scripts `npm run build` and `npm run build:ptc` run, started with this
+// Node directly: no shell, so no argument is ever re-parsed.
+const steps = values['no-build'] ? [] : [[process.execPath, ['scripts/build.mjs']], [process.execPath, ['bin/dsh-ops.mjs', 'build-ptc']]]
 for (const [command, args] of steps) {
-  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', shell: process.platform === 'win32', windowsHide: true })
+  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', windowsHide: true })
   if (result.status !== 0) { console.error(`release:prepare: ${command} ${args.join(' ')} failed`); process.exit(result.status ?? 1) }
 }
 
