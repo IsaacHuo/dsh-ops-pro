@@ -48,6 +48,7 @@ Release record and documentation structure.
 - `docs/manual-validation.md` / `docs/手动验收.md`: a current 1.1.0 section lists the ten desktop steps CI cannot cover (identity, tool publication without a stray child, element-id lifecycle, approval and denial, browser lane, crash restart limit, console settings write, usage counters, uninstall keeps state); the 0.4.0 checklist is kept below as history.
 - `AGENTS.md`: the project description, the `release/<version>` staging convention, the docs row (bilingual pairs indexed by `docs/README.md`) and the rule that both sides of a bilingual pair change together.
 - `docs/release-1.1.0.md` is the release record: contents, inheritance and modification of both upstreams, the verification table with real command results, the gates that were not run on the release host, known limits, rollback, the release checklist and the GO/NO-GO verdict.
+- `README.md` / `README.en.md`: the inherited upstream header (dsh-ops banner, Trendshift badge, QQ group line) and the upstream maintainer list are gone; the top now reads title, one-line scope, badges and the language switch, and the maintainer table names this repository. `docs/assets/readme/dsh-ops-header.svg` was deleted because nothing referenced it.
 
 ## [1.0.1] — 2026-11-23 — Documentation release
 

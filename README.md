@@ -1,30 +1,21 @@
 <p align="center">
-  <img src="docs/assets/readme/dsh-ops-header.svg" alt="dsh-ops 表头" width="640">
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
+  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/dsh-ops-pro?style=flat-square&color=2ea44f"></a>
 </p>
+
+# dsh-ops-pro
+
+DSH 的工具运行时插件：Windows 上的 ops_bash，跨平台的 Rust 文件、搜索与批处理工具，批量 OPS-PTC 调用；另含可选的 Windows 桌面与浏览器电脑操控、侧栏控制台和用量统计。
 
 <p align="center">
   <strong>中文</strong> | <a href="README.en.md">English</a>
 </p>
 
-<div align="center" style="text-align: center;">
-  <a href="https://trendshift.io/repositories/296103" title="Trendshift · JavaScript 日榜">
-    <img src="https://trendshift.io/api/badge/trendshift/repositories/296103/daily?language=JavaScript" alt="Trendshift · JavaScript 日榜" width="250" height="55" style="vertical-align: middle;">
-  </a>
-</div>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
-  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
-</p>
-
-# dsh-ops-pro
-
-> 本项目是 [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops) 的长期独立分支，以 npm 包 **`dsh-ops-pro`** 发布，持续修复上游积压的问题并有选择地吸收上游 PR。工具名（`ops_*`）、`dsh-ops` 命令行与 `<DSH_HOME>/dsh-ops/` 下的托管状态保持不变。
->
-> **从上游 `dsh-ops` 迁移**：两者发布同一组 `ops_*` 工具，不能同时启用——先 `remove dsh-ops` 再 `add dsh-ops-pro`。插件行改名为 `dsh-ops-pro`，原 `dsh-ops` 行上保存的设置不会自动带过来，需在设置页重新确认；集成方的导入路径从 `dsh-ops/integration` 改为 `dsh-ops-pro/integration`。
-
 插件在 DSH 的现有工具集之外新增一组 `ops_*` 工具，并可按配置隐藏部分官方工具。默认只新增工具与配置项，不接管宿主逻辑，可与其它插件同时启用。
+
+项目源自 [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops)，在此基础上进行了大量独立开发与架构演进；1.1.0 起整合 [Yu-tao-Li/dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win) 的 Windows 电脑操控运行时。目标是形成一个架构统一、低侵入、低 token 消耗、易于维护的 DSH 综合操作工具插件。
 
 功能范围：
 
@@ -40,9 +31,8 @@
   &nbsp;&nbsp;&nbsp;
   <img src="https://github.com/user-attachments/assets/a0c0fdfe-337a-43d5-8ca2-326d9287bfea" height="300" alt="第二张图">
 </p>
-<p align="center"><em>左：deepseek-v4.1-flash-1017在各harness的跑分与开销<br>右：ops在自用benchmark上取得的的成绩。完整benchmark将随后续更新发布<br>dsh-ops团队将致力于持续优化dsh的token效率，以更低的成本更好地完成同样的任务</em></p>
+<p align="center"><em>左：deepseek-v4.1-flash-1017在各harness的跑分与开销<br>右：ops在自用benchmark上取得的的成绩。完整benchmark将随后续更新发布</em></p>
 
-交流群：企鹅 1127808570
 
 ## 系统要求
 
@@ -59,6 +49,8 @@
 ## 安装、更新、卸载
 
 > 所有 npm、市场和 CLI 更新入口的二进制位置与清理边界见[升级与卸载](docs/升级与卸载.md#二进制位置与更新清理)。
+
+> 从 `dsh-ops` 迁移：两个包发布同一组 `ops_*` 工具，不能同时启用。先移除 `dsh-ops` 再安装本包，迁移步骤见[升级与卸载](docs/升级与卸载.md)。
 
 ### 官方插件市场
 
@@ -161,7 +153,6 @@ Windows Bash 自检：`dsh-ops-pro ladder` 分别报告映像/祖先路径完整
 
 Windows 随包 Niubash 及其 WinuxCmd、Git 等组件分别遵循上游许可证；原始许可证、NOTICE 与来源记录随完整载荷保留。Git Bash 仅保留为显式 legacy 后端与源码路径，不再默认下载其可选包。插件 MIT 许可不替代任何第三方许可；见 [NOTICE](NOTICE) 和[升级与卸载](docs/升级与卸载.md)。
 
-
 ## 静海实验室
 
 ops团队组织库 [静海实验室](https://github.com/Tranquillitatis-Lab) 致力于做点好玩的事情
@@ -172,7 +163,6 @@ ops团队组织库 [静海实验室](https://github.com/Tranquillitatis-Lab) 致
 | [dsh-live-compact](https://github.com/Tranquillitatis-Lab/dsh-live-compact)                | 使用本地算法对部分输出进行去重，并在大部分benchmark获得了提高通过率和得分率的收益 |
 | [dsh-office-kit](https://github.com/dsh-office-kit)                | 可视化dsh办公套件 |
 | ...                                                          | ...                                              | ...                                    |
-
 
 ## 联动！
 
@@ -218,10 +208,7 @@ dsh-ops与以下项目有协作关系
 <table>
   <tbody>
     <tr>
-      <td align="center" width="150"><a href="https://github.com/T-Auto"><img src="https://github.com/T-Auto.png?size=160" width="96" height="96" alt="T-Auto"></a><br><a href="https://github.com/T-Auto"><b>T-Auto</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/ccch1mneyyy"><img src="https://github.com/ccch1mneyyy.png?size=160" width="96" height="96" alt="ccch1mneyyy"></a><br><a href="https://github.com/ccch1mneyyy"><b>ccch1mneyyy</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Haoming9527"><img src="https://github.com/Haoming9527.png?size=160" width="96" height="96" alt="Haoming9527"></a><br><a href="https://github.com/Haoming9527"><b>Haoming9527</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Thatgfsj"><img src="https://github.com/Thatgfsj.png?size=160" width="96" height="96" alt="Thatgfsj"></a><br><a href="https://github.com/Thatgfsj"><b>Thatgfsj</b></a></td>
+      <td align="center" width="150"><a href="https://github.com/IsaacHuo"><img src="https://github.com/IsaacHuo.png?size=160" width="96" height="96" alt="IsaacHuo"></a><br><a href="https://github.com/IsaacHuo"><b>IsaacHuo</b></a></td>
     </tr>
   </tbody>
 </table>
