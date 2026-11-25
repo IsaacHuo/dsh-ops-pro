@@ -14,6 +14,7 @@ import * as panelModule from './components/panel/index.js'
 import * as tuiModule from './components/tui/index.js'
 import * as downloadGuardModule from './components/download-guard/index.js'
 import * as computerUseModule from './components/computer-use/index.js'
+import { installUsage } from './usage/hook.js'
 import { configureResultCacheGc } from './kernel/result-cache-gc.js'
 import { registerOpsPtcPreset } from './presets/ops-ptc/register.js'
 import { PACKAGE_NAME } from './identity.js'
@@ -64,6 +65,8 @@ export async function apply(root: Context, rawConfig: unknown): Promise<void> {
     // to provide that seam, so the merged row owns it now.
     await host.plugin({ name: 'dsh-ops/runtime-settings',
       apply: (ctx: Context) => mountRuntimeSettings(ctx, { config: () => rawConfig, applyDefaultPreset: () => preset.applyDefault() }) })
+    // Usage counting spans every mode, preset and ops_cu_* tool, so it hangs off the row itself.
+    await host.plugin({ name: 'dsh-ops/usage', apply: (ctx: Context) => installUsage(ctx) })
     const linked = pwsh7Linked(config.other)
     for (const mode of MODE_IDS) {
       const state = config[mode]
