@@ -1,38 +1,23 @@
 <p align="center">
-  <img src="docs/assets/readme/dsh-ops-header.svg" alt="dsh-ops header" width="640">
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
+  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
+  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/dsh-ops-pro?style=flat-square&color=2ea44f"></a>
 </p>
+
+# dsh-ops-pro
+
+A tool runtime for DSH: ops_bash on Windows, Rust file, search and batch tools across platforms, batched OPS-PTC calls, plus opt-in Windows desktop and browser computer use, a sidebar console and usage statistics.
 
 <p align="center">
   <strong>English</strong> | <a href="README.md">中文</a>
 </p>
 
-<div align="center" style="text-align: center;">
-  <a href="https://trendshift.io/repositories/296103" title="Trendshift · JavaScript daily list">
-    <img src="https://trendshift.io/api/badge/trendshift/repositories/296103/daily?language=JavaScript" alt="Trendshift · JavaScript daily list" width="250" height="55" style="vertical-align: middle;">
-  </a>
-</div>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
-  <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
-  <a href="https://upstar.dev/r/IsaacHuo/dsh-ops-pro"><img alt="Upstar: #2 in JavaScript" src="https://upstar.dev/badge/IsaacHuo/dsh-ops-pro.svg"></a>
-</p>
-
-# dsh-ops-pro
-
-> A long-term independent fork of [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops), published on npm as **`dsh-ops-pro`**. It keeps fixing the upstream backlog and selectively absorbs upstream pull requests. Tool names (`ops_*`), the `dsh-ops` CLI and the managed state under `<DSH_HOME>/dsh-ops/` are unchanged.
->
-> **Migrating from upstream `dsh-ops`**: both publish the same `ops_*` tools and cannot be enabled together — `remove dsh-ops` first, then `add dsh-ops-pro`. The plugin row is now named `dsh-ops-pro`, so settings saved on the old `dsh-ops` row are not carried over; review them on the settings page. Integrators change their import from `dsh-ops/integration` to `dsh-ops-pro/integration`.
-
 OPS adds bounded file and document tools to DSH. Native mode returns compact, line-numbered text;
 PTC code receives typed Outcome values from the same one-shot Rust worker. Host integration is
 strict TypeScript, compiled to the existing JavaScript package paths.
 
-> [!IMPORTANT]
-> This branch is the **0.5.0 candidate**, not a published release: configuration now uses one
-> `dsh-ops` row. Commands using `@latest` below select the published package; build and pack this
-> checkout to evaluate the candidate. See the [changelog](docs/CHANGELOG.md).
+The project started from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops) and has since gone through substantial independent development and architecture evolution; since 1.1.0 it integrates the Windows computer-use runtime of [Yu-tao-Li/dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win). The goal is one DSH operations plugin with a unified architecture, low intrusion, low token cost and low maintenance burden.
 
 - The single row enables the five built-in preset consumers: Standard and Cordis publish resident
   Native file tools, PTC publishes typed APIs, and Minimal has no resident file baseline. OPS PTC is
@@ -87,6 +72,8 @@ Nothing beyond these requirements is a dependency. Computer use reads the Window
 ## Install, update and uninstall
 
 ### Official plugin marketplace
+
+> Migrating from `dsh-ops`: both packages publish the same `ops_*` tools and cannot be enabled together. Remove `dsh-ops` first, then install this package; see [upgrading](docs/upgrading.md).
 
 In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops-pro`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
 
@@ -207,10 +194,7 @@ Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-du
 <table>
   <tbody>
     <tr>
-      <td align="center" width="150"><a href="https://github.com/T-Auto"><img src="https://github.com/T-Auto.png?size=160" width="96" height="96" alt="T-Auto"></a><br><a href="https://github.com/T-Auto"><b>T-Auto</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/ccch1mneyyy"><img src="https://github.com/ccch1mneyyy.png?size=160" width="96" height="96" alt="ccch1mneyyy"></a><br><a href="https://github.com/ccch1mneyyy"><b>ccch1mneyyy</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Haoming9527"><img src="https://github.com/Haoming9527.png?size=160" width="96" height="96" alt="Haoming9527"></a><br><a href="https://github.com/Haoming9527"><b>Haoming9527</b></a></td>
-      <td align="center" width="150"><a href="https://github.com/Thatgfsj"><img src="https://github.com/Thatgfsj.png?size=160" width="96" height="96" alt="Thatgfsj"></a><br><a href="https://github.com/Thatgfsj"><b>Thatgfsj</b></a></td>
+      <td align="center" width="150"><a href="https://github.com/IsaacHuo"><img src="https://github.com/IsaacHuo.png?size=160" width="96" height="96" alt="IsaacHuo"></a><br><a href="https://github.com/IsaacHuo"><b>IsaacHuo</b></a></td>
     </tr>
   </tbody>
 </table>
