@@ -176,6 +176,8 @@ The separate Windows Bash payload package (the npm optional dependency `@dsh-ops
 
 ## Acknowledgements
 
+Origin and versions: the project started from [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops) and since 1.1.0 integrates the runtime of [Yu-tao-Li/dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win); versions, commits and SHA-256 pins are recorded in [docs/PROVENANCE.md](docs/PROVENANCE.md).
+
 Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-duan)'s Codex plugin FastCtx and used its source code to provide the Rust tool surface. FastCtx's source was removed with the background component; the current `native/` Rust core is original MIT-licensed dsh-ops code. FastCtx's license text and the notice that must be reproduced remain in `licenses/fastctx/` and [NOTICE](NOTICE) as attribution for those earlier versions:
 
 > This product includes FastCtx
@@ -198,8 +200,6 @@ Versions before 0.3.2 bundled and distributed [yc-duan](https://github.com/yc-du
     </tr>
   </tbody>
 </table>
-
-*In no particular order*
 
 ---
 

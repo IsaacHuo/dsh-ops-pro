@@ -26,13 +26,6 @@ DSH 的工具运行时插件：Windows 上的 ops_bash，跨平台的 Rust 文�
 - PTC SDK 目录包含 18 个 API：15 个文件/文档工具，加批处理、结果引用和加载器。
 - 可与 [Tranquillitatis-Lab/dsh-live-compact](https://github.com/Tranquillitatis-Lab/dsh-live-compact) 搭配使用，两者互不依赖。
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/8238e4cd-61aa-4740-83bf-3aa6dd61291b" height="300" alt="dsh token 效率">
-  &nbsp;&nbsp;&nbsp;
-  <img src="https://github.com/user-attachments/assets/a0c0fdfe-337a-43d5-8ca2-326d9287bfea" height="300" alt="第二张图">
-</p>
-<p align="center"><em>左：deepseek-v4.1-flash-1017在各harness的跑分与开销<br>右：ops在自用benchmark上取得的的成绩。完整benchmark将随后续更新发布</em></p>
-
 
 ## 系统要求
 
@@ -153,42 +146,9 @@ Windows Bash 自检：`dsh-ops-pro ladder` 分别报告映像/祖先路径完整
 
 Windows 随包 Niubash 及其 WinuxCmd、Git 等组件分别遵循上游许可证；原始许可证、NOTICE 与来源记录随完整载荷保留。Git Bash 仅保留为显式 legacy 后端与源码路径，不再默认下载其可选包。插件 MIT 许可不替代任何第三方许可；见 [NOTICE](NOTICE) 和[升级与卸载](docs/升级与卸载.md)。
 
-## 静海实验室
-
-ops团队组织库 [静海实验室](https://github.com/Tranquillitatis-Lab) 致力于做点好玩的事情
-
-| 项目                                                         | 介绍                                             |
-| ------------------------------------------------------------ | ------------------------------------------------ |
-| [ops-ga](https://github.com/Tranquillitatis-Lab/ops-ga) | 尝试使用传统机器学习算法对ops进行优化 |
-| [dsh-live-compact](https://github.com/Tranquillitatis-Lab/dsh-live-compact)                | 使用本地算法对部分输出进行去重，并在大部分benchmark获得了提高通过率和得分率的收益 |
-| [dsh-office-kit](https://github.com/dsh-office-kit)                | 可视化dsh办公套件 |
-| ...                                                          | ...                                              | ...                                    |
-
-## 联动！
-
-dsh-ops和很多优质的项目互相之间有联动，如果你觉得帮到了你的话，记得给大家star哦~
-
-### 相关dsh插件
-
-dsh-ops与以下dsh插件存在双向之间的代码联动，同时安装并启动后有额外的联动功能
-
-| 插件                                                         | Stars | 介绍                                                         | 联动项                             |
-| ------------------------------------------------------------ | ------ | ------------------------------------------------------------ | ---------------------------------- |
-| [dsh-TUI](https://github.com/ccch1mneyyy/dsh-TUI)            | 6k⭐    | DSH 社区内首个被官方推荐的插件！为DSH补上了缺失的TUI，高性能低占用，界面顶级，交互流畅 | 同时开启后在dsh-tui中可显示ops侧栏 |
-| [DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget) | 6k⭐    | 可以随时看余额的可爱小鲸鱼！几乎登上所有榜单的DSH必装插件之一！ | 暂时保密~                          |
-| ...                                                          |        | ...                                                          | ...                                |
-
-### 相关项目
-
-dsh-ops与以下项目有协作关系
-
-| 项目                                                         | Stars | 介绍                                             | 协作内容                               |
-| ------------------------------------------------------------ | ------ | ------------------------------------------------ | -------------------------------------- |
-| [dsh-tauri](https://github.com/dsh-tauri/deepseek-harness-desktop) | 3k   ⭐    | 稳定，安全且非常有技术品味的tauri版本dsh客户端！ | dsh-tauri内置了dsh-ops并联合调优       |
-| [niubash](https://github.com/unixwin/niubash)                | 300⭐   | 比Git bash更轻量，更高性能的 Bash For Windows    | dsh-ops使用niubash的bash实现并联合调优 |
-| ...                                                          |        | ...                                              | ...                                    |
-
 ## 致谢
+
+来源与版本：本项目最早派生自 [T-Auto/dsh-ops](https://github.com/T-Auto/dsh-ops)，1.1.0 起整合 [Yu-tao-Li/dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win) 的运行时；对应版本、commit 与 SHA-256 固定值记录在 [docs/PROVENANCE.md](docs/PROVENANCE.md)。
 
 早期版本（`0.3.2` 之前）曾内置并分发 [yc-duan](https://github.com/yc-duan) 的 Codex 插件 FastCtx，并使用其源代码提供 Rust 工具面。FastCtx 源码随后台组件一并移除，当前 `native/` 的 Rust 核心为 dsh-ops 原创的 MIT 代码；FastCtx 的许可文本与需要转载的声明仍保留在 `licenses/fastctx/` 与 [NOTICE](NOTICE) 中，作为对历史版本的归属：
 
@@ -212,8 +172,6 @@ dsh-ops与以下项目有协作关系
     </tr>
   </tbody>
 </table>
-
-※ 排名不分先后
 
 ---
 
