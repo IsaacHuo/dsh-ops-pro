@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "dsh-ops-computer-use",
+    "description": "以 ops_cu_* 工具提供 Windows 桌面与浏览器自动化（内置 dsh-computer-use-win 引擎）。默认关闭，仅 Windows 可用。"
+  }
+}

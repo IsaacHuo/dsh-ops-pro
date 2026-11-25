@@ -15,7 +15,7 @@ const SWITCHES = ['bash', 'hidePwsh', 'hideOfficialTools', 'dynamicTools']
 const GLOBAL_SWITCHES = [...SWITCHES]
 
 await test('the page matches the host descriptor, and the opt-in switches share one card', () => {
-  assert.deepEqual(Object.keys(Config.dict), ['presets', 'global', 'minimal', 'standard', 'ptc', 'ops-ptc', 'cordis', 'panel', 'tui', 'other'])
+  assert.deepEqual(Object.keys(Config.dict), ['presets', 'global', 'minimal', 'standard', 'ptc', 'ops-ptc', 'cordis', 'panel', 'tui', 'computer-use', 'other'])
   const global = GROUPS.find(group => group.id === 'global')
   // The bundle section mirrors the presets' four switches. The default preset is
   // a one-shot action on the detail page, so it contributes no field here.
@@ -34,8 +34,8 @@ await test('the page matches the host descriptor, and the opt-in switches share 
   }
   // compat/panel/tui used to be three single-switch cards; they are one card now.
   const other = GROUPS.find(group => group.id === 'other')
-  assert.deepEqual(other.fields.map(spec => flatKey(spec.path)), ['panel.enabled', 'tui.enabled', 'other.pwsh7Link'])
-  for (const section of ['panel', 'tui']) assert.deepEqual(Object.keys(Config.dict[section].dict), ['enabled'])
+  assert.deepEqual(other.fields.map(spec => flatKey(spec.path)), ['panel.enabled', 'tui.enabled', 'computer-use.enabled', 'other.pwsh7Link'])
+  for (const section of ['panel', 'tui', 'computer-use']) assert.deepEqual(Object.keys(Config.dict[section].dict), ['enabled'])
   assert.equal(ROW_ID, 'dsh-ops-pro')
 })
 

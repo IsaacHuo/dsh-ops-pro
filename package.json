@@ -96,6 +96,12 @@
     "./download-guard/package.json": "./lib/components/download-guard/package.json",
     "./download-guard/locale/*.json": "./lib/components/download-guard/locale/*.json",
     "./download-guard/icon": "./lib/components/download-guard/icon.png",
+    "./computer-use": {
+      "default": "./lib/components/computer-use/index.js"
+    },
+    "./computer-use/package.json": "./lib/components/computer-use/package.json",
+    "./computer-use/locale/*.json": "./lib/components/computer-use/locale/*.json",
+    "./computer-use/icon": "./lib/components/computer-use/icon.png",
     "./hide-official": {
       "default": "./lib/components/hide-official/index.js"
     },

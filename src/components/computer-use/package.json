@@ -1,0 +1,6 @@
+{
+  "name": "dsh-ops-computer-use",
+  "description": "Windows desktop and browser automation (vendored dsh-computer-use-win) published as ops_cu_* tools.",
+  "icon": "./icon.png",
+  "type": "module"
+}
