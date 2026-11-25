@@ -58,6 +58,7 @@ Local gates, run on Windows 11 x64, Node.js 24.19.0, DSH 0.2.2-rc.x checkout at 
 | Model-free bench | `node bench/cli.mjs tools` | 14 of 14 queries MATCH; timings within 0.96x–1.02x on the same binary |
 | Package | `npm pack` | `dsh-ops-pro-1.1.0.tgz`, 66.0 MB packed, 127 MB unpacked, 1154 files, sha1 `0a1a15ea4decf0d9d2382ade2085e9e7ee35ebf5` |
 | Install | `npm i --ignore-scripts` of the tarball into an empty project | pass — one package added, CLI and runtime/win32-x64 payload present |
+| Runtime self-test (real desktop) | `node lib/computer-use/mcp/server.mjs --self-test` on Windows 11 | pass — `ok: true`, backend `windows-computer-use` 0.6.3, PowerShell 5.1.19041, UI Automation available, 25 tools, active-window tree with an observation token, screenshot 790,000 B PNG, 6200x1920 virtual screen (two monitors) |
 | Cross-platform CI | `.github/workflows/ci.yml` run [45615683229](https://github.com/IsaacHuo/dsh-ops-pro/actions/runs/45615683229) on `9806f5d2` | pass — 10 of 10 jobs: `validate` on win32-x64 (6m52s), linux-x64 (3m24s), darwin-x64 (7m29s), darwin-arm64 (4m11s), plus `rust-lint`, `tools-trial`, `source-size`, `node-floor`, `workflow-lint`, `CI required` |
 
 The CI column carries weight the local column cannot: each `validate` job runs
@@ -72,8 +73,11 @@ Not run, therefore not claimed:
 
 - `npm run verify:release` (`bin/check-release.mjs`) needs all four staged runtimes; this host stages
   `win32-x64` only, and CI does not run that script.
-- Real-desktop acceptance: `docs/manual-validation.md` lists the 1.1.0 steps a mocked suite cannot
-  cover.
+- The full real-desktop acceptance of `docs/manual-validation.md`. Its first half is covered above by
+  the runtime self-test (health, UI Automation tree, screenshot, identification without moving the
+  pointer); the remaining steps need the DSH host to be restarted with this build — approval prompts,
+  the browser lane with a throwaway and an attached profile, the two-crash rule, the sidebar console
+  and uninstall — and have not been executed.
 - A local rebuild of the native worker: no Rust toolchain here (`npm run env:probe` reports
   `MISS cargo`); `npm run build:ptc` exits 0 reusing the staged worker, and CI builds it from source.
 - The 3 red suites need a local prerequisite, not code: `bash-ipc.test.mjs` and
@@ -99,6 +103,44 @@ Not run, therefore not claimed:
 - Automatic takeover, approval prompts and the emergency stop are the upstream implementation
   unchanged; the console can edit settings but cannot originate an approval.
 
+## Release notes (draft for the GitHub Release)
+
+Tag `v1.1.0`, annotated, on the tip of `release/1.1.0` at publication time. The body below is the
+text to publish with it; it repeats only what this document verifies.
+
+```markdown
+## 1.1.0 — computer use, sidebar console, usage statistics
+
+**Computer use (Windows 10/11, off by default).** 26 `ops_cu_*` tools expose the vendored
+`dsh-computer-use-win` 0.6.3 runtime (MIT, commit `acfb689`): UI Automation trees for desktop windows,
+CDP accessibility outlines for Chrome and Edge, window and element actions, OCR and screenshots as the
+documented fallback for surfaces that publish no tree. Tools are advisory, structure first, and no
+separate install is needed — the runtime ships in the package.
+
+**Sidebar console.** A Status / Computer use / Usage page in the DSH sidebar (中文界面「电脑操控」)
+reads the row's own settings, edits the computer-use configuration with its own validation, and
+restarts only the computer-use runtime.
+
+**Usage statistics.** Per-day counts of every `ops_*` call, 30 days retained locally in
+`<DSH_HOME>/dsh-ops/usage.json`.
+
+**Fix.** A staged runtime receipt that differs only by version now warns instead of disabling native
+tools; a digest, target or executable mismatch is still refused.
+
+```console
+npm i -g dsh-ops-pro@1.1.0
+dsh-ops-pro install --profile <profile>
+```
+
+Upgrading from 0.5.x or 1.0.x keeps the state directory, log prefix and settings keys. Rollback:
+`npm i dsh-ops-pro@1.0.1`, then `dsh-ops-pro install --profile <profile>`.
+
+Verification: local gates, real-desktop runtime self-test and cross-platform CI
+(`run 45615683229`) are recorded in `docs/release-1.1.0.md`.
+```
+
+Publishing steps that this document does not perform: create the tag, push it, write the GitHub
+Release, and `npm publish`.
 ## Rollback
 
 Reinstall the previous published version (`npm i dsh-ops-pro@1.0.1`) or check out `v1.0.1` and run
@@ -117,7 +159,11 @@ unchanged between 1.0.x and 1.1.0, so a rollback keeps existing settings; `compu
 - [x] Local gates green for build, types, size, host boundary, manifest, workflows, docs facts, package
       and clean-room install
 - [x] Release branch gated by CI on push (`.github/workflows/ci.yml` covers `release/*`)
-- [x] Linux, macOS and Windows CI green on this commit — run 45615683229 (`9806f5d2`), 10 of 10 jobs
+- [x] Linux, macOS and Windows CI green on the code state of this release — run 45615683229
+      (`9806f5d2`, the last commit that changes code), 10 of 10 jobs; later commits in this document are
+      documentation only
+- [x] Computer-use runtime self-test on a real Windows 11 desktop — health, UI Automation tree and
+      screenshot captured without moving the pointer
 - [x] `cargo test --workspace` green on all four CI targets — inside `verify-gate`; `rust-lint` covers
       rustfmt and clippy on linux, windows and macos
 - [ ] `npm run verify:release` with all four staged runtimes
