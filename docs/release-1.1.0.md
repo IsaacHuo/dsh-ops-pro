@@ -43,7 +43,7 @@ tree and re-pins the SHA-256 values.
 
 ## Verification
 
-Run on Windows 11 x64, Node.js 24.19.0, DSH 0.2.2-rc.x checkout at this commit.
+Local gates, run on Windows 11 x64, Node.js 24.19.0, DSH 0.2.2-rc.x checkout at this commit.
 
 | Gate | Command | Result |
 | --- | --- | --- |
@@ -58,13 +58,24 @@ Run on Windows 11 x64, Node.js 24.19.0, DSH 0.2.2-rc.x checkout at this commit.
 | Model-free bench | `node bench/cli.mjs tools` | 14 of 14 queries MATCH; timings within 0.96x–1.02x on the same binary |
 | Package | `npm pack` | `dsh-ops-pro-1.1.0.tgz`, 66.0 MB packed, 127 MB unpacked, 1154 files, sha1 `0a1a15ea4decf0d9d2382ade2085e9e7ee35ebf5` |
 | Install | `npm i --ignore-scripts` of the tarball into an empty project | pass — one package added, CLI and runtime/win32-x64 payload present |
+| Cross-platform CI | `.github/workflows/ci.yml` run [45615683229](https://github.com/IsaacHuo/dsh-ops-pro/actions/runs/45615683229) on `9806f5d2` | pass — 10 of 10 jobs: `validate` on win32-x64 (6m52s), linux-x64 (3m24s), darwin-x64 (7m29s), darwin-arm64 (4m11s), plus `rust-lint`, `tools-trial`, `source-size`, `node-floor`, `workflow-lint`, `CI required` |
 
-Not run on this host, therefore not claimed:
+The CI column carries weight the local column cannot: each `validate` job runs
+`node scripts/verify-gate.mjs --skip-install --target <target>`, which builds the plugin, runs
+`cargo test --workspace --locked`, runs `npm run build:ptc`, stages and checks the frozen Bash payload,
+validates the manifest, runs every suite with `DSH_OPS_REQUIRE_RUNTIME=1` (a runtime-absence skip is a
+failure on POSIX), checks the native-runtime closure, then packs and unpacks the tarball. `rust-lint`
+runs `cargo fmt --all --check` and `clippy` for linux, windows and macos. No local preflight can
+reproduce that on a Windows-only host without a Rust toolchain.
+
+Not run, therefore not claimed:
 
 - `npm run verify:release` (`bin/check-release.mjs`) needs all four staged runtimes; this host stages
-  `win32-x64` only.
-- `cargo test --workspace` and a rebuild of the native worker: no Rust toolchain (`npm run env:probe`
-  reports `MISS cargo`); `npm run build:ptc` exits 0 reusing the previously staged worker.
+  `win32-x64` only, and CI does not run that script.
+- Real-desktop acceptance: `docs/manual-validation.md` lists the 1.1.0 steps a mocked suite cannot
+  cover.
+- A local rebuild of the native worker: no Rust toolchain here (`npm run env:probe` reports
+  `MISS cargo`); `npm run build:ptc` exits 0 reusing the staged worker, and CI builds it from source.
 - The 3 red suites need a local prerequisite, not code: `bash-ipc.test.mjs` and
   `bash-ipc-roots.test.mjs` need `DSH_OPS_TEST_BASH` (a pinned `bin/bash.exe`); CI stages it from
   the committed pin. `pwsh-upgrade.test.mjs` was red on the first run because the local payload had
@@ -106,16 +117,18 @@ unchanged between 1.0.x and 1.1.0, so a rollback keeps existing settings; `compu
 - [x] Local gates green for build, types, size, host boundary, manifest, workflows, docs facts, package
       and clean-room install
 - [x] Release branch gated by CI on push (`.github/workflows/ci.yml` covers `release/*`)
-- [ ] Linux and macOS CI green on this commit
+- [x] Linux, macOS and Windows CI green on this commit — run 45615683229 (`9806f5d2`), 10 of 10 jobs
+- [x] `cargo test --workspace` green on all four CI targets — inside `verify-gate`; `rust-lint` covers
+      rustfmt and clippy on linux, windows and macos
 - [ ] `npm run verify:release` with all four staged runtimes
-- [ ] `cargo test --workspace` on a host with a Rust toolchain
 - [ ] Real-desktop acceptance per `docs/manual-validation.md` on Windows 11
 - [ ] Maintainer confirmation to tag, publish and merge
 
 ## Verdict
 
-**GO for a release candidate, conditional on the four unchecked items.** The package builds, validates,
-packs and installs in a clean room; identity and provenance are consistent; no gate reports a false
-pass. The tag should be cut only after cross-platform CI, `verify:release` on a machine with all
-staged runtimes, the Rust workspace tests and one real-desktop acceptance run are recorded green, and
-the maintainer confirms publication.
+**GO for a release candidate, conditional on the two unchecked items and the maintainer's decision.**
+The package builds, validates, packs and installs in a clean room; identity and provenance are
+consistent; cross-platform CI is green on the final commit including the Rust workspace tests; no gate
+reports a false pass. The tag should be cut after `verify:release` on a machine with all four staged
+runtimes and one real-desktop acceptance run are recorded green, and the maintainer confirms
+publication.
