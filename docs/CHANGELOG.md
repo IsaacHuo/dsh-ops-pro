@@ -7,6 +7,12 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-11-25 — README on the project identity
+
+- `README.md` / `README.en.md`: the inherited upstream header is gone (dsh-ops banner SVG, Trendshift badge, QQ group line, upstream maintainer table, the stale 0.5.0-candidate callout). The top now reads title, one-line scope, badges including a license badge and the language switch; a short provenance paragraph states the origin from `T-Auto/dsh-ops`, the independent development, the 1.1.0 integration of the `dsh-computer-use-win` runtime and the project goal. The migration note (remove `dsh-ops` before installing this package) moves into the install section.
+- `README.md`: the unrelated partner sections (`静海实验室`, `联动！` with the plugin and project tables) and the two upstream benchmark screenshots with their unmeasured claims are removed; the acknowledgements keep the FastCtx license attribution and now name both upstream repositories with a link to `docs/PROVENANCE.md`. `docs/assets/readme/dsh-ops-header.svg` is deleted because nothing referenced it.
+- Documentation only: no tool surface, configuration key, runtime binary or package-content change. The version bump touches `package.json`, `package-lock.json`, `dsh-plugin.json`, `native/Cargo.toml` and `native/Cargo.lock`.
+
 ## [1.1.0] — 2026-11-25 — Computer use, sidebar console, usage statistics
 
 Guide: [computer-use.md](computer-use.md) / [computer-use.zh.md](computer-use.zh.md).
