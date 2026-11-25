@@ -40,6 +40,7 @@ import { COMPONENTS, componentEntry, componentEnabled } from '../lib/components/
 import { resolveHidingConfig } from '../lib/official-tools/hiding.js'
 import { evaluatePluginCompatibility } from '@deepseek-ai/dsh-app-boot'
 import { composeBundle } from './lib/compose-bundle.mjs'
+import { versionDrift } from './lib/version-sync.mjs'
 
 /** The repository root (`scripts/`'s parent). */
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -595,6 +596,14 @@ for (const component of [...COMPONENTS, 'background']) {
   const resource = pkg.exports?.[`./${component}/icon`]
   check(typeof resource === 'string' && fs.existsSync(path.join(PACKAGE_ROOT, resource)),
     `the ${component} icon is exported for subpath metadata readers`)
+}
+
+// Release-version drift (the 1.0.0 degrade): every declared version and every staged runtime receipt
+// must equal package.json. Fix with `npm run release:prepare -- <version>`.
+{
+  const { expected, drift } = versionDrift(PACKAGE_ROOT)
+  check(drift.length === 0, `every version site and staged runtime receipt says ${expected}`,
+    `${drift.join(', ')}; run npm run release:prepare -- ${expected} (it rewrites the sites and restages runtime/)`)
 }
 
 for (const line of notes) console.log(line)

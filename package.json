@@ -198,6 +198,7 @@
     "build:ptc": "node bin/dsh-ops.mjs build-ptc",
     "stage:ptc": "node bin/native-runtime.mjs stage",
     "check:ptc-runtime": "node bin/native-runtime.mjs check --staged",
+    "release:prepare": "node scripts/release-prepare.mjs",
     "test:ptc": "node test/run.mjs ptc",
     "validate:manifest": "node scripts/validate-manifest.mjs",
     "check:size": "node scripts/check-file-size.mjs",

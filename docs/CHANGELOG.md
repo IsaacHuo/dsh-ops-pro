@@ -7,6 +7,12 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- **Fix:** a packaged runtime receipt whose only disagreement is the version (a `link:` checkout after a version bump that did not restage — the 1.0.0 state) no longer disables every native tool. The worker is used with a warning naming both versions and `npm run build:ptc`; a sha256, target or executable mismatch is still refused. The release gates (`native-runtime check`, `check-release`) stay strict.
+
+- Provenance failures name each mismatched field (`version 0.5.5≠1.0.0`, `sha256 …`) and the repair command, in the resolver and in `native-runtime check` alike (shared `receiptMismatches`). The `RUNTIME_UNAVAILABLE` diagnostic now carries that reason instead of a generic sentence.
+
+- `npm run release:prepare -- <version>` (`scripts/release-prepare.mjs`) rewrites every version site — `package.json`, `package-lock.json`, `dsh-plugin.json`, `native/Cargo.toml`, `native/Cargo.lock` — then rebuilds and restages the host worker and checks that nothing drifted. `validate-manifest` fails on any version drift, including a stale staged receipt, and `prepack` runs `native-runtime check --staged` so a stale receipt cannot be packed.
+
 ## [1.0.0] — 2026-11-23 — Architecture release
 
 - `npm run env:probe` (`scripts/env-probe.mjs`) reports missing local test prerequisites (worker, `cargo`, Bash IPC payload, Niubash archive, `DSH_OPS_TEST_BASH`) and the suites each decides; an emptied Bash IPC directory is attributed to endpoint security.
