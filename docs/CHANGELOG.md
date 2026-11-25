@@ -7,6 +7,8 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- The Windows computer-use runtime of [dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win) 0.6.3 (MIT, Yu-tao-Li and cgissing) is vendored in `vendor/computer-use/`, pinned file by file to upstream commit `acfb689` by SHA-256. Its four files over the 1000-line gate are stored as line-range parts; `npm run build` reassembles the exact upstream bytes into `lib/computer-use/` and refuses any digest mismatch. The upstream suites that need no live desktop run as `cu-upstream`. The size gate now also covers `.cs`.
+
 - **Fix:** a packaged runtime receipt whose only disagreement is the version (a `link:` checkout after a version bump that did not restage — the 1.0.0 state) no longer disables every native tool. The worker is used with a warning naming both versions and `npm run build:ptc`; a sha256, target or executable mismatch is still refused. The release gates (`native-runtime check`, `check-release`) stay strict.
 
 - Provenance failures name each mismatched field (`version 0.5.5≠1.0.0`, `sha256 …`) and the repair command, in the resolver and in `native-runtime check` alike (shared `receiptMismatches`). The `RUNTIME_UNAVAILABLE` diagnostic now carries that reason instead of a generic sentence.

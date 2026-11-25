@@ -21,7 +21,7 @@ capabilities.
 ## Hard rules
 
 1. **No code file over 1000 lines.** `node scripts/check-file-size.mjs` (`npm run check:size`) runs
-   in CI over every git-tracked `.js .mjs .cjs .ts .mts .cts .rs .ps1 .sh .py .cpp .h .hpp .cc` file
+   in CI over every git-tracked `.js .mjs .cjs .ts .mts .cts .rs .ps1 .sh .py .cpp .h .hpp .cc .cs` file
    outside `node_modules/ native/target/ runtime/ licenses/ docs/ dist/`. When a file approaches the
    limit, split it into modules and group them in a folder (see `src/shells/`,
    `scripts/lib/build/`, `bench/lib/fixtures/`). Do not raise the limit or add exclusions.

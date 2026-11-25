@@ -5,6 +5,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:f
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { bundleClient } from './lib/build/client.mjs'
+import { assembleComputerUse } from './lib/build/computer-use.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const source = path.join(root, 'src')
@@ -57,6 +58,8 @@ try {
   } else {
     bundleClient(root)
     const assets = copyAssets(source)
+    const computerUse = assembleComputerUse(root)
+    if (computerUse.files) console.log(`build: assembled computer-use ${computerUse.version} (${computerUse.commit.slice(0, 7)}, ${computerUse.files} files)`)
     if (existsSync(path.join(source, 'projections/ptc/contract.ts'))) {
       const { writePtcDeclarations } = await import('./lib/build/ptc-sdk.mjs')
       const sdk = await writePtcDeclarations(root)
