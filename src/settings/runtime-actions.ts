@@ -13,6 +13,10 @@ import { companionVersion, pwsh7Linked } from './companion.js'
 import { effectiveMode, resolveMergedConfig } from './merged.js'
 import type { UpgradeProcessResult } from '../shells/pwsh-upgrade.js'
 import { parseAction, parseSelection } from './runtime-contract.js'
+import { ConsoleActions } from './console-actions.js'
+import { parseCuSettings, parseDays } from './console-contract.js'
+import type { ConsoleSaveResult, ConsoleSnapshot } from './console-contract.js'
+import type { UsageSummary } from '../usage/store.js'
 import type { DefaultPresetResult, RuntimeAction, RuntimePlan, RuntimeResult, RuntimeSnapshot, RuntimeSelection, RuntimeSelectionRequest,
   BashResolutionView, BashSourceKind, ModeBashView } from './runtime-contract.js'
 
@@ -184,6 +188,15 @@ export class RuntimeActions {
       return failure(combined.aborted ? 'cancelled' : 'failed', error instanceof Error ? error.message : String(error), attempted ? 'unknown' : 'none')
     } finally { this.busy = false }
   }
+  // The sidebar console shares this remote; its logic lives in console-actions.ts.
+  private consoleActions?: ConsoleActions
+  private get panel(): ConsoleActions {
+    return this.consoleActions ??= new ConsoleActions({ env: this.options.env, platform: this.options.platform, ...(this.options.config ? { config: this.options.config } : {}) })
+  }
+  console(): Promise<ConsoleSnapshot> { return this.panel.snapshot() }
+  usage(days: number): UsageSummary { return this.panel.usage(parseDays(days)) }
+  resetUsage(): ConsoleSaveResult { return this.panel.resetUsage() }
+  saveComputerUse(settings: Record<string, unknown>): Promise<ConsoleSaveResult> { return this.panel.saveComputerUse(parseCuSettings(settings)) }
   async dispose(): Promise<void> {
     this.lifetime.abort(new Error('Shell settings component unloaded'))
     this.plans.clear()

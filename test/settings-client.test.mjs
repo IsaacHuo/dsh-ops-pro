@@ -53,6 +53,7 @@ await test('shipped browser entry stays lazy and binds the one row page plus one
   const Renderer = capture(clientEntry('@deepseek-ai/dsh-client-ui-renderer')).factory(external)
   const ctx = new Cordis.Context(); ctx.logger.level = 0
   let dictionaries, disposed = false, calls = 0, markStarted
+  const registered = {}
   const started = new Promise(resolve => { markStarted = resolve })
   try {
     await ctx.plugin(Renderer.SlotRegistry)
@@ -86,8 +87,13 @@ await test('shipped browser entry stays lazy and binds the one row page plus one
     } })
     await ctx.plugin(ClientGateway)
     await ctx.plugin({ inject: ['slots'], apply(inner) {
-      inner.provide('locale', { register(namespace, values) { dictionaries = { namespace, values }; return () => { disposed = true } } })
+      inner.provide('locale', {
+        register(namespace, values) { registered[namespace] = values; if (namespace === 'dshOps') dictionaries = { namespace, values }; return () => { if (namespace === 'dshOps') disposed = true } },
+        bind: namespace => key => registered[namespace]?.en?.[key] ?? key,
+      })
       inner.slots.register({ name: 'root', children: {
+        main: { kind: 'keyed', scope: 'root' },
+        'sidebar.panellist': { kind: 'list', scope: 'root' },
         'plugins.row.config': { kind: 'keyed', scope: 'root' },
         'plugins.detail.section': { kind: 'list', scope: 'root' },
       } }, () => null)
@@ -107,7 +113,17 @@ await test('shipped browser entry stays lazy and binds the one row page plus one
     assert.deepEqual(ctx.get('slots').entries('plugins.detail.section').map(value => value.options.id), ['dsh-ops.diagnostics'])
     assert.equal(ctx.get('slots').entries('plugins.detail.section')[0].options.order, 50)
     assert.equal(document.querySelectorAll('style[data-dsh-ops-settings]').length, 1)
+    // The sidebar console: one menu entry and one page under the same id.
+    const panel = ctx.get('slots').entries('sidebar.panellist').map(value => value.options)
+    assert.deepEqual(panel.map(options => [options.id, options.order]), [['dsh-ops-pro', 20]])
+    assert.equal(panel[0].label(), 'OPS')
+    assert.deepEqual(ctx.get('slots').entries('main').map(value => value.options.key), ['dsh-ops-pro'])
+    assert.deepEqual(Object.keys(registered.dshOpsConsole.en).sort(), Object.keys(registered.dshOpsConsole.zh).sort())
+    assert.equal(document.querySelectorAll('style[data-dsh-ops-console]').length, 1)
     await fiber.dispose()
+    assert.equal(ctx.get('slots').entries('sidebar.panellist').length, 0)
+    assert.equal(ctx.get('slots').entries('main').length, 0)
+    assert.equal(document.querySelectorAll('style[data-dsh-ops-console]').length, 0)
     assert.equal(ctx.get('slots').entries('plugins.row.config').length, 0)
     assert.equal(ctx.get('slots').entries('plugins.detail.section').length, 0)
     assert.equal(document.querySelectorAll('style[data-dsh-ops-settings]').length, 0)

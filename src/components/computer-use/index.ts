@@ -30,7 +30,8 @@ import { resolveComputerUseConfig, type ComputerUseConfig } from '../../cu/confi
 import { isStandaloneCuName, publicCuName, upstreamCuName } from '../../cu/names.js'
 import { RpcFailure } from '../../cu/rpc-client.js'
 import { ComputerUseServer, type ServerCallResult, type ServerTool } from '../../cu/server.js'
-import { publishComputerUseStatus, type ComputerUseStatus } from '../../cu/state.js'
+import { publishComputerUseRestart, publishComputerUseStatus, type ComputerUseStatus } from '../../cu/state.js'
+import { readOverrides } from '../../cu/overrides.js'
 
 export const name = 'dsh-ops-computer-use'
 
@@ -121,8 +122,24 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     return
   }
   const backendMissing = !existsSync(path.join(RUNTIME_DIR, 'scripts', 'windows-uia.ps1'))
-  status = { ...status, backendMissing }
-  void startRow(ctx, config, serverPath, next => { status = { ...status, ...next } }, value => { tools = value }, value => { server = value })
+  // The runtime lives in its own child scope so the console can restart it with
+  // freshly saved settings without remounting the whole row.
+  let fork: { dispose(): unknown } | undefined
+  const mountRuntime = (): void => {
+    const overrides = readOverrides()
+    status = { state: 'starting', tools: [], conflict: false, backendMissing, ...(overrides.error ? { message: overrides.error } : {}) }
+    tools = undefined
+    server = undefined
+    const effective: ComputerUseConfig = { ...config, settings: { ...config.settings, ...overrides.settings } }
+    fork = ctx.plugin({ name: 'dsh-ops/computer-use-runtime', apply: (inner: Context) => {
+      void startRow(inner, effective, serverPath, next => { status = { ...status, ...next } }, value => { tools = value }, value => { server = value })
+    } }) as unknown as { dispose(): unknown }
+  }
+  mountRuntime()
+  ctx.effect(() => publishComputerUseRestart(async () => {
+    await fork?.dispose()
+    mountRuntime()
+  }), 'dsh-ops: computer-use restart')
 }
 
 async function startRow(ctx: Context, config: ComputerUseConfig, serverPath: string, update: (next: Partial<ComputerUseStatus>) => void,

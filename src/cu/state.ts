@@ -30,6 +30,21 @@ export function publishComputerUseStatus(reader: () => ComputerUseStatus): () =>
   return () => { if (current === reader) current = undefined }
 }
 
+let restarter: (() => Promise<void>) | undefined
+
+/** Install the mounted row's restart action (re-reads console settings); returns its remover. */
+export function publishComputerUseRestart(restart: () => Promise<void>): () => void {
+  restarter = restart
+  return () => { if (restarter === restart) restarter = undefined }
+}
+
+/** Restart the mounted row so saved settings apply; `false` when no row is mounted. */
+export async function restartComputerUse(): Promise<boolean> {
+  if (!restarter) return false
+  await restarter()
+  return true
+}
+
 /** The current status; `disabled` while no row is mounted. */
 export function computerUseStatus(): ComputerUseStatus {
   try { return current?.() ?? DISABLED } catch (error) {

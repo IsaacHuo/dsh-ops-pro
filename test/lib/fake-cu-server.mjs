@@ -37,7 +37,7 @@ function handle(message) {
   if (message.method === 'tools/call') {
     if (mode === 'crash-on-call') process.exit(3)
     if (mode === 'hang') return
-    const text = `${message.params.name} ${JSON.stringify(message.params.arguments)} pid=${process.pid}`
+    const text = `${message.params.name} ${JSON.stringify(message.params.arguments)} settings=${process.env.WCU_SETTINGS_JSON ?? ''} pid=${process.pid}`
     return send({ id: message.id, result: { isError: mode === 'tool-error', content: [{ type: 'text', text }] } })
   }
   send({ id: message.id, error: { code: -32601, message: `unknown method ${message.method}` } })
