@@ -412,9 +412,12 @@ jobs:
           npm install -g npm@11.17.0
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
-          tarball="dist-release/${name}-${version}.tgz"
+          # npm flattens a scoped name on disk: @scope/name -> scope-name.
+          flat="${name#@}"
+          flat="${flat//\//-}"
+          tarball="dist-release/${flat}-${version}.tgz"
           [ -f "$tarball" ] || { echo "missing main tarball: $tarball" >&2; exit 1; }
-          (cd dist-release && grep -F " ${name}-${version}.tgz" SHA256SUMS | sha256sum -c -)
+          (cd dist-release && grep -F " ${flat}-${version}.tgz" SHA256SUMS | sha256sum -c -)
           if npm view "${name}@${version}" version >/dev/null 2>&1; then
             echo "${name}@${version} is already on npm; nothing to publish"
             exit 0

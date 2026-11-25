@@ -10,6 +10,7 @@ import { resolveShells } from '../lib/shells.js'
 import { describePackages } from '../scripts/lib/build/assemble.js'
 import { writeReleaseRecords } from '../scripts/lib/build/pack.js'
 import { stepCheck } from '../scripts/lib/build/check.js'
+import { flattenPackageName, tarballName } from '../scripts/lib/build/util.js'
 import { injectedOptionalDependencies } from '../scripts/lib/build/publish-dir.js'
 import { assert, report, test, withTempDir, TEST_HOME, PACKAGE_ROOT } from './lib/harness.mjs'
 import { bootHost, shutdown } from './lib/host.mjs'
@@ -181,10 +182,10 @@ await test('a payload release records the package at its declared pin, not the m
     const tarball = `dsh-ops-bash-win32-x64-${version}.tgz`, tarballBytes = Buffer.from('payload tarball fixture')
     fs.writeFileSync(path.join(dist, tarball), tarballBytes)
     const context = { backend: 'git-bash', dist, packages: [pkg], tarballs: { bash: { tarball, sha256: hash(tarballBytes), bytes: tarballBytes.length, files: 2, unpackedBytes: bytes.length } } }
-    const publishDir = path.join(dist, 'publish', `${manifest.name}-${manifest.version}`)
+    const publishDir = path.join(dist, 'publish', `${flattenPackageName(manifest.name)}-${manifest.version}`)
     fs.mkdirSync(publishDir, { recursive: true })
     fs.writeFileSync(path.join(publishDir, 'package.json'), JSON.stringify({ ...manifest, optionalDependencies: injectedOptionalDependencies(context) }))
-    mainArchive(path.join(dist, `${manifest.name}-${manifest.version}.tgz`))
+    mainArchive(path.join(dist, tarballName(manifest.name, manifest.version)))
     await writeReleaseRecords(context, [{ pkg, provenance }])
     assert.equal(await stepCheck(context), 0, 'a payload pinned at its own version must pass the release gate')
     fs.writeFileSync(path.join(stage, 'provenance.json'), JSON.stringify({ ...provenance, version: manifest.version }))
@@ -194,11 +195,11 @@ await test('a payload release records the package at its declared pin, not the m
 await test('main-only release records validate without shell payloads and reject stale shell archives', async () => {
   await withTempDir('release-main-only', async dist => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8'))
-    const directory = path.join(dist, 'publish', manifest.name + '-' + manifest.version)
+    const directory = path.join(dist, 'publish', flattenPackageName(manifest.name) + '-' + manifest.version)
     fs.mkdirSync(directory, { recursive: true })
     delete manifest.private
     fs.writeFileSync(path.join(directory, 'package.json'), JSON.stringify(manifest))
-    const tarball = manifest.name + '-' + manifest.version + '.tgz'
+    const tarball = tarballName(manifest.name, manifest.version)
     const frozen = stageFixtureNiubash(path.join(dist, 'stage/niubash-win32-x64'))
     fs.cpSync(frozen, path.join(directory, NIUBASH_PACKAGE_PATH), { recursive: true })
     copyFixtureModules(directory)

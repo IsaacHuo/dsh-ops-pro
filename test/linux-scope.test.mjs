@@ -166,7 +166,7 @@ await test('package.json, the resolver and the plugin manifest declare the same 
   const components = PLUGIN.contributes?.['x-components'] ?? []
   assert.deepEqual(components.map(component => component.id), ['dsh-ops-pro'])
   const merged = components[0]
-  assert.equal(merged.entry, 'dsh-ops-pro')
+  assert.equal(merged.entry, '@huoweifang/dsh-ops-pro')
   assert.deepEqual([...PLATFORMS], ['win32-x64', 'linux-x64', 'linux-arm64', 'darwin-arm64', 'darwin-x64'], 'only the approved target pairs are supported')
   assert.deepEqual(manifest.os, ['win32', 'linux', 'darwin'])
   assert.deepEqual(merged.platforms, ['win32', 'linux', 'darwin'])

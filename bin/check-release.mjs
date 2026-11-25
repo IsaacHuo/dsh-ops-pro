@@ -7,12 +7,13 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { PLATFORMS, RELEASE_TARGETS } from '../lib/execution/runtime.js'
+import { ROW_ID } from '../lib/identity.js'
 const { values } = parseArgs({ options: { root: { type: 'string' } } })
 const root = path.resolve(values.root ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'))
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'dsh-plugin.json'), 'utf8'))
 const components = manifest.contributes?.['x-components'] ?? []
-if (components.length !== 1 || components[0].id !== pkg.name) throw Error(`Release must declare exactly the merged ${pkg.name} component`)
+if (components.length !== 1 || components[0].id !== ROW_ID) throw Error(`Release must declare exactly the merged ${ROW_ID} component`)
 const declared = components[0].targets ?? []
 const sameSet = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort())
 if (!sameSet(declared, PLATFORMS)) throw Error(`Declared scope ${JSON.stringify(declared)} and resolver PLATFORMS ${JSON.stringify(PLATFORMS)} disagree`)

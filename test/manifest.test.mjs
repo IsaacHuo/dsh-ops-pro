@@ -148,7 +148,7 @@ await test('the bundle patch inserts exactly the one row and no removed FastCtx 
   const patch = parse(fs.readFileSync(patchFile, 'utf8'))
   const rows = patch.flatMap((entry) => entry.insert ?? [])
   assert.deepEqual(rows.map((row) => row.id), ['dsh-ops-pro'])
-  assert.deepEqual(rows.map((row) => row.name), ['dsh-ops-pro'])
+  assert.deepEqual(rows.map((row) => row.name), ['@huoweifang/dsh-ops-pro'])
   // The legacy rows remain exported modules; they are not inserted into new profiles.
   for (const legacy of ['shell', 'file', 'ptc', 'hide-official', 'background']) {
     assert.equal(rows.some((row) => row.id === `dsh-ops-${legacy}`), false, `${legacy} must not be inserted`)
@@ -177,7 +177,7 @@ await test('the card text is translated, not one string repeated across locales'
   const english = read('en')
   const chinese = read('zh')
   assert.equal(english.title, display.title, 'the manifest and the English locale must not drift')
-  assert.equal(english.title, pkg.name, 'the shared brand title is intentionally not translated')
+  assert.equal(english.title, 'dsh-ops-pro', 'the shared brand title is intentionally not translated')
   assert.equal(chinese.title, english.title)
   assert.notEqual(chinese.description, english.description, 'the Chinese card must not show the English description')
 })
@@ -210,7 +210,7 @@ await test('the icon and all component entries are shipped in the package whitel
 await test('the display manifest declares the one row, enabled by default', async () => {
   const components = raw.contributes['x-components']
   assert.deepEqual(components.map((component) => component.id), ['dsh-ops-pro'])
-  assert.equal(components[0].entry, 'dsh-ops-pro')
+  assert.equal(components[0].entry, '@huoweifang/dsh-ops-pro')
   assert.equal(components[0].defaultEnabled, true)
   assert.ok(Array.isArray(components[0].tools) && components[0].tools.length > 0)
   for (const component of COMPONENTS) {
@@ -229,8 +229,8 @@ await test('one package identity names the npm package, the row, its entry and t
   const { PACKAGE_NAME } = await import('../lib/identity.js')
   assert.equal(PACKAGE_NAME, pkg.name)
   assert.equal(raw.name, pkg.name)
-  assert.deepEqual(raw.contributes['x-components'].map(c => [c.id, c.entry]), [[pkg.name, pkg.name]])
-  assert.match(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'), new RegExp(`- id: ${pkg.name}\\s+name: ${pkg.name}\\s`))
+  assert.deepEqual(raw.contributes['x-components'].map(c => [c.id, c.entry]), [['dsh-ops-pro', pkg.name]])
+  assert.match(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'), new RegExp(`- id: dsh-ops-pro\\s+name: "${pkg.name.replace(/[/.]/gu, '\\$&')}"\\s`))
   assert.ok(fs.readFileSync(path.join(PACKAGE_ROOT, 'lib', 'client.js'), 'utf8').startsWith(`window.__ModuleLoader__.load({id:${JSON.stringify(pkg.name)},`))
 })
 

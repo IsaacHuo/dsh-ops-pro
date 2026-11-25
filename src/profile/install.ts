@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process'
 import { PACKAGE_ROOT, dshHome } from '../paths.js'
 import { PLATFORMS } from '../execution/runtime.js'
 import { reportDefaultReset, resetStaleDefault } from './default-reset.js'
-import { PACKAGE_NAME } from '../identity.js'
+import { LEGACY_PACKAGE_NAMES, PACKAGE_NAME } from '../identity.js'
 
 /**
  * Architectures this fork will run its profile commands on.
@@ -114,10 +114,23 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   const directory = path.join(dshHome(), 'profiles', target)
   if (!fs.existsSync(path.join(directory, 'package.json'))) throw new Error(`Initialize the target DSH application/profile first: ${directory}`)
   const version = readManifest(path.join(PACKAGE_ROOT, 'package.json')).version
-  const enabledIn = (manifest: Record<string, unknown>): boolean => {
+  const bundlesOf = (manifest: Record<string, unknown>): readonly string[] => {
     const dsh = record(manifest.dsh) ? manifest.dsh : undefined
     const bundles = record(dsh?.profile) ? dsh.profile.bundles : undefined
-    return (Array.isArray(bundles) || typeof bundles === 'string') && bundles.includes(PACKAGE_NAME)
+    if (Array.isArray(bundles)) return bundles.filter((name): name is string => typeof name === 'string')
+    if (typeof bundles === 'string') return [bundles]
+    if (bundles !== undefined) throw new Error(`Invalid profile bundles in ${path.join(directory, 'package.json')}: expected an array of package names.`)
+    return []
+  }
+  const dependenciesOf = (manifest: Record<string, unknown>): Record<string, unknown> =>
+    record(manifest.dependencies) ? manifest.dependencies : {}
+  const declaredNames = (manifest: Record<string, unknown>): string[] => {
+    const dependencies = dependenciesOf(manifest), bundles = bundlesOf(manifest)
+    return [PACKAGE_NAME, ...LEGACY_PACKAGE_NAMES].filter(name => dependencies[name] !== undefined || bundles.includes(name))
+  }
+  const enabledIn = (manifest: Record<string, unknown>): boolean => {
+    const bundles = bundlesOf(manifest)
+    return [PACKAGE_NAME, ...LEGACY_PACKAGE_NAMES].some(name => bundles.includes(name))
   }
   if (operation === 'repair-default') {
     // While the bundle is enabled, ops-ptc is a live preset and the operator's choice.
@@ -126,16 +139,37 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   }
   if (operation === 'status') {
     const manifest = readManifest(path.join(directory, 'package.json'))
-    const dependencies = record(manifest.dependencies) ? manifest.dependencies : undefined
-    const dsh = record(manifest.dsh) ? manifest.dsh : undefined
-    const profileManifest = record(dsh?.profile) ? dsh.profile : undefined
-    const bundles = profileManifest?.bundles ?? []
-    if (!Array.isArray(bundles) && typeof bundles !== 'string') throw new Error('Invalid profile bundles: expected an array.')
-    console.log(JSON.stringify({ profile: target, directory, dependency: dependencies?.[PACKAGE_NAME] ?? null, enabled: bundles.includes(PACKAGE_NAME) }, null, 2))
+    const dependencies = dependenciesOf(manifest), bundles = bundlesOf(manifest)
+    const legacy = Object.fromEntries(LEGACY_PACKAGE_NAMES
+      .filter(name => dependencies[name] !== undefined || bundles.includes(name))
+      .map(name => [name, dependencies[name] ?? null]))
+    console.log(JSON.stringify({
+      profile: target,
+      directory,
+      dependency: dependencies[PACKAGE_NAME] ?? null,
+      enabled: bundles.includes(PACKAGE_NAME),
+      legacy,
+    }, null, 2))
     return 0
   }
-  const args = ['plugin', '--profile', target, operation === 'install' ? 'add' : 'remove',
-    operation === 'install' ? (process.env.DSH_OPS_INSTALL_SPEC ?? `${PACKAGE_NAME}@${version}`) : PACKAGE_NAME]
+  const manifest = readManifest(path.join(directory, 'package.json'))
+  const installSpec = process.env.DSH_OPS_INSTALL_SPEC ?? `${PACKAGE_NAME}@${version}`
+  const invocation = (action: 'add' | 'remove', spec: string): string[] => ['plugin', '--profile', target, action, spec]
+  const steps: string[][] = []
+  if (operation === 'install') {
+    // An unscoped install and the scoped one both insert the same row id, so the
+    // old copy is removed before the new one is added; a failed removal aborts.
+    for (const name of LEGACY_PACKAGE_NAMES) {
+      if (declaredNames(manifest).includes(name)) steps.push(invocation('remove', name))
+    }
+    steps.push(invocation('add', installSpec))
+  } else {
+    const declared = declaredNames(manifest)
+    const targets = declared.length > 0
+      ? [PACKAGE_NAME, ...LEGACY_PACKAGE_NAMES].filter(name => declared.includes(name))
+      : [PACKAGE_NAME]
+    for (const name of targets) steps.push(invocation('remove', name))
+  }
   let command = dshCli ?? process.env.DSH_OPS_DSH_CLI
   let prefix: string[] = []
   if (!command && target === 'desktop') {
@@ -168,23 +202,29 @@ export function profileCommand(operation: ProfileOperation, { profile, dshCli, d
   }
   command = preflightCli(command, prefix[0])
   // Built before the dry-run return so a preview refuses exactly what a run refuses. `command` is
-  // already checked by `preflightCli`; only its quotes are added here. `prefix` travels with `args`
-  // so the line and the printed command cannot disagree: a launcher reached through a Node entry
-  // point would otherwise drop the entry silently.
-  const launcherLine = process.platform === 'win32' && /\.(cmd|bat)$/i.test(command)
+  // already checked by `preflightCli`; only its quotes are added here. `prefix` travels with each
+  // step so the line and the printed command cannot disagree: a launcher reached through a Node
+  // entry point would otherwise drop the entry silently.
+  const launcherLine = (args: string[]): string | undefined => process.platform === 'win32' && /\.(cmd|bat)$/i.test(command)
     ? `"${quoteCliArg(command)} ${[...prefix, ...args].map(quoteCliArg).join(' ')}"`
     : undefined
+  // Every step is checked before the dry-run return, so a preview refuses exactly what a
+  // run refuses instead of reporting success for a spec the launcher cannot carry.
+  const lines = steps.map(args => launcherLine(args))
   console.log(`Target: ${target} (${directory})`)
-  console.log(`Official CLI: ${command}; ${[...prefix, ...args].join(' ')}`)
+  for (const args of steps) console.log(`Official CLI: ${command}; ${[...prefix, ...args].join(' ')}`)
   if (dryRun) return 0
-  let result
-  if (launcherLine !== undefined) {
-    // `verbatim` means this line reaches `cmd` exactly as written: every argument is quoted here
-    // or not at all, and `quoteCliArg` has already refused what quoting cannot carry.
-    result = spawnSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', launcherLine], { stdio: 'inherit', windowsHide: true, windowsVerbatimArguments: true })
-  } else result = spawnSync(command, [...prefix, ...args], { stdio: 'inherit', windowsHide: true })
-  if (result.error) throw result.error
-  if (result.status !== 0) return result.status ?? 1
+  for (const [index, args] of steps.entries()) {
+    const line = lines[index]
+    let result
+    if (line !== undefined) {
+      // `verbatim` means this line reaches `cmd` exactly as written: every argument is quoted here
+      // or not at all, and `quoteCliArg` has already refused what quoting cannot carry.
+      result = spawnSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', line], { stdio: 'inherit', windowsHide: true, windowsVerbatimArguments: true })
+    } else result = spawnSync(command, [...prefix, ...args], { stdio: 'inherit', windowsHide: true })
+    if (result.error) throw result.error
+    if (result.status !== 0) return result.status ?? 1
+  }
   // The removed bundle can no longer publish ops-ptc; a default naming it would point nowhere (#881, #928).
   if (operation === 'uninstall') {
     const code = reportDefaultReset(resetStaleDefault(directory), false)

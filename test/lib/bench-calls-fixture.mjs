@@ -5,7 +5,7 @@ import path from 'node:path'
 export function pluginFixture(root, label, log, { fail = false } = {}) {
   const worker = path.join(root, 'native', 'target', 'release', process.platform === 'win32' ? 'dsh-ops-worker.exe' : 'dsh-ops-worker')
   const files = {
-    'package.json': JSON.stringify({ type: 'module', name: 'dsh-ops-pro', version: label }),
+    'package.json': JSON.stringify({ type: 'module', name: '@huoweifang/dsh-ops-pro', version: label }),
     'lib/policy.js': `export const publicToolName = name => ${JSON.stringify(label + '_')} + name`,
     'lib/components/discovery/index.js': 'export function apply() {}',
     'lib/components/file/index.js': `

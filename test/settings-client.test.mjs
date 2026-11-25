@@ -46,7 +46,7 @@ const external = name => name === '@deepseek-ai/cordis' ? Cordis
 
 await test('shipped browser entry stays lazy and binds the one row page plus one detail section to the real host registry', async () => {
   const definition = capture(path.join(PACKAGE_ROOT, 'lib/client.js')), imports = []
-  assert.equal(definition.id, 'dsh-ops-pro'); assert.equal(typeof definition.factory, 'function')
+  assert.equal(definition.id, '@huoweifang/dsh-ops-pro'); assert.equal(typeof definition.factory, 'function')
   assert.deepEqual(imports, [])
   const plugin = definition.factory(name => { imports.push(name); return external(name) })
   assert.deepEqual([...new Set(imports)].sort(), ['@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'])
@@ -157,7 +157,7 @@ await test('browser package declares its client facet and the bundle keeps the s
   assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-primitives'))
   // The bundle inserts one row named like the package, so the browser half mounts
   // there and no carrier bundle is needed.
-  assert.match(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'), /- id: dsh-ops-pro\s+name: dsh-ops-pro\s/)
+  assert.match(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'), /- id: dsh-ops-pro\s+name: "@huoweifang\/dsh-ops-pro"\s/)
   for (const component of ['mode-minimal', 'mode-standard', 'mode-ptc', 'mode-ops-ptc', 'mode-cordis']) {
     assert.equal(pkg.exports[`./${component}`].default, `./lib/components/${component}/index.js`, component)
   }

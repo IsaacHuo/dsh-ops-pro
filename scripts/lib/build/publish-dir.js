@@ -12,7 +12,7 @@ import { checkNiubash } from './niubash.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import { packDirectory, writeReleaseRecords } from './pack.js'
-import { REPO_ROOT, copyEntry, log, mainManifest, npm, parseNpmPackReport, run, size, writeJson } from './util.js'
+import { REPO_ROOT, copyEntry, flattenPackageName, log, mainManifest, npm, parseNpmPackReport, run, size, writeJson } from './util.js'
 
 /**
  * The `optionalDependencies` a publish would inject.
@@ -61,7 +61,7 @@ export async function stepPublishDir(context, assembled) {
   // source build is sufficient for local use, never for a cross-platform release.
   run(process.execPath, [path.join(REPO_ROOT, 'bin/native-runtime.mjs'), 'check'])
   const manifest = mainManifest()
-  const directory = path.join(context.dist, 'publish', `${manifest.name}-${manifest.version}`)
+  const directory = path.join(context.dist, 'publish', `${flattenPackageName(manifest.name)}-${manifest.version}`)
   if (fs.existsSync(directory)) fs.rmSync(directory, { recursive: true, force: true })
   fs.mkdirSync(directory, { recursive: true })
 

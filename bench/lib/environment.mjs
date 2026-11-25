@@ -1,6 +1,6 @@
 import { parse } from 'yaml'
 import { switchesFromDump } from './switches.mjs'
-import { PACKAGE_NAME } from '../../lib/identity.js'
+import { ROW_ID } from '../../lib/identity.js'
 
 // Keep in sync with the component roster in src/components/defaults.ts.
 const COMPONENTS = ['mode-minimal', 'mode-standard', 'mode-ptc', 'mode-cordis', 'discovery', 'compat', 'panel', 'tui']
@@ -10,7 +10,7 @@ export function componentFacts(text) {
   // Preserve old archive fields, but report the shipped merged row by section.
   try {
     const rows = parse(text)
-    if (Array.isArray(rows) && rows.some(row => row?.id === PACKAGE_NAME)) {
+    if (Array.isArray(rows) && rows.some(row => row?.id === ROW_ID)) {
       return Object.fromEntries(Object.entries(switchesFromDump(text) ?? {}).map(([name, value]) =>
         [name, value.enabled === null ? 'unknown' : value.enabled ? 'enabled' : 'disabled']))
     }

@@ -1,4 +1,4 @@
-import type { OpsSdk, Outcome, StorageReference } from 'dsh-ops-pro/ptc-sdk'
+import type { OpsSdk, Outcome, StorageReference } from '@huoweifang/dsh-ops-pro/ptc-sdk'
 
 declare const tools: OpsSdk
 async function read() {

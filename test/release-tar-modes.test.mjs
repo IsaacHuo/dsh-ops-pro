@@ -4,7 +4,7 @@ import { gzipSync, gunzipSync } from 'node:zlib'
 import { assert, test, report, withTempDir } from './lib/harness.mjs'
 import { tar, UNIX_WORKERS, fixUnixWorkerModes, checkUnixWorkerModes } from '../scripts/lib/build/tar-modes.js'
 import { packDirectory, writeReleaseRecords } from '../scripts/lib/build/pack.js'
-import { sha256File } from '../scripts/lib/build/util.js'
+import { sha256File, tarballName } from '../scripts/lib/build/util.js'
 import { stepCheck } from '../scripts/lib/build/check.js'
 import { copyFixtureModules, stageFixtureNiubash } from './lib/niubash-distribution-fixture.mjs'
 import { NIUBASH_PACKAGE_PATH } from '../lib/cli/niubash-payload.js'
@@ -70,7 +70,7 @@ await test('actual npm pack hashes, provenance and SHA256SUMS describe repaired 
     const dist = path.join(root, 'dist')
     fs.mkdirSync(stage)
     fs.mkdirSync(dist)
-    fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify({name:'dsh-ops-pro',version:'0.0.0',type:'module',files:['runtime','lib']}))
+    fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify({name:'@huoweifang/dsh-ops-pro',version:'0.0.0',type:'module',files:['runtime','lib']}))
     stageFixtureNiubash(path.join(stage, NIUBASH_PACKAGE_PATH))
     copyFixtureModules(stage)
     for (const name of names.slice(0, 4)) {
@@ -107,7 +107,7 @@ await test('actual npm pack hashes, provenance and SHA256SUMS describe repaired 
 await test('release check rejects 0644 even when SHA256SUMS matches the bad artifact', () =>
   withTempDir('tar-gate', async dist => {
     const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)))
-    const name = manifest.name + '-' + manifest.version + '.tgz'
+    const name = tarballName(manifest.name, manifest.version)
     const file = path.join(dist, name)
     archive(file)
     fs.writeFileSync(path.join(dist, 'SHA256SUMS'), await sha256File(file) + '  ' + name + '\n')

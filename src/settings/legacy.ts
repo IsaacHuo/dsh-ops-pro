@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs'
 import type { Context } from '../adapter/dsh/types.js'
-import { PACKAGE_NAME } from '../identity.js'
+import { PACKAGE_NAME, ROW_ID } from '../identity.js'
 
 let merged: boolean | undefined
 let mounting = false
@@ -20,7 +20,7 @@ export function mergedBundle(): boolean {
   if (merged !== undefined) return merged
   try {
     const patch = readFileSync(new URL('../../cordis.patch.yml', import.meta.url), 'utf8')
-    merged = new RegExp(`- id: ${PACKAGE_NAME}\\s*\\n\\s+name: ${PACKAGE_NAME}\\s`).test(patch)
+    merged = new RegExp(`- id: ${ROW_ID}\\s*\\n\\s+name: ["']?${PACKAGE_NAME}["']?\\s`).test(patch)
   } catch { merged = false }
   return merged
 }

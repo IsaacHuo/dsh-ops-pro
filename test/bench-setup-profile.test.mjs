@@ -78,9 +78,9 @@ function fixture(dir, { version = '0.3.1', failAdd = false, installed = null } =
   const calls = []
   const logs = []
   const profileDir = (name) => path.join(home, 'profiles', name)
-  const pluginDir = (name) => path.join(profileDir(name), 'node_modules', PLUGIN_NAME)
+  const pluginDir = (name) => path.join(profileDir(name), 'node_modules', ...PLUGIN_NAME.split('/'))
   const install = (name, spec) => {
-    const resolved = /^dsh-ops-pro@/.test(spec)
+    const resolved = /^@huoweifang\/dsh-ops-pro@/u.test(spec)
       ? spec.slice(`${PLUGIN_NAME}@`.length)
       : JSON.parse(fs.readFileSync(path.join(spec, 'package.json'), 'utf8')).version
     fs.mkdirSync(pluginDir(name), { recursive: true })
@@ -292,9 +292,9 @@ await test('install failures and stale copies name the plugin, the version and t
     assert.equal(result.outcomes.plugin, 'failed')
     const problem = result.problems.find((line) => line.includes(PLUGIN_NAME))
     assert.ok(problem, `a failure has to name the plugin: ${result.problems.join('; ')}`)
-    assert.match(problem, /dsh-ops-pro@0\.3\.1/, 'the version it wanted is named')
+    assert.match(problem, /@huoweifang\/dsh-ops-pro@0\.3\.1/, 'the version it wanted is named')
     assert.ok(problem.includes(fx.checkout), 'the spec it tried is named')
-    assert.match(fx.logs.join('\n'), /could not install dsh-ops-pro@0\.3\.1/, 'the narration names it too')
+    assert.match(fx.logs.join('\n'), /could not install @huoweifang\/dsh-ops-pro@0\.3\.1/, 'the narration names it too')
     assert.match(fx.logs.join('\n'), /pnpm/, 'and points at the usual cause')
   })
   await withTempDir('bench-plugin-stale-', (dir) => {
@@ -303,8 +303,8 @@ await test('install failures and stale copies name the plugin, the version and t
     assert.equal(result.outcomes.plugin, 'stale')
     const problem = result.problems.find((line) => line.includes('--reinstall'))
     assert.ok(problem, result.problems.join('; '))
-    assert.match(problem, /dsh-ops-pro@0\.2\.0/, 'the old copy is named')
-    assert.match(problem, /dsh-ops-pro@0\.3\.1/, 'and so is what this checkout would install')
+    assert.match(problem, /@huoweifang\/dsh-ops-pro@0\.2\.0/, 'the old copy is named')
+    assert.match(problem, /@huoweifang\/dsh-ops-pro@0\.3\.1/, 'and so is what this checkout would install')
     assert.equal(fs.readFileSync(path.join(fx.pluginDir('bench-ops'), 'package.json'), 'utf8').includes('0.2.0'), true, 'the stale copy is not silently replaced')
   })
 })
@@ -395,7 +395,7 @@ await test('argument handling fails closed on typos and defaults to this checkou
   assert.equal(merged.plugin, 'local')
 
   assert.equal(specVersion('local'), JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version)
-  assert.equal(specVersion('dsh-ops-pro@0.3.1-rc.2'), '0.3.1-rc.2')
+  assert.equal(specVersion('@huoweifang/dsh-ops-pro@0.3.1-rc.2'), '0.3.1-rc.2')
   assert.equal(specVersion('dsh-ops-pro@latest'), null, 'a dist tag pins nothing to compare against')
   assert.equal(specVersion('./some/checkout.tgz'), null)
   assert.deepEqual(installSpec(parseArgs([]), '/tmp/checkout'), {

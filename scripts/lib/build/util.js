@@ -230,6 +230,26 @@ export function mainManifest() {
 }
 
 /**
+ * npm's on-disk spelling of a package name: the scope marker removed and the
+ * separator replaced (`@scope/name` -> `scope-name`).
+ * @param {string} name - the package name.
+ * @returns {string} the flattened name.
+ */
+export function flattenPackageName(name) {
+  return name.replace(/^@/u, '').replace(/\//gu, '-')
+}
+
+/**
+ * The artifact name npm gives this package's tarball.
+ * @param {string} name - the package name.
+ * @param {string} version - the package version.
+ * @returns {string} the tarball file name.
+ */
+export function tarballName(name, version) {
+  return `${flattenPackageName(name)}-${version}.tgz`
+}
+
+/**
  * Copy one file or directory tree.
  * @param {string} source - the source path.
  * @param {string} destination - the destination path.

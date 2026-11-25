@@ -36,6 +36,23 @@ export function stageFixtureNiubash(target) {
     fs.mkdirSync(path.dirname(target), { recursive: true })
     fs.cpSync(source, target, { recursive: true, dereference: false })
   }
+  // A checked-out payload can have been executed in place, which creates runtime
+  // directories the frozen archive never had. The released tarball is packed from the
+  // archive, so the fixture prunes those directories to match what npm would ship.
+  pruneExecutedDirectories(target)
   verifyNiubashTree(target)
   return target
+}
+
+function pruneExecutedDirectories(root) {
+  const walk = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      const child = path.join(directory, entry.name)
+      const relative = path.relative(root, child).split(path.sep).join('/')
+      if (NIUBASH_PIN.directories.includes(relative)) walk(child)
+      else fs.rmSync(child, { recursive: true, force: true })
+    }
+  }
+  walk(root)
 }

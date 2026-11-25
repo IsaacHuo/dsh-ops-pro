@@ -41,6 +41,7 @@ import { resolveHidingConfig } from '../lib/official-tools/hiding.js'
 import { evaluatePluginCompatibility } from '@deepseek-ai/dsh-app-boot'
 import { composeBundle } from './lib/compose-bundle.mjs'
 import { versionDrift } from './lib/version-sync.mjs'
+import { ROW_ID } from '../lib/identity.js'
 
 /** The repository root (`scripts/`'s parent). */
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -240,7 +241,7 @@ if (typeof patch === 'string' && fs.existsSync(path.join(PACKAGE_ROOT, patch))) 
       : []
     check(rows.length === 1, 'the bundle declares exactly one row')
     const row = rows[0]
-    check(row?.id === pkg.name && row?.name === pkg.name, 'the row id and specifier are the package name')
+    check(row?.id === ROW_ID && row?.name === pkg.name, 'the row id stays dsh-ops-pro and the specifier is the package name')
     check(row?.disabled !== true, 'the row ships enabled')
     try {
       const resolved = resolveMergedConfig(row?.config)
