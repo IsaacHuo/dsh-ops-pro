@@ -2,23 +2,50 @@
 
 中文：[升级与卸载](升级与卸载.md).
 
-## Upgrading from 0.5.x to 1.1.0
+## Upgrading from the unscoped 1.1.0 to 1.1.1
 
-0.5.x shipped as the package `dsh-ops`; 1.1.0 ships as `dsh-ops-pro`, and `dsh-ops-pro` is the only
-executable name. To upgrade:
+1.1.1 publishes as `@huoweifang/dsh-ops-pro`. The unscoped `dsh-ops-pro` package stays at 1.1.0 and
+is deprecated with a message pointing at the scoped package. The bundle row id (`dsh-ops-pro`),
+the executable (`dsh-ops-pro`), the `ops_*` tool names and `<DSH_HOME>/dsh-ops/` are unchanged, so
+saved row settings keep working.
+
+1. Stop the host.
+2. Install the scoped package into the same profile:
+
+```console
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop
+```
+
+   The wrapper detects the old unscoped dependency or bundle in the profile manifest, removes it
+   through the official CLI, and only then adds the scoped package. Adding the scoped package next
+   to the old one would put two bundles on the same row id, so do not skip this order. A failure in
+   the removal step stops the install and prints the failing command; nothing is added in that case.
+3. Start the host, open the Plugins page and confirm exactly one row with id `dsh-ops-pro` at
+   1.1.1.
+4. Confirm the installation with `npx --yes @huoweifang/dsh-ops-pro@latest status --profile desktop`;
+   its `legacy` field must be empty once migration succeeded.
+
+The old package is not removed from the registry; `npm deprecate` only forwards users to the scoped
+one. A profile that still pins `dsh-ops-pro` continues to work at 1.1.0. Roll back by installing
+`dsh-ops-pro@1.1.0` again (the scoped install is then removed by the same manifest-based migration).
+
+## Upgrading from 0.5.x to 1.1.1
+
+0.5.x shipped as the package `dsh-ops`; 1.1.1 ships as `@huoweifang/dsh-ops-pro`, and `dsh-ops-pro`
+is the only executable name. To upgrade:
 
 1. Stop the host (desktop app, Web service or TUI) so loaded code is not replaced mid-flight.
 2. Remove the old package and install the new one:
 
 ```console
-npx --yes dsh-ops-pro@latest install --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop
 ```
 
-   Use the matching profile for `web` and `tui`, or install `dsh-ops-pro` from the plugin marketplace
-   or the official `dsh plugin add`.
+   Use the matching profile for `web` and `tui`, or install `@huoweifang/dsh-ops-pro` from the
+   plugin marketplace or the official `dsh plugin add`.
 3. Start the host, open the Plugins page and confirm the row id is `dsh-ops-pro` and the version is
-   1.1.0.
-4. Confirm the installation with `npx --yes dsh-ops-pro@latest status --profile desktop`.
+   1.1.1.
+4. Confirm the installation with `npx --yes @huoweifang/dsh-ops-pro@latest status --profile desktop`.
 
 The state directory and log prefix do not change: `<DSH_HOME>/dsh-ops/` and `dsh-ops:`. Legacy
 component modules stay exported, so saved specifier overrides keep loading; no configuration needs
@@ -33,7 +60,7 @@ Rollback: reinstall the 0.5.x package. The state directory is not rewritten, and
 
 ## Binary locations and update cleanup
 
-This release embeds complete Niubash 1.5.0. These locations apply equally to marketplace installs, `npx dsh-ops install --profile ...`, official `plugin ... add`, local tarballs, and direct npm/pnpm installs:
+This release embeds complete Niubash 1.5.0. These locations apply equally to marketplace installs, `npx --yes @huoweifang/dsh-ops-pro@latest install --profile ...`, official `plugin ... add`, local tarballs, and direct npm/pnpm installs:
 
 | Ownership | Binary location | Update/removal behavior |
 | --- | --- | --- |
@@ -45,7 +72,7 @@ This release embeds complete Niubash 1.5.0. These locations apply equally to mar
 | Legacy managed Git Bash / IPC | `<DSH_HOME>/dsh-ops/shells/bash/<version>`; `<DSH_HOME>/dsh-ops/bash-ipc/` | Old state is not silently deleted by npm upgrade. Inspect `bash-runtime status`; preview managed removal with `bash-runtime remove --dry-run`, then use `remove --yes` only when all listed managed copies are unwanted. This removes managed Niubash too, not just legacy Bash. IPC cleanup requires `bash-runtime clean-cache --yes --all-hosts-stopped` after stopping every host/job; that offline command also reclaims quarantined copies beyond the newest two, while an online sweep keeps them. `cache status` reports them. A successful install never deletes a staging sibling it could not verify. |
 | User-selected shell / shared stores | Explicit `bashPath`, system installations, npm/pnpm stores and npm `_npx` cache | Not OPS-owned: never automatically removed by OPS. `npx` may cache a separate full package; do not use it for every runtime invocation. Package-manager retention/pruning is separate from uninstalling the plugin. |
 
-Direct npm installs live under the selected project's `node_modules/dsh-ops-pro`; global installs use `npm root -g`. DSH installs normally resolve under `<DSH_HOME>/profiles/<profile>/node_modules/dsh-ops-pro`; follow the actual resolved package location, not a guessed store path. Each profile may intentionally own a separate package. `bash-runtime status` reports the selected executor and managed directories.
+Direct npm installs live under the selected project's `node_modules/@huoweifang/dsh-ops-pro`; global installs use `npm root -g`. DSH installs normally resolve under `<DSH_HOME>/profiles/<profile>/node_modules/@huoweifang/dsh-ops-pro`; follow the actual resolved package location, not a guessed store path. Each profile may intentionally own a separate package. `bash-runtime status` reports the selected executor and managed directories.
 
 There is **no automatic npm update/uninstall cleanup hook**: it cannot safely determine active jobs, shared stores or user-owned shells. Install-time hooks remain prohibited by the manifest gate. Fixed-directory provisioning replacement and version-level runtime reuse avoid per-call payload accumulation; explicit offline cleanup handles legacy state. Prepared-version retirement is limited to the exact manifest-hash namespace and first renames each real directory; unrelated names and links are never swept. Never run the broad legacy `uninstall --yes` merely to reclaim one shell: it can remove other explicitly provisioned OPS state.
 
@@ -73,9 +100,9 @@ Change the path for a custom installation. Choose one operation:
 ```powershell
 $desktopCli = Join-Path $env:LOCALAPPDATA 'Programs/DeepSeek Harness/resources/runtime/cli/bin/dsh.cmd'
 # Update to the version you have reviewed:
-& $desktopCli plugin --profile desktop add 'dsh-ops-pro@<version>' --registry=https://registry.npmjs.org
+& $desktopCli plugin --profile desktop add '@huoweifang/dsh-ops-pro@<version>' --registry=https://registry.npmjs.org
 # Or remove the plugin:
-& $desktopCli plugin --profile desktop remove dsh-ops-pro --registry=https://registry.npmjs.org
+& $desktopCli plugin --profile desktop remove @huoweifang/dsh-ops-pro --registry=https://registry.npmjs.org
 ```
 
 Replace `<version>` with the chosen version. `web` and `dsh-tui` use their own
@@ -168,7 +195,7 @@ nothing matching `(pre|post)?(prepare|install)` — `prepare`, `preprepare`,
 `scripts/validate-manifest.mjs` fails on any of them, including a hook unrelated to
 the build, because the gate cannot tell an innocent hook from one that tries to
 repair the unsupported channel. Install the published registry target
-(`add dsh-ops-pro`), or build and `npm pack` a checkout yourself; see
+(`add @huoweifang/dsh-ops-pro`), or build and `npm pack` a checkout yourself; see
 [contributing](CONTRIBUTING.md#building-the-plugin-and-installing-from-source).
 
 ## Moving from 0.4.x to 0.5.x

@@ -110,7 +110,7 @@ Desktop uses its bundled CLI; the ordinary CLI does not manage the reserved
 Desktop profile. For a non-Desktop test profile:
 
 ```console
-dsh plugin --profile ops-test add dsh-ops-pro@latest
+dsh plugin --profile ops-test add @huoweifang/dsh-ops-pro@latest
 dsh --profile ops-test --dump-config
 dsh --profile ops-test --dump-config-schema
 ```

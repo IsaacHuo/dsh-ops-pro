@@ -46,7 +46,7 @@ added 45 packages in 499ms
 The root package declares `"os": ["win32", "linux"]`, so npm applies no platform
 veto here. On a tree whose `os` list is still Windows-only — the published 0.3.0
 tarball, for instance — the same command stops at `EBADPLATFORM`, and the
-published `npx dsh-ops-pro@latest install` entry point is unusable on Linux for that
+published `npx @huoweifang/dsh-ops-pro@latest install` entry point is unusable on Linux for that
 reason. See [Installing into a profile](#5-install-into-a-profile) for the path
 that works regardless of how the tarball was published.
 
@@ -169,7 +169,7 @@ cross-platform release and a missing platform must be a failure.
 
 ## 5. Install into a profile
 
-`npx dsh-ops-pro@latest install` is the documented Windows path and requires a
+`npx @huoweifang/dsh-ops-pro@latest install` is the documented Windows path and requires a
 Windows-only npm tarball. On Linux, install from the checkout through DSH's own
 plugin manager, which forwards to pnpm:
 

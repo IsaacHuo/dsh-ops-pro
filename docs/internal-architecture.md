@@ -9,7 +9,7 @@ implementations of the tools. External presets use the same assembly pipeline.
 
 | Directory | Responsibility |
 | --- | --- |
-| `integration/` | Stable `dsh-ops-pro/integration` export and scoped diagnostics |
+| `integration/` | Stable `@huoweifang/dsh-ops-pro/integration` export and scoped diagnostics |
 | `consumer/` | Preset identity, explicit bindings, validated options, consumer plan and shared assembly |
 | `presets/` | Built-in product defaults and compatibility configuration; never generic publication policy |
 | `capabilities/` | Tool contracts, mutation metadata, argument normalization and resident profiles |
@@ -67,7 +67,7 @@ the result limit is applied.
 Published component paths remain available where they have documented legacy semantics. Older
 internal `file/`, `modes/` and root helper paths are compatibility reexports. `ptc/` retains
 configuration and execution-contract seams; projection and publication implementations live in
-the responsibility-based modules above. These private seams are not new public APIs. New consumers must import `dsh-ops-pro/integration`, never private `lib/*` paths.
+the responsibility-based modules above. These private seams are not new public APIs. New consumers must import `@huoweifang/dsh-ops-pro/integration`, never private `lib/*` paths.
 
 The obsolete `dsh-ops/compat` export was dangling after the single-row change and is removed.
 Use `hideOfficialTools: false` in a built-in section or `replaceOfficial: false` in an explicit
