@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { assert, test, report, skipSuite, withTempDir, PACKAGE_ROOT } from './lib/harness.mjs'
-import { npm } from '../scripts/lib/build/util.js'
+import { mainManifest, npm } from '../scripts/lib/build/util.js'
 import { checkNiubashTarball } from '../scripts/lib/build/niubash-tar.mjs'
 
 if (process.platform !== 'win32') skipSuite('niubash-consumer', 'requires the real Windows host sandbox')
@@ -36,7 +36,7 @@ await test('clean full-plugin pack consumer uses production prepare for repeated
     assert.equal(install.status, 0, `${install.error ?? ''}\n${install.stderr}`)
     // pnpm's public package entry is a link into its physical virtual store. The
     // verifier receives the real package root, never a relaxed no-link policy.
-    const installed = fs.realpathSync.native(path.join(consumer, 'node_modules/dsh-ops-pro'))
+    const installed = fs.realpathSync.native(path.join(consumer, 'node_modules', mainManifest().name))
     if (pnpm) assert.ok(fs.statSync(path.join(installed, 'runtime/win32-x64/niubash/niu.exe')).nlink > 1,
       'exercise actual pnpm store hardlink imports, not copy/reflink fallback')
     assert.equal(fs.lstatSync(installed).isSymbolicLink(), false, 'consumer is a real installed artifact, not a workspace link')
