@@ -3,7 +3,7 @@
   "manifestVersion": "0.15",
   "id": "dsh-ops-pro.native",
   "name": "dsh-ops-pro",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "license": "MIT",
   "facets": {
     "host": {
@@ -163,7 +163,7 @@
           "ops_load_sdk",
           "ops_discover_tools"
         ],
-        "notes": "A feature that is switched off in the row page is not mounted at all, exactly like the old per-row switch. Legacy component specifiers (mode-*, discovery, panel, tui, shell, file, ptc, hide-official, background) remain exported so a saved override still loads its module, but they are no longer inserted by the bundle."
+        "notes": "A feature that is switched off in the row page is not mounted at all, exactly like the old per-row switch. Legacy component specifiers (mode-*, discovery, panel, tui, shell, file, ptc, hide-official, background) remain exported so a saved override still loads its module, but they are no longer inserted by the bundle. The opt-in computer-use section (Windows only) adds ops_cu_* tools at runtime from the vendored dsh-computer-use-win server; they are not part of the native catalogue."
       }
     ]
   },

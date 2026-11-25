@@ -20,6 +20,8 @@ if (!existsSync(path.join(root, 'scripts', 'build.mjs'))) process.exit(0)
 const steps = [
   ['scripts/build.mjs'],
   ['scripts/lib/build/niubash.mjs', '--check'],
+  // A locally packed tarball must never carry a stale runtime receipt (the 1.0.0 degrade).
+  ['bin/native-runtime.mjs', 'check', '--staged'],
 ]
 
 for (const [script, ...args] of steps) {

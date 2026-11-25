@@ -1,17 +1,14 @@
 dsh-ops-pro
-Copyright (c) 2026 IsaacHuo and the dsh-ops-pro contributors
-
-dsh-ops-pro is a fork of dsh-ops (https://github.com/T-Auto/dsh-ops).
-The dsh-ops notices below are retained unchanged.
-
-dsh-ops
 Copyright (c) 2026 T-Auto and the dsh-ops contributors
+
+dsh-ops-pro is the maintained continuation of the fork T-Auto/dsh-ops. Earlier
+releases, branches and records use the name dsh-ops; they refer to the same work.
 
 ================================================================
 LICENSE
 ================================================================
 
-dsh-ops is licensed under the MIT License. The license text is in `LICENSE`.
+dsh-ops-pro is licensed under the MIT License. The license text is in `LICENSE`.
 Nothing in this distribution is relicensed. The MIT grant covers only the work
 this repository authored; components with their own licenses are noted below.
 
@@ -107,6 +104,12 @@ DeepSeek Harness shell contract, approval and job adapters are adapted from
 @deepseek-ai/dsh-tool-bash 0.2.0-rc.2 (MIT), Copyright (c) 2026 DeepSeek.
 Upstream: https://github.com/deepseek-ai/deepseek-harness
 License: licenses/deepseek-harness/LICENSE
+
+The Windows computer-use runtime under lib/computer-use is dsh-computer-use-win 0.6.3
+(commit acfb689), MIT, Copyright (c) 2026 Yu-tao-Li and Copyright (c) 2026 cgissing.
+Upstream: https://github.com/Yu-tao-Li/dsh-computer-use-win
+License and upstream provenance: licenses/computer-use/LICENSE, licenses/computer-use/THIRD_PARTY.md
+Its files are shipped byte-identical to upstream; the pins are in vendor/computer-use/upstream.json.
 
 The native worker's DOCX reader uses pinned third-party Rust ZIP/XML libraries.
 Their exact versions and dependency rationale are recorded in docs/document-dependencies.md;

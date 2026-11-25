@@ -1,0 +1,183 @@
+{
+  "repository": "https://github.com/Yu-tao-Li/dsh-computer-use-win",
+  "commit": "acfb689b077eca9744f464ad4658037bc85a24e4",
+  "version": "0.6.3",
+  "files": {
+    "mcp/activity.mjs": {
+      "sha256": "2cd928c2626977afe2a258bcaae6e976e47e29210f92c55a321e3dd2d5031df7"
+    },
+    "mcp/background-desktop.mjs": {
+      "sha256": "14b23a11bea1c68cea7670ac647fb101ea5cd82cd00732b470d70f8b65331565"
+    },
+    "mcp/browser-bidi-dom.mjs": {
+      "sha256": "d74bef48ab7b2620a65969c1a2676b7fbee418c6f8daeabd0c1484de8249b6b2"
+    },
+    "mcp/browser-bidi.mjs": {
+      "sha256": "494d266e5a9eb0367bf82b23fdb1b9c290bf822a5faa03ee20fdc7172fa1596e"
+    },
+    "mcp/browser-frames.mjs": {
+      "sha256": "ca6629101a72669d121334a2ff58614d3e42600ad7a35c89665a9fac345a5b2e"
+    },
+    "mcp/browser-pipe.mjs": {
+      "sha256": "3ea6a578c942b72bebff78cb373a87c678b4f2ab9f731a3c772c42492bea3774"
+    },
+    "mcp/browser-profile-lock.mjs": {
+      "sha256": "57bbef7a601f60c9b979de23a7708409b0db530557f851eaccbb01be7c544b4a"
+    },
+    "mcp/browser.mjs": {
+      "sha256": "01797dc3d0b737b59650fac73b155bec4cb3fb5a42cc27e38324f376ef970252",
+      "parts": [
+        "mcp/browser.part1.mjs",
+        "mcp/browser.part2.mjs",
+        "mcp/browser.part3.mjs"
+      ]
+    },
+    "mcp/catalog.mjs": {
+      "sha256": "c5fc4d3de5b9f97d38b408fdc11c870f2e115e1a8f05c7a4a5bbfd3d21918648"
+    },
+    "mcp/diagnostics.mjs": {
+      "sha256": "093369212ef65b18e2797e87c7d3c05d8597af30723180aeeca651eca19a3737"
+    },
+    "mcp/hyperv-relay.mjs": {
+      "sha256": "7273aa8778c6152bcd294bafb7258f866dc1c30aee78df3f84fa141a5b758aba"
+    },
+    "mcp/observation-budget.mjs": {
+      "sha256": "df02528d26ccafb9f25cbfbf441de27c5a285cd1f009924c51985c7bc984dae0"
+    },
+    "mcp/overlay-strings.mjs": {
+      "sha256": "d7b08d14f1b9abdf402fbff6ac75216eee9b8a1e8b42b77accb7536ff938bda1"
+    },
+    "mcp/page-values.mjs": {
+      "sha256": "4a95cbaebb1c9e64a57f76ed5c11e977770de3b0757f4caeda95191e4d2cffd0"
+    },
+    "mcp/policy.mjs": {
+      "sha256": "26d9a5c3352a46e4533f90401b27c8878fb556982dd4613801a399fb474b1b4b"
+    },
+    "mcp/progress-summary.mjs": {
+      "sha256": "96d25e2301ff4b6befbc9d0411a2f980dae8bec57260616a348b90431b7e8858"
+    },
+    "mcp/protocol.mjs": {
+      "sha256": "2f02fc92a128e5e135ff0b9bff7f74ca3e0ad635b2f7541f83dafa35748a5ede"
+    },
+    "mcp/server.mjs": {
+      "sha256": "6d6ade2142e51e5d7d2e20188bde6871f5b0e9394ec9bd6b3f8303c565ae2790",
+      "parts": [
+        "mcp/server.part1.mjs",
+        "mcp/server.part2.mjs",
+        "mcp/server.part3.mjs"
+      ]
+    },
+    "mcp/settings-schema.mjs": {
+      "sha256": "2d4b885fcf95974361117b09b411d45ce5edc47de2d65a15f5d95624a2c1713a"
+    },
+    "mcp/settings.mjs": {
+      "sha256": "f4cc5070e4ef3104451f6acdfcd4e4c1eb9f021ae5172f651137f1a58b619b59"
+    },
+    "mcp/takeover.mjs": {
+      "sha256": "c799196283e9d40e5ea95229b1e2c4e5f3296649936a7e48ba7cfbcd384271f9"
+    },
+    "scripts/windows-uia.ps1": {
+      "sha256": "6af747326f2e34f3b8d31a3e0e468c65edb59dbecbba0399ef9362ef5cc70066",
+      "parts": [
+        "scripts/windows-uia.part1.ps1",
+        "scripts/windows-uia.part2.ps1",
+        "scripts/windows-uia.part3.ps1",
+        "scripts/windows-uia.part4.ps1",
+        "scripts/windows-uia.part5.ps1",
+        "scripts/windows-uia.part6.ps1",
+        "scripts/windows-uia.part7.ps1"
+      ]
+    },
+    "scripts/background-desktop.ps1": {
+      "sha256": "4fc0b6684f77c1ceaa85f1a3e1149d3f95ef151092c37cf44857bfaabca88326"
+    },
+    "scripts/hyperv-desktop.ps1": {
+      "sha256": "ea97df4bd32b9712d6abc1cd1c76cf44aef50d211c8b01ea4fb8a9a664a9cc35"
+    },
+    "scripts/windows-takeover.ps1": {
+      "sha256": "f92f69174d48961b3c529be47290cf136fc7ae8842f7f567515f725c2abf8861"
+    },
+    "scripts/windows-takeover.cs": {
+      "sha256": "77bedd3e62e8cbbdfa02fc972ca3a45b52e24a332a517e0917dd8127ffe84a79",
+      "parts": [
+        "scripts/windows-takeover.part1.cs",
+        "scripts/windows-takeover.part2.cs"
+      ]
+    },
+    "scripts/windows-clipboard.cs": {
+      "sha256": "2549f15ffe4931db633dff695a1ac29888f2429ea7dfb498555186a1efb4edf0"
+    },
+    "scripts/native-loader.ps1": {
+      "sha256": "60bb79770939d6d0ddcc93789028402ea4cbf39d5ee68e0e13e644d05f20b625"
+    },
+    "scripts/build-native.ps1": {
+      "sha256": "4cf50e7f3c6a68473c09c99f46244cf60eb3d7a2bfca546fb81b7ac6a1d10e57"
+    },
+    "scripts/native/manifest.json": {
+      "sha256": "b2d55ccecef4ca080ee96902c8ffacdd02254a779383de9d62d7bdff6d1cefae"
+    },
+    "scripts/native/wcu-clipboard-netfx.dll": {
+      "sha256": "c9d5f7696b7bf167e7f16f923fd9a5a1120b7a856d87c87b77912ead74049bc3"
+    },
+    "scripts/native/wcu-native-netfx.dll": {
+      "sha256": "3eebef8e3fab5f3a6858a4802f08ac9a54d45a580af6eff7e786f95994ac1036"
+    },
+    "scripts/native/wcu-ocr-netfx.dll": {
+      "sha256": "d5d05ca4878fda37f6d2d1e314442f98302feb71ff98f6e9ae00dc9420c75c2a"
+    },
+    "scripts/native/wcu-takeover-netfx.dll": {
+      "sha256": "6bcf835ab5b75709e7172bb9430075357c2ae9b67f3d2ba5b70f108dc2958a5d"
+    },
+    "test/activity-series.mjs": {
+      "sha256": "76abee66864ab0c60d4a6bd06c69221f929319fb1786ba1836b67ba788ea908d"
+    },
+    "test/atomic-json.mjs": {
+      "sha256": "30190737c1415971cad18f51701dfb8608e5b1a89a06f50ef399e447ec85cfc3"
+    },
+    "test/backend-ready.mjs": {
+      "sha256": "4d530cfda96091da67757212695b00898e7a83b51fc166a25cbbc3d9cb8c4850"
+    },
+    "test/browser-frames.mjs": {
+      "sha256": "9332e90b7dff538fec5de7159632fcebf1206a49b01356f30a305418ad302523"
+    },
+    "test/observation-budget.mjs": {
+      "sha256": "a950bd6dd4a10d3c2130b2994042780d75f70f419250dd0d3ebb1360b4b0505a"
+    },
+    "test/observation-contract.mjs": {
+      "sha256": "7f6aaec8e164f1878d2adc83ab4925d1bbbf3192233448c33b1385668d4f0059"
+    },
+    "test/policy.mjs": {
+      "sha256": "f7421c105ebb52c804eaeba7726b08c65f350aee11e3581d01e24328954313e8"
+    },
+    "test/progress-summary.mjs": {
+      "sha256": "6984eb09f263c35e4a84e954cd68941cb92157c926495a3fb09c689e3ecc47b8"
+    },
+    "test/rpc-protocol.mjs": {
+      "sha256": "7cc23f3ca3e922fd6480978c7e034e5c583542f604ce368e31cb6b593a9e6823"
+    },
+    "test/security-regressions.mjs": {
+      "sha256": "321040b12bb361f9b4a2b888403e45bc8361cab3e7da937b67e778101f17e428"
+    },
+    "test/settings-matrix.mjs": {
+      "sha256": "294eff8dea72e764bd40b50afb2b5d89809679fa05734ecaa88dd0792f559363"
+    },
+    "test/shared-stop.mjs": {
+      "sha256": "c41de8f89c4a5c76218c0424cd25ad2a7fc4f85924decf50a72c8fa838dbfaac"
+    },
+    "test/work-mode-contract.mjs": {
+      "sha256": "154fe9cbc00951c72d618ec72ea9ed619e44609b0de05102630f82ef83617ce1"
+    },
+    "test/mcp-test-client.mjs": {
+      "sha256": "2cf970bed2aaa60aadb49f98c9ea1bae17e6d1c727f081f00ae1dc76d339c1f3"
+    },
+    "test/private-temp.mjs": {
+      "sha256": "9b0e1b89db27e9188f7d2d320697f7df2184633e4fd13ab79422311dcff39d77"
+    },
+    "LICENSE": {
+      "sha256": "e3ecfc149634f568a98c4bff7aebca9f2797e334fb69c2b6539679762eca0d74"
+    },
+    "THIRD_PARTY.md": {
+      "sha256": "4a5f17d9728d38b32a00c9654d3ed4807ecea887997b51acce02c48cd4972a4e"
+    }
+  }
+}

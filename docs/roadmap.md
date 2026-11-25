@@ -2,48 +2,48 @@
 
 中文：[路线图](路线图.md)。
 
-> Directional, not a schedule or a commitment. Priorities can change with
-> upstream DSH releases and community feedback. Shipped work is recorded in
-> [CHANGELOG.md](CHANGELOG.md).
+> Directional, not a schedule or a commitment. Priorities change with host
+> releases and community feedback. What shipped is recorded in
+> [CHANGELOG.md](CHANGELOG.md); what a release contains is fixed in
+> [PROVENANCE.md](PROVENANCE.md).
 
 ## Shipped
 
-- **0.3.0** — native Rust file tools and confined PTC batching (Windows x64).
-- **0.3.1** — cross-platform: Windows x64, Linux x64 and macOS Apple Silicon
-  (`darwin-arm64`). See [linux-build.md](linux-build.md) and
-  [macos.md](macos.md).
+| Version | Content |
+| --- | --- |
+| 0.3.x | Native Rust file tools with confined PTC batching; Windows x64, Linux x64 and macOS arm64. |
+| 0.4.0 | Separate Native/PTC projections, scoped discovery, typed PTC outcome schema, strict TypeScript source. |
+| 0.5.x | Preset rows, result cache, disk reporting, Windows Bash payload and the `ops_bash` contract. |
+| 0.6.0 | First release under the name `dsh-ops-pro`, beside `dsh-ops`. |
+| 1.0.0 | Architecture release: single component row, `src/adapter/dsh` host boundary, smaller PTC outcome schema, batching notices, prefix-stability suite. |
+| 1.1.0 | Vendored computer-use runtime (Windows), read-only sidebar console, usage statistics. |
 
-## 0.4.0 candidate
+## Next
 
-Separate Native/PTC projections, scoped discovery, bounded CSV/TSV, DOCX and restricted PDF readers, runtime/settings changes and strict TypeScript source are implemented. This is not a release announcement: final evidence must satisfy the approved OPS 0.3.x BM-01 threshold and file/discovery BM-03 budget, while separately reporting the official comparison and full Bash-inclusive startup total. See [candidate status and format limits](release-0.4.0.md).
+### Computer use
 
-- macOS Intel (`darwin-x64`) on macOS 13+ is implemented and in review; macOS 12's
-  `CLONE_ACL` fallback remains a separate follow-up. See [macOS](macos.md).
-
-## Later
+- Port the remaining upstream desktop surfaces (overlay, background desktop lane).
+- Stabilise the experimental Firefox lane or drop it in favour of documented Chromium attachment.
+- Real-desktop acceptance runs recorded per release in
+  [manual validation](manual-validation.md).
 
 ### Platform coverage
 
 - Windows ARM64 and Linux ARM64 targets.
-- macOS 12 (`CLONE_ACL` fallback for Intel and arm64) after the macOS 13+ support lands.
+- macOS 12 `CLONE_ACL` fallback, after the macOS 13+ support this release ships.
 
-### Tool surface (progressive disclosure)
+### Tool surface
 
-- Broader document-format coverage beyond the bounded 0.4.0 DOCX/PDF subsets.
-- Web search and crawl4ai-style HTML-to-Markdown tools.
-- More PTC tools and bounded result projections.
+- Document formats beyond the bounded DOCX/PDF subsets.
+- More PTC projections and bounded result shapes.
 
-### Documentation
+### Release engineering
 
-- Keep the English/Chinese doc pairs in sync; expand the troubleshooting and
-  Windows verification notes.
-
-### Ecosystem
-
-- Track upstream DSH releases (currently `0.2.0-rc.2`) and adapt the plugin
-  APIs promptly.
+- `bin/check-release.mjs` currently needs all four staged runtimes; make a partial local run report which targets are missing instead of failing outright.
+- Complete the `bench/cli.mjs tracks` subcommand, which is listed but not implemented.
+- Optional detached signatures over `SHA256SUMS`; today provenance is a receipt plus checksums.
 
 ## How to influence it
 
-Open an issue describing the use case. See
-[贡献指南.md](贡献指南.md) for the contribution workflow.
+Open an issue with the scenario and the tool calls it needs; the process is in
+[CONTRIBUTING.md](CONTRIBUTING.md).

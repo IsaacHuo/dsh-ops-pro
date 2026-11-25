@@ -20,7 +20,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { PLATFORMS, RELEASE_TARGETS, PACKAGE_ROOT, workerName } from '../lib/execution/runtime.js'
+import { PLATFORMS, RELEASE_TARGETS, PACKAGE_ROOT, workerName, receiptMismatches, RESTAGE_HINT } from '../lib/execution/runtime.js'
 const { values, positionals } = parseArgs({ options: { input: {type:'string'}, root: {type:'string'}, platform: {type:'string'}, staged: {type:'boolean'} }, allowPositionals:true })
 const command = positionals[0] ?? 'check'
 if (command !== 'stage' && command !== 'check') throw Error('Expected stage or check')
@@ -76,7 +76,9 @@ for (const target of targets) {
   if (!fs.existsSync(receiptPath)) throw Error(`Runtime for ${target} is not staged: ${receiptPath} is missing. Run npm run build:ptc -- stage on ${target}, or use check --staged to validate only the targets this package carries.`)
   const receipt = readJson(receiptPath,`runtime provenance for ${target}`)
   if (!fs.existsSync(destination)) throw Error(`Runtime for ${target} is incomplete: ${receiptPath} exists but ${destination} is missing.`)
-  if (receipt.version !== version || receipt.target !== target || receipt.executable !== name || receipt.sha256 !== hash(destination)) throw Error(`Runtime provenance mismatch: ${target}`)
+  // Strict here, unlike the runtime resolver: a version-only drift is a release defect.
+  const mismatches = receiptMismatches(receipt, { version, target, executable: name, sha256: hash(destination) })
+  if (mismatches.length) throw Error(`Runtime provenance mismatch: ${target} (${mismatches.join('; ')}); ${RESTAGE_HINT}`)
   const bytes = fs.readFileSync(destination)
   // Reject accidental copies of a host binary labeled as a foreign target.
   if (target.startsWith('win32-')) {

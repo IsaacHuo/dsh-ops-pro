@@ -68,9 +68,12 @@ await test('a checkout still builds and checks the payload before packing', () =
       `import fs from 'node:fs'\nfs.appendFileSync(${JSON.stringify(trace)}, 'build\\n')\n`)
     write(root, 'scripts/lib/build/niubash.mjs',
       `import fs from 'node:fs'\nfs.appendFileSync(${JSON.stringify(trace)}, 'check ' + process.argv.slice(2).join(' ') + '\\n')\n`)
+    write(root, 'bin/native-runtime.mjs',
+      `import fs from 'node:fs'\nfs.appendFileSync(${JSON.stringify(trace)}, 'runtime ' + process.argv.slice(2).join(' ') + '\\n')\n`)
     const result = spawnSync(process.execPath, [path.join(root, entry)], { cwd: root, encoding: 'utf8', timeout: CPU_PROCESS_TIMEOUT_MS })
     assert.equal(result.status, 0, result.stderr)
-    assert.equal(fs.readFileSync(trace, 'utf8'), 'build\ncheck --check\n')
+    // The staged runtime receipt is checked last, so a stale receipt can never be packed (1.0.0).
+    assert.equal(fs.readFileSync(trace, 'utf8'), 'build\ncheck --check\nruntime check --staged\n')
   }))
 
 report('prepack')

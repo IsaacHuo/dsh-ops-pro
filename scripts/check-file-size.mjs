@@ -43,7 +43,7 @@ const DEFAULT_LIMIT = 1000
  */
 const CODE_EXTENSIONS = new Set([
   '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts',
-  '.rs', '.ps1', '.sh', '.py', '.cpp', '.h', '.hpp', '.cc',
+  '.rs', '.ps1', '.sh', '.py', '.cpp', '.h', '.hpp', '.cc', '.cs',
 ])
 
 /**

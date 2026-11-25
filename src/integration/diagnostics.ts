@@ -47,7 +47,12 @@ export async function diagnose(ctx: Context, agent: Agent): Promise<Diagnostic> 
       : mode && enabledModes(ctx).has(mode) && mode !== 'minimal')
     if (builtins) {
       try { resolveWorker(config?.core ?? enabledModes(ctx).get(mode!)!) }
-      catch { issue('RUNTIME_UNAVAILABLE', 'Native worker resolution failed. Check binaryPath and the packaged runtime; official alternatives remain available.') }
+      catch (error) {
+        // Carry the resolver's reason: it names the mismatched field and the repair command, and it
+        // is package-relative (runtime.ts readJson), so it discloses no install path.
+        const reason = String((error as Error)?.message ?? error).split('\n')[0]
+        issue('RUNTIME_UNAVAILABLE', `Native worker resolution failed: ${reason} Official alternatives remain available.`)
+      }
     }
     if (builtins || config?.shell) for (const service of ['sandboxPolicy', 'subprocess']) if (!ctx.get(service as 'tools')) issue('HOST_SERVICE_UNAVAILABLE', `Execution service ${service} is unavailable; enable it and reload.`)
     if (config?.shell) {

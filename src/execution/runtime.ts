@@ -33,14 +33,46 @@ function readJson(file: string, what: string, shown: string): Record<string, unk
     throw new Error(`Native worker ${what} at ${shown} is not valid JSON (${(error as Error)?.name ?? 'unknown'})`)
   }
 }
-/** Shared receipt check for locally executed and delegated packaged payloads. */
+export interface ReceiptExpectation { version: unknown; target: string; executable: string; sha256: string }
+/**
+ * Name every receipt field that disagrees with what the package and the bytes say.
+ *
+ * Shared by the runtime resolver and the release gate (`bin/native-runtime.mjs`) so both report the
+ * same field-level reason. Each entry reads `field receipt≠expected`; a sha256 entry shortens both
+ * digests because the full values add nothing a reader can act on.
+ */
+export function receiptMismatches(receipt: Record<string, unknown>, expected: ReceiptExpectation): string[] {
+  const out: string[] = []
+  const short = (value: unknown) => typeof value === 'string' ? value.slice(0, 12) : String(value)
+  if (receipt.target !== expected.target) out.push(`target ${String(receipt.target)}≠${expected.target}`)
+  if (receipt.executable !== expected.executable) out.push(`executable ${String(receipt.executable)}≠${expected.executable}`)
+  if (receipt.sha256 !== expected.sha256) out.push(`sha256 ${short(receipt.sha256)}…≠${short(expected.sha256)}…`)
+  if (receipt.version !== expected.version) out.push(`version ${String(receipt.version)}≠${String(expected.version)}`)
+  return out
+}
+/** The one-line repair every provenance failure ends with. */
+export const RESTAGE_HINT = 'run npm run build:ptc (or npm run stage:ptc to restage the existing build) in the source checkout'
+/**
+ * Shared receipt check for locally executed and delegated packaged payloads.
+ *
+ * Integrity is the bytes: target, executable and sha256 must match or the worker is refused. A receipt
+ * whose **only** disagreement is the version describes the same binary under an older label — the
+ * normal state of a `link:` checkout after a version bump that did not restage. That is accepted with
+ * a warning instead of disabling every native tool; the release gates (`native-runtime check`,
+ * `check-release`, `validate-manifest`) stay strict, so such a receipt can still never ship.
+ */
 export function verifyPackagedWorker(file: string, packageRoot: string, platform: string, arch: string): string {
   const receipt = readJson(path.join(path.dirname(file), 'provenance.json'), 'provenance receipt',
     path.posix.join('runtime', `${platform}-${arch}`, 'provenance.json'))
   const version = readJson(path.join(packageRoot, 'package.json'), 'package manifest', 'package.json').version
+  if (!fs.statSync(file).isFile()) throw new Error(`Native worker provenance mismatch: runtime/${platform}-${arch} payload is not a regular file; ${RESTAGE_HINT}.`)
   const digest = createHash('sha256').update(fs.readFileSync(file)).digest('hex')
-  if (!fs.statSync(file).isFile() || receipt.target !== `${platform}-${arch}` || receipt.version !== version
-    || receipt.executable !== workerName(platform) || receipt.sha256 !== digest) throw new Error('Native worker provenance mismatch.')
+  const mismatches = receiptMismatches(receipt, { version, target: `${platform}-${arch}`, executable: workerName(platform), sha256: digest })
+  if (mismatches.length === 1 && mismatches[0]!.startsWith('version ')) {
+    console.warn(`dsh-ops: runtime/${platform}-${arch} receipt is stale (${mismatches[0]}) but the worker bytes match it; using it. To refresh the receipt, ${RESTAGE_HINT}.`)
+  } else if (mismatches.length) {
+    throw new Error(`Native worker provenance mismatch for runtime/${platform}-${arch} (${mismatches.join('; ')}); ${RESTAGE_HINT}.`)
+  }
   return digest
 }
 /**

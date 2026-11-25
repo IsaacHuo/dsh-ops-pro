@@ -480,12 +480,27 @@ effect without a restart.
 
 ---
 
+## Computer use (Windows)
+
+### What has to be installed for computer use
+
+Nothing extra. The `ops_cu_*` runtime, scripts and UI Automation backend all ship inside the plugin package; the backend calls the PowerShell 5.1 and .NET `UIAutomation` assemblies that come with Windows. The only external condition is Edge or Chrome, because the browser lane launches one of them. No separate MCP server, browser extension or installer is involved.
+
+### How Edge, Chrome and other browsers differ
+
+Not in capability: both go through the same CDP interface and read the same page accessibility tree, with identical element ids and operations. The difference is the profile mode: by default every run uses a throwaway profile; `browserSignIn: true` keeps sign-ins; `browserAttachUser: true` attaches to the user's own signed-in browser, which must expose a debugging port, and the first connection asks for approval. `default` prefers Edge because since Edge 156 a new profile signs itself into the Windows account and writes that account's cookies. Other Chromium browsers (third-party shells such as ego) connect through `WCU_BROWSER_EXE` or `WCU_BROWSER_CDP_URL`; that is optional configuration, and leaving it unset changes nothing.
+
+### Does it take over my mouse and keyboard
+
+Mostly no. Clicking, typing, scrolling and expanding an element id happen inside the target window and the desktop pointer does not move; browser-lane page operations run entirely inside the page and do not take the foreground. Real input is used for coordinate clicks, foreground keypresses and drags: a coordinate click briefly brings the target window forward and then restores the pointer and foreground; in foreground mode a target point covered by another window returns `POINT_COVERED` instead of clicking somewhere else. `desktopTarget: quiet` prefers background execution; a failure stops and returns an error rather than retrying. Operations such as connecting the user's browser, launching a program with arguments and reading or writing local files through a page ask for approval first.
+
 ## See also
 
 - [Upgrade and uninstall safely](upgrading.md) — Windows file locks, registry policy checks and 0.3.x migration
 - [Usage](usage.md) — the complete install flow and CLI
 - [Configuration reference](configuration-reference.md) — keys and owning components
 - [Component reference](component-reference.md) — tools and permissions
+- [Computer use](computer-use.md) — requirements, settings, tools and the element identification model
 
 ## Windows Bash integrity labels
 

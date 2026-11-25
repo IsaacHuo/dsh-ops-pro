@@ -4,7 +4,7 @@ Instructions for AI coding agents working in this repository. Humans: see
 [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) (中文：[docs/贡献指南.md](docs/贡献指南.md)), which this file
 summarizes and never overrides.
 
-## What dsh-ops is
+## What dsh-ops-pro is
 
 A DSH tool-enhancement plugin. Its purpose is to save the model's tokens, contain context growth,
 shorten task time and make the model more capable — by giving it low-cognitive-load tools with small
@@ -21,13 +21,13 @@ capabilities.
 ## Hard rules
 
 1. **No code file over 1000 lines.** `node scripts/check-file-size.mjs` (`npm run check:size`) runs
-   in CI over every git-tracked `.js .mjs .cjs .ts .mts .cts .rs .ps1 .sh .py .cpp .h .hpp .cc` file
+   in CI over every git-tracked `.js .mjs .cjs .ts .mts .cts .rs .ps1 .sh .py .cpp .h .hpp .cc .cs` file
    outside `node_modules/ native/target/ runtime/ licenses/ docs/ dist/`. When a file approaches the
    limit, split it into modules and group them in a folder (see `src/shells/`,
    `scripts/lib/build/`, `bench/lib/fixtures/`). Do not raise the limit or add exclusions.
 2. **A PR adds at most ~1000 implementation lines** (tests and byte-identical moves excluded) and
    touches only the files its issue names. Large work is split into slices on a staging branch
-   (for 0.4.0: `release/0.4.0`).
+   (staged releases use `release/<version>`, e.g. `release/1.1.0`).
 3. **No AI attribution** in commits, PRs, issues or comments: no `Co-authored-by:` lines naming an
    agent/model/bot, no "Generated with/Made with" footers. Commits use the user's own identity.
 4. **Every new behaviour has an assertion** that fails when the change is reverted. No silent skips,
@@ -45,7 +45,7 @@ capabilities.
 | `test/` | One `*.test.mjs` file = one suite = one process; shared helpers in `test/lib/` (never named `*.test.mjs`) |
 | `bench/` | Repository-only benchmarks; never shipped, never part of the default gate |
 | `scripts/`, `bin/` | Gate, manifest validation, packaging, CLI |
-| `docs/` | Bilingual docs: every document exists in English and Chinese |
+| `docs/` | Technical docs: bilingual pairs plus single-language notes. `docs/README.md` is the index |
 
 ## Commands
 
@@ -70,7 +70,8 @@ node scripts/verify-gate.mjs --skip-install              # the full release gate
 ## Code conventions
 
 - English for code, comments, CLI output and commit messages; user-facing docs in both languages,
-  updated in the same PR.
+  updated in the same PR. A document that has a bilingual pair (`docs/x.md` plus `docs/x.zh.md` or a
+  Chinese-named twin) is updated on both sides in the same change; `docs/README.md` lists the pairs.
 - Tool names always come from `publicToolName()` in `src/policy.ts`; never hand-write `ops_`.
 - Config is validated in `src/config/resolve.ts`; unknown keys are errors that name the key. Defaults in
   `cordis.patch.yml` must equal the defaults in code.

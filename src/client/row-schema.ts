@@ -80,6 +80,7 @@ export const GROUPS: readonly GroupSpec[] = Object.freeze([
   { id: 'other', label: 'groupOther', hint: 'groupOtherHint', toggle: false, fields: Object.freeze([
     field(at('panel', 'enabled'), 'featurePanel', 'featurePanelHint'),
     field(at('tui', 'enabled'), 'featureTui', 'featureTuiHint'),
+    field(at('computer-use', 'enabled'), 'featureComputerUse', 'featureComputerUseHint'),
     field(at('other', 'pwsh7Link'), 'featurePwsh7Link', 'featurePwsh7LinkHint'),
   ]) },
 ])
@@ -92,7 +93,7 @@ const DEFAULTS: Readonly<Record<string, boolean>> = Object.freeze({
   'ptc.enabled': true, 'ptc.residentTools': true, 'ptc.bash': true, 'ptc.hidePwsh': true, 'ptc.hideOfficialTools': true, 'ptc.dynamicTools': true,
   'ops-ptc.enabled': true, 'ops-ptc.residentTools': true, 'ops-ptc.bash': true, 'ops-ptc.hidePwsh': true, 'ops-ptc.hideOfficialTools': true, 'ops-ptc.dynamicTools': true,
   'cordis.enabled': true, 'cordis.residentTools': true, 'cordis.bash': true, 'cordis.hidePwsh': true, 'cordis.hideOfficialTools': true, 'cordis.dynamicTools': true,
-  'panel.enabled': false, 'tui.enabled': false, 'other.pwsh7Link': false,
+  'panel.enabled': false, 'tui.enabled': false, 'computer-use.enabled': false, 'other.pwsh7Link': false,
 })
 
 /** The draft key of one switch. */

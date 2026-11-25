@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "dsh-ops-computer-use",
+    "description": "Windows desktop and browser automation as ops_cu_* tools (vendored dsh-computer-use-win engine). Off by default; Windows only."
+  }
+}

@@ -6,6 +6,9 @@
     "service:remote.opsSettings": 1,
     "service:remote.pluginManager": 1
   },
+  "components/computer-use/index.ts": {
+    "inject:tools": 1
+  },
   "components/download-guard/index.ts": {
     "event:tools/pre-execute": 1
   },
@@ -21,6 +24,11 @@
     "inject:systemPrompt": 1,
     "inject:tools": 2,
     "service:tools": 1
+  },
+  "cu/rpc-client.ts": {
+    "event:data": 2,
+    "event:error": 2,
+    "event:exit": 1
   },
   "discovery/controller.ts": {
     "event:agent/created": 1,

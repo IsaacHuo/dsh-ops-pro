@@ -7,6 +7,48 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-25 — Computer use, sidebar console, usage statistics
+
+Guide: [computer-use.md](computer-use.md) / [computer-use.zh.md](computer-use.zh.md).
+
+- The Windows computer-use runtime of [dsh-computer-use-win](https://github.com/Yu-tao-Li/dsh-computer-use-win) 0.6.3 (MIT, Yu-tao-Li and cgissing) is vendored in `vendor/computer-use/`, pinned file by file to upstream commit `acfb689` by SHA-256. Its four files over the 1000-line gate are stored as line-range parts; `npm run build` reassembles the exact upstream bytes into `lib/computer-use/` and refuses any digest mismatch. The upstream suites that need no live desktop run as `cu-upstream`. The size gate now also covers `.cs`.
+
+- New `computer-use` row section (off by default, Windows only): the vendored server runs as one persistent host child (`process.execPath`, `ELECTRON_RUN_AS_NODE=1`) behind a minimal stdio JSON-RPC client, and its tools are published globally as `ops_cu_*` (formerly `mcp__wincu__windows_computer_use_*` in the standalone plugin), so every mode and custom preset sees them, Native or PTC. The upstream approval rules are reused unchanged; a crashed server restarts once per minute and then reports why; timeouts, cancellations and tool errors are returned values (`CU_TIMEOUT`, `CU_CANCELLED`, `CU_TOOL_ERROR`, `CU_UNAVAILABLE`). A standalone dsh-computer-use-win install is detected and warned about, never disabled. Not ported from the upstream adapter: the activity overlay, background-desktop helper and web routes.
+
+- Sidebar console: an **OPS** entry in the DSH sidebar (中文界面为「电脑操控」) opens a page with three tabs — Status (version, native worker, enabled features, computer-use runtime with conflict and quarantined-backend warnings), Computer use (the vendored runtime's editable settings, validated by its own rules, saved to `<DSH_HOME>/dsh-ops/computer-use.json` and applied by restarting only the computer-use runtime) and Usage (7/30-day counters, per-tool table, reset with confirmation). It reads the same `opsSettings` remote as the row page through four new methods: `console`, `usage`, `resetUsage`, `saveComputerUse`.
+- Usage statistics: one global `tools/execute` listener counts every `ops_*` call (including `ops_cu_*`) in every mode and preset — calls, failures (host failures and returned failure values), calls made from `run_code`, wall-time p50/p95 and result characters. Token figures are an estimate (characters / 4). Counters live in `<DSH_HOME>/dsh-ops/usage.json`, one bucket per local day, 30 days kept, written at most every 5 s and atomically; an unreadable file starts a fresh count instead of failing any call.
+
+- **Fix:** a packaged runtime receipt whose only disagreement is the version (a `link:` checkout after a version bump that did not restage — the 1.0.0 state) no longer disables every native tool. The worker is used with a warning naming both versions and `npm run build:ptc`; a sha256, target or executable mismatch is still refused. The release gates (`native-runtime check`, `check-release`) stay strict.
+
+- Provenance failures name each mismatched field (`version 0.5.5≠1.0.0`, `sha256 …`) and the repair command, in the resolver and in `native-runtime check` alike (shared `receiptMismatches`). The `RUNTIME_UNAVAILABLE` diagnostic now carries that reason instead of a generic sentence.
+
+- `npm run release:prepare -- <version>` (`scripts/release-prepare.mjs`) rewrites every version site — `package.json`, `package-lock.json`, `dsh-plugin.json`, `native/Cargo.toml`, `native/Cargo.lock` — then rebuilds and restages the host worker and checks that nothing drifted. `validate-manifest` fails on any version drift, including a stale staged receipt, and `prepack` runs `native-runtime check --staged` so a stale receipt cannot be packed.
+
+Release engineering for 1.1.0.
+
+- `.github/workflows/ci.yml`: the push trigger now covers `release/*` (it listed only `release/0.4.0`), so a staged release branch is validated on push and the commit a release tag points at already carries a green `CI required` check, which `release.yml` requires. `scripts/check-workflows.mjs` asserts the pattern instead of the 0.4.0 branch name.
+- `docs/PROVENANCE.md`: new `## 1.1.0` section records the vendored computer-use runtime (upstream, pinned commit `acfb689`, MIT holders, byte-identical pinning, part-file reassembly, what is not vendored and who owns the adapter), the two local state files, and that the receipt-plus-checksum provenance mechanism is unchanged. The stale `Current target matrix (0.4.x)` heading is now `Target matrix history (0.4.x)`.
+- `NOTICE`: the distribution identifies itself as `dsh-ops-pro` and states that it continues the `T-Auto/dsh-ops` fork; copyright holders and the historical FastCtx paragraph are unchanged.
+- `docs/usage.md` / `docs/使用指南.md`: the 0.5.0-candidate section is replaced by the 1.1.0 component and default-value description (single row, five presets, defaults for panel/tui/download-guard/computer-use, legacy module exports, live working-directory base).
+- `docs/upgrading.md` / `docs/升级与卸载.md`: new "Upgrading from 0.5.x to 1.1.0" section — package and command rename, install and verify steps, unchanged state directory and log prefix, the two new state files, and rollback.
+- `README.md`: the single-row paragraph names the `dsh-ops-pro` row.
+
+Documentation pass on the computer-use surface; no code, configuration or vendored file changed.
+
+- `README.md` / `README.en.md`: the intro now states what the plugin adds instead of comparative claims; a **Requirements** section lists the supported platforms and the Windows computer-use prerequisites (PowerShell 5.1 and the .NET UI Automation assemblies that ship with Windows, Edge or Chrome for the browser lane) and says that every executable part — native worker, bash payload, computer-use runtime — is inside the npm package, so no component is installed separately. A **Computer use** section summarizes the structure-first identification model (UIA tree, page accessibility tree, element ids), the two lanes, the upstream provenance and the browser choice, and links the reference doc.
+- `docs/computer-use.md` / `docs/computer-use.zh.md`: rewritten as reference documents with a fixed section order — overview, requirements, enable and configure (three keys plus the six settings groups), the 26 tools with their key parameters, the element identification model (element-id lifecycle, browser-lane special ids, fallback order, boundaries, screen-coordinate mapping), the browser lane (settings, profile modes, attaching to the user's browser, `WCU_BROWSER_*` variables), limits and known issues, and source and license. The sidebar-console and usage-statistics sections are kept unchanged in substance.
+- `docs/configuration-reference.md` / `docs/配置参考.md`: the single `computer-use.enabled` row now points at a short subsection with the three keys, the six settings groups, the "unknown keys are errors" rule and the console-override precedence.
+- `docs/troubleshooting.md` / `docs/常见问题.md`: three computer-use questions — what has to be installed additionally, how Edge, Chrome and other Chromium browsers differ, and whether it takes over the mouse and keyboard.
+- The computer-use docs follow the structure of the Microsoft Hybrid-Computer-Use documentation for organization; the technical content follows this repository's implementation, and the runtime provenance and pinned-commit notice stay as recorded in `vendor/computer-use/UPSTREAM.md`.
+
+Release record and documentation structure.
+
+- `docs/README.md` is new: one index groups every document by purpose (getting started, computer use, architecture, tools and contracts, cross-platform, operations and verification, benchmarks, governance and history) and marks which entries are bilingual pairs; `README.md` / `README.en.md` link it as the documentation entry point. Every relative target was checked to exist.
+- `docs/roadmap.md` / `docs/路线图.md`: the shipped table now ends at 1.1.0 (computer use, sidebar console, usage statistics) and the open directions name what is actually left — remaining upstream desktop surfaces, the Firefox lane, ARM64 targets, `check-release` partial runs and the missing `bench/cli.mjs tracks` subcommand.
+- `docs/manual-validation.md` / `docs/手动验收.md`: a current 1.1.0 section lists the ten desktop steps CI cannot cover (identity, tool publication without a stray child, element-id lifecycle, approval and denial, browser lane, crash restart limit, console settings write, usage counters, uninstall keeps state); the 0.4.0 checklist is kept below as history.
+- `AGENTS.md`: the project description, the `release/<version>` staging convention, the docs row (bilingual pairs indexed by `docs/README.md`) and the rule that both sides of a bilingual pair change together.
+- `docs/release-1.1.0.md` is the release record: contents, inheritance and modification of both upstreams, the verification table with real command results, the gates that were not run on the release host, known limits, rollback, the release checklist and the GO/NO-GO verdict.
+
 ## [1.0.1] — 2026-11-23 — Documentation release
 
 - The READMEs (both languages) now describe dsh-ops-pro itself: its features, 1.0 changes, install and migration, development, and a dedicated section crediting the upstream dsh-ops maintainers and contributors. Upstream-only material (upstream team pages, benchmark images, partner tables, rankings) is removed.

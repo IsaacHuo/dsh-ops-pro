@@ -1,6 +1,8 @@
 /** Shared strict descriptors for operator-only settings actions; no host value imports. */
 import type { InvocationDescriptor, RemoteResult, TypertCodec } from '../adapter/dsh/types.js'
 import { PACKAGE_NAME } from '../identity.js'
+import { parseCuSettings, parseDays } from './console-contract.js'
+import type { ConsoleRemote } from './console-contract.js'
 export const RUNTIME_ACTIONS = ['install-bash', 'remove-bash', 'upgrade-pwsh'] as const
 export type RuntimeAction = typeof RUNTIME_ACTIONS[number]
 /** The executors an operator may choose: the packaged Niubash rung, or a Git Bash/MSYS executable. */
@@ -66,7 +68,7 @@ export interface RuntimeSelectionRequest {
   source: BashSource
   path?: string
 }
-export interface RuntimeRemote {
+export interface RuntimeRemote extends ConsoleRemote {
   snapshot(): Promise<RemoteResult<RuntimeSnapshot>>
   plan(action: RuntimeAction): Promise<RemoteResult<RuntimePlan>>
   select(selection: RuntimeSelectionRequest): Promise<RemoteResult<RuntimeSelection>>
@@ -134,5 +136,8 @@ export const RUNTIME_DESCRIPTORS: readonly InvocationDescriptor[] = Object.freez
   method('select', { wire: 'selection', codec: codec('BashSelection', parseSelection) }),
   method('execute', { wire: 'id', codec: codec('RuntimePlanId', planId) }, true),
   method('applyDefaultPreset'),
+  // The sidebar console.
+  method('console'), method('usage', { wire: 'days', codec: codec('UsageDays', parseDays) }), method('resetUsage'),
+  method('saveComputerUse', { wire: 'settings', codec: codec('CuSettings', parseCuSettings) }),
 ])
 export const RUNTIME_REMOTE = Object.freeze({ package: PACKAGE_NAME, descriptors: RUNTIME_DESCRIPTORS })

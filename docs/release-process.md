@@ -56,7 +56,7 @@
 ## 发版步骤（维护者）
 
 1. 确认要发布的 commit 在 `main` 上且 `CI required` 绿。
-2. `npm version` 更新 `package.json` 版本并合并（走 PR）；在同一条版本分支提交 `docs/release-notes/v<version>.md`，正文按 v0.5.2–v0.5.5 的双语模板写。
+2. `npm run release:prepare -- <version>` 同步改写全部版本位置（`package.json`、`package-lock.json`、`dsh-plugin.json`、`native/Cargo.toml`、`native/Cargo.lock`），并重新构建、stage 本机 worker，最后核对没有漂移；不要只跑 `npm version` 或手改版本号（1.0.0 就因此带着 0.5.5 的 runtime 收据降级）。`validate-manifest` 与 `prepack` 都会拒绝版本漂移。改完走 PR 合并；在同一条版本分支提交 `docs/release-notes/v<version>.md`，正文按 v0.5.2–v0.5.5 的双语模板写。
 3. Actions → Release → **Run workflow**，ref 选 `main`：dry run，确认四个 `native-*` 工件 + `release-dist` 产出、`publish` skipped、`SHA256SUMS` 与 `dist-release` 一致。
 4. `git tag v<package.json 版本>` → `git push origin v<version>`。
 5. 发布中断时：重新 dispatch 同一个 tag（同 commit），只补缺失资产；**不要**移动 tag。

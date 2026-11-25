@@ -19,6 +19,7 @@ import { resolveConfig, resolveResultCacheConfig, type DownloadGuardConfig, type
 import { resolvePanelConfig } from '../panel/collect.js'
 import { resolveActivityConfig } from '../tui/activity.js'
 import { resolveDiskConfig, type DiskConfig } from '../disk/ownership.js'
+import { resolveComputerUseConfig, type ComputerUseConfig } from '../cu/config.js'
 import { PRESET_SETTINGS } from './preset-schema.js'
 import { customPresets, type CustomPreset } from './presets.js'
 import { editable, settingsConfig, type Field } from './schema.js'
@@ -31,7 +32,7 @@ type ActivityConfig = ReturnType<typeof resolveActivityConfig>
 export const MODES = MODE_IDS
 export type ModeKey = typeof MODES[number]
 /** Every section the row accepts. */
-export const FEATURES = [...MODES, 'discovery', 'download-guard', 'resultCache', 'panel', 'tui', 'disk', 'other'] as const
+export const FEATURES = [...MODES, 'discovery', 'download-guard', 'computer-use', 'resultCache', 'panel', 'tui', 'disk', 'other'] as const
 export type Feature = typeof FEATURES[number]
 
 /** Bundle-wide switches; resident publication is deliberately mode-local. */
@@ -61,6 +62,7 @@ export interface MergedConfig {
   readonly cordis: FeatureState<ModeConfig>
   readonly discovery: FeatureState<DiscoveryConfig>
   readonly 'download-guard': FeatureState<DownloadGuardConfig>
+  readonly 'computer-use': FeatureState<ComputerUseConfig>
   readonly resultCache: FeatureState<ResultCacheConfig>
   readonly panel: FeatureState<PanelConfig>
   readonly tui: FeatureState<ActivityConfig>
@@ -72,7 +74,8 @@ const ENABLED_BY_DEFAULT: Readonly<Record<Feature, boolean>> = Object.freeze({
   minimal: true, standard: true, ptc: true, 'ops-ptc': true, cordis: true, discovery: true,
   // The download guard is off until an operator names a downloader: mounting it
   // against an empty template would register a listener that can never act.
-  'download-guard': false, resultCache: true, panel: false, tui: false, disk: true, other: false,
+  // Computer use drives the real desktop; it stays off until an operator turns it on.
+  'download-guard': false, 'computer-use': false, resultCache: true, panel: false, tui: false, disk: true, other: false,
 })
 
 function object(name: string, value: unknown): Record<string, unknown> {
@@ -148,6 +151,7 @@ export function resolveMergedConfig(raw?: unknown): MergedConfig {
     cordis: modeState('cordis', input.cordis),
     discovery: discoveryState(input.discovery),
     'download-guard': downloadGuardState(input['download-guard']),
+    'computer-use': computerUseState(input['computer-use']),
     resultCache: resultCacheState(input.resultCache),
     panel: panelState(input.panel),
     tui: tuiState(input.tui),
@@ -175,6 +179,13 @@ function downloadGuardState(value: unknown): FeatureState<DownloadGuardConfig> {
   return resolved === undefined
     ? { enabled, config: resolveConfig(rest).downloadGuard, raw: rest }
     : { enabled, config: resolved as DownloadGuardConfig }
+}
+
+function computerUseState(value: unknown): FeatureState<ComputerUseConfig> {
+  const { enabled, rest, resolved } = split('computer-use', value)
+  return resolved === undefined
+    ? { enabled, config: resolveComputerUseConfig(rest), raw: rest }
+    : { enabled, config: resolved as ComputerUseConfig, raw: { settings: { ...(resolved as ComputerUseConfig).settings }, callTimeoutMs: (resolved as ComputerUseConfig).callTimeoutMs } }
 }
 
 function resultCacheState(value: unknown): FeatureState<ResultCacheConfig> {
@@ -302,5 +313,7 @@ export const Config = settingsConfig(hostConfig, {
   // paths and the credential fence stay YAML-only by design.
   panel: { type: 'object', dict: { enabled: boolean('Capture OPS activity for developer diagnosis.') } },
   tui: { type: 'object', dict: { enabled: boolean('Link OPS into dsh-tui when both plugins are installed.') } },
+  // Computer-use settings are edited from the sidebar console; the row page only owns the switch.
+  'computer-use': { type: 'object', dict: { enabled: boolean('Publish Windows desktop and browser automation as ops_cu_* tools.') } },
   other: { type: 'object', dict: { pwsh7Link: boolean('With dsh-win-pwsh7, keep the host pwsh visible so the plugin can point it at pwsh 7.') } },
 })

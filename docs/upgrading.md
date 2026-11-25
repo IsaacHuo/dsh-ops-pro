@@ -2,9 +2,38 @@
 
 中文：[升级与卸载](升级与卸载.md).
 
+## Upgrading from 0.5.x to 1.1.0
+
+0.5.x shipped as the package `dsh-ops`; 1.1.0 ships as `dsh-ops-pro`, and `dsh-ops-pro` is the only
+executable name. To upgrade:
+
+1. Stop the host (desktop app, Web service or TUI) so loaded code is not replaced mid-flight.
+2. Remove the old package and install the new one:
+
+```console
+npx --yes dsh-ops-pro@latest install --profile desktop
+```
+
+   Use the matching profile for `web` and `tui`, or install `dsh-ops-pro` from the plugin marketplace
+   or the official `dsh plugin add`.
+3. Start the host, open the Plugins page and confirm the row id is `dsh-ops-pro` and the version is
+   1.1.0.
+4. Confirm the installation with `npx --yes dsh-ops-pro@latest status --profile desktop`.
+
+The state directory and log prefix do not change: `<DSH_HOME>/dsh-ops/` and `dsh-ops:`. Legacy
+component modules stay exported, so saved specifier overrides keep loading; no configuration needs
+manual deletion, and dropping such overrides returns the plugin to single-row behaviour.
+
+1.1.0 adds the `computer-use` row (disabled by default, Windows only), the Computer use and Usage
+panels, and two state files: `<DSH_HOME>/dsh-ops/computer-use.json` and `usage.json`. This plugin
+writes them atomically and never removes them on uninstall.
+
+Rollback: reinstall the 0.5.x package. The state directory is not rewritten, and
+`computer-use.json` and `usage.json` stay in place for the older version to ignore.
+
 ## Binary locations and update cleanup
 
-This candidate embeds complete Niubash 1.5.0; `@latest` remains the published release until publication. These locations apply equally to marketplace installs, `npx dsh-ops install --profile ...`, official `plugin ... add`, local tarballs, and direct npm/pnpm installs:
+This release embeds complete Niubash 1.5.0. These locations apply equally to marketplace installs, `npx dsh-ops install --profile ...`, official `plugin ... add`, local tarballs, and direct npm/pnpm installs:
 
 | Ownership | Binary location | Update/removal behavior |
 | --- | --- | --- |

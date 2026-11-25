@@ -17,6 +17,7 @@ import type { PluginInstaller } from './detail.js'
 import type { SettingsProps } from './forms.js'
 import { ROW_ID } from './row-schema.js'
 import { SETTINGS_CSS } from './styles.js'
+import { mountConsole } from './console/register.js'
 export const name = 'dsh-ops-settings'
 export const inject = ['slots', 'locale', 'remote']
 export async function apply(ctx: Context): Promise<void> {
@@ -45,7 +46,10 @@ export async function apply(ctx: Context): Promise<void> {
     ? `dsh-ops: the opsSettings remote is unavailable${mountError === undefined ? '' : `: ${mountError}`}`
     : ''
   const miss = async (): Promise<never> => { throw new Error(reason) }
-  const api: RuntimeRemote = mounted ?? { snapshot: miss, plan: miss, select: miss, execute: miss, applyDefaultPreset: miss }
+  const api: RuntimeRemote = mounted ?? { snapshot: miss, plan: miss, select: miss, execute: miss, applyDefaultPreset: miss,
+    console: miss, usage: miss, resetUsage: miss, saveComputerUse: miss }
+  // The sidebar console reads the same remote; an absent remote shows its failure there too.
+  mountConsole(ctx, api)
   // This namespace mounts separately from the gateway. Its lifetime only
   // controls the companion controls, so the row and its draft can stay mounted.
   let plugins: PluginInstaller | undefined
