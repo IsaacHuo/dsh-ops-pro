@@ -1,6 +1,6 @@
 /** A third-party tool plugin and unrelated presets use public imports only. */
 import { createScope } from '@deepseek-ai/dsh-scope'
-import { integration, registerNativeCapability, diagnose } from 'dsh-ops-pro/integration'
+import { integration, registerNativeCapability, diagnose } from '@huoweifang/dsh-ops-pro/integration'
 import { bootHost, shutdown, scopedToolNames } from './lib/host.mjs'
 import { assert, test, report, waitFor, withTempDir } from './lib/harness.mjs'
 import { prepareStep, executeCall } from './lib/executor.mjs'

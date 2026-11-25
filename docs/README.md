@@ -12,7 +12,7 @@ This directory groups documents by purpose. Entries marked 中/英 are bilingual
 | [预设与默认模式](预设与默认模式.md) · [Presets](presets.md) | 五个预设的差异与切换方式 | 中/英 |
 | [组件参考](组件参考.md) · [Component reference](component-reference.md) | 每个工具的参数、权限与输出契约 | 中/英 |
 | [常见问题](常见问题.md) · [Troubleshooting](troubleshooting.md) | 症状 → 原因 → 处理 | 中/英 |
-| [升级与卸载](升级与卸载.md) · [Upgrade and uninstall](upgrading.md) | 0.5.x → 1.1.0 迁移、回滚、状态文件 | 中/英 |
+| [升级与卸载](升级与卸载.md) · [Upgrade and uninstall](upgrading.md) | 0.5.x 与无 scope 1.1.0 → 1.1.1 迁移、回滚、状态文件 | 中/英 |
 
 ## 电脑操控 / Computer use
 
@@ -112,6 +112,7 @@ This directory groups documents by purpose. Entries marked 中/英 are bilingual
 | [设计决策 2026-11-15](设计决策-20261115.md) | 当日决策记录 | 中 |
 | [设计决策 2026-11-19](设计决策-20261119.md) · [English](design-decisions-20261119.md) | 当日决策记录 | 中/英 |
 | [插件细节](plugin-detail.zh.md) · [Plugin detail](plugin-detail.en.md) | 插件清单与面向市场的说明 | 中/英 |
+| [1.1.1 发布说明](release-notes/v1.1.1.md) | 1.1.1：scoped 包名、旧名弃用、自动迁移 | 中/英 |
 | [1.1.0 发布候选](release-1.1.0.md) | 1.1.0 发布记录：内容、继承关系、验证证据、风险与发布清单 | 英 |
 | [0.4.0 发布候选](0.4.0发布候选.md) · [0.4.0 release candidate](release-0.4.0.md) | 历史发布记录 | 中/英 |
 | [0.3.1 发布](release-0.3.1.md) | 历史发布记录 | 英 |

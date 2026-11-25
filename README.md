@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
+  <a href="https://www.npmjs.com/package/@huoweifang/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=6c5ce7"></a>
+  <a href="https://www.npmjs.com/package/@huoweifang/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=4b6fff"></a>
   <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
-  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/dsh-ops-pro?style=flat-square&color=2ea44f"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=2ea44f"></a>
 </p>
 
 # dsh-ops-pro
@@ -45,9 +45,12 @@ DSH 的工具运行时插件：Windows 上的 ops_bash，跨平台的 Rust 文�
 
 > 从 `dsh-ops` 迁移：两个包发布同一组 `ops_*` 工具，不能同时启用。先移除 `dsh-ops` 再安装本包，迁移步骤见[升级与卸载](docs/升级与卸载.md)。
 
+> 从无 scope 的 `dsh-ops-pro` 迁移：1.1.1 起 npm 包名为 **`@huoweifang/dsh-ops-pro`**，旧名已弃用。
+> 行 id、可执行命令与状态目录不变；`install --profile` 会先移除旧依赖再安装新包，详见[升级与卸载](docs/升级与卸载.md#从无-scope-的-110-升级到-111)。
+
 ### 官方插件市场
 
-在目标 DSH 应用的插件市场中输入 npm 包名 **`dsh-ops-pro`**，选择自定义地址，输入 `https://mirrors.huaweicloud.com/repository/npm/`，安装后选择启用。目前不推荐用npmmirror安装，有bug。
+在目标 DSH 应用的插件市场中输入 npm 包名 **`@huoweifang/dsh-ops-pro`**，选择自定义地址，输入 `https://mirrors.huaweicloud.com/repository/npm/`，安装后选择启用。目前不推荐用npmmirror安装，有bug。
 
 当然，如果你确定可以连接 npm 官方源那就选择官方源，如果你不确定那就按教程操作。
 
@@ -58,9 +61,9 @@ DSH 的工具运行时插件：Windows 上的 ops_bash，跨平台的 Rust 文�
 #### 安装方法
 
 ```console
-npx --yes dsh-ops-pro@latest install --profile desktop
-npx --yes dsh-ops-pro@latest install --profile web
-npx --yes dsh-ops-pro@latest install --profile tui
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile web
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile tui
 ```
 
 必须显式选择目标 profile；`tui` 映射到 **dsh-TUI 产品的 `dsh-tui` profile**，不是旧的 `tui` 目录。请先初始化目标应用。该入口委托官方 DSH CLI 安装，不另写一套 profile 锁与回滚逻辑。
@@ -72,9 +75,9 @@ npx --yes dsh-ops-pro@latest install --profile tui
 也可以直接使用官方命令：
 
 ```console
-dsh plugin --profile web add dsh-ops-pro
-dsh plugin --profile dsh-tui add dsh-ops-pro
-"<桌面安装目录>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops-pro
+dsh plugin --profile web add @huoweifang/dsh-ops-pro
+dsh plugin --profile dsh-tui add @huoweifang/dsh-ops-pro
+"<桌面安装目录>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add @huoweifang/dsh-ops-pro
 ```
 
 普通 DSH CLI 不能管理保留的 `desktop` profile；不要把它与桌面自带入口混淆。
@@ -88,18 +91,18 @@ dsh plugin --profile dsh-tui add dsh-ops-pro
 组件图标导出、profile 刷新及配置/schema 检查见
 [宿主兼容范围与展示元数据](docs/使用指南.md#宿主兼容范围与展示元数据)。
 
-重新运行相同的 `npx --yes dsh-ops-pro@latest install --profile ...`，或用官方 CLI `add dsh-ops-pro@latest`。按应用提示重载；替换已加载代码时重启应用。
+重新运行相同的 `npx --yes @huoweifang/dsh-ops-pro@latest install --profile ...`，或用官方 CLI `add @huoweifang/dsh-ops-pro@latest`。按应用提示重载；替换已加载代码时重启应用。
 
 #### 卸载与查看状态
 
 ```console
-npx --yes dsh-ops-pro@latest status --profile desktop
-npx --yes dsh-ops-pro@latest uninstall --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest status --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-把 `desktop` 换成 `web` 或 `tui` 即可。也可在市场卸载，或执行官方 `dsh plugin --profile ... remove dsh-ops-pro`。随包二进制由 profile 的包管理器管理；显式 provision 的副本不会随 npm 卸载，先查看 `dsh-ops-pro bash-runtime status`，再用 `dsh-ops-pro bash-runtime remove --dry-run` 预览、`remove --yes` 确认。不要误删系统 shell、其它 profile 或共享缓存。详见[二进制位置与更新清理](docs/升级与卸载.md#二进制位置与更新清理)。
+把 `desktop` 换成 `web` 或 `tui` 即可。也可在市场卸载，或执行官方 `dsh plugin --profile ... remove @huoweifang/dsh-ops-pro`。随包二进制由 profile 的包管理器管理；显式 provision 的副本不会随 npm 卸载，先查看 `dsh-ops-pro bash-runtime status`，再用 `dsh-ops-pro bash-runtime remove --dry-run` 预览、`remove --yes` 确认。不要误删系统 shell、其它 profile 或共享缓存。详见[二进制位置与更新清理](docs/升级与卸载.md#二进制位置与更新清理)。
 
-旧版显式 provision 的 `<DSH_HOME>/dsh-ops/` 文件（provision 的 shell，以及早期版本可 provision 的 FastCtx 运行时）需单独清理：`npx --yes dsh-ops-pro@latest uninstall --yes`。已移除的后台组件留下的 `~/.fastctx/` 状态默认不删；需要时显式加 `--purge-fastctx`。
+旧版显式 provision 的 `<DSH_HOME>/dsh-ops/` 文件（provision 的 shell，以及早期版本可 provision 的 FastCtx 运行时）需单独清理：`npx --yes @huoweifang/dsh-ops-pro@latest uninstall --yes`。已移除的后台组件留下的 `~/.fastctx/` 状态默认不删；需要时显式加 `--purge-fastctx`。
 
 组件 bundle 只插入一个 `dsh-ops-pro` 行：其中按预设配置常驻、动态加载、Bash、文件替换与宿主 PowerShell 隐藏，并可通过 `presets` 显式接入自定义消费者。内置与外部预设共用装配流程。旧 `mode-*`、`discovery`、`compat`、`panel`、`tui` 及更早的 `shell`、`file`、`ptc`、`hide-official` 行覆盖须迁入单行；兼容开关已移除，改用各项隐藏开关。见[配置参考](docs/配置参考.md)。
 

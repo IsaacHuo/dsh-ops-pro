@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/dsh-ops-pro?style=flat-square&color=6c5ce7"></a>
-  <a href="https://www.npmjs.com/package/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-ops-pro?style=flat-square&color=4b6fff"></a>
+  <a href="https://www.npmjs.com/package/@huoweifang/dsh-ops-pro"><img alt="npm" src="https://img.shields.io/npm/v/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=6c5ce7"></a>
+  <a href="https://www.npmjs.com/package/@huoweifang/dsh-ops-pro"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=4b6fff"></a>
   <a href="https://github.com/IsaacHuo/dsh-ops-pro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/IsaacHuo/dsh-ops-pro?style=flat-square&color=eab308"></a>
-  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/dsh-ops-pro?style=flat-square&color=2ea44f"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@huoweifang%2Fdsh-ops-pro?style=flat-square&color=2ea44f"></a>
 </p>
 
 # dsh-ops-pro
@@ -73,9 +73,13 @@ Nothing beyond these requirements is a dependency. Computer use reads the Window
 
 ### Official plugin marketplace
 
+> Migrating from the unscoped `dsh-ops-pro`: since 1.1.1 the npm package is **`@huoweifang/dsh-ops-pro`** and
+> the old name is deprecated. The row id, executable and state directory are unchanged; `install --profile`
+> removes the old dependency before adding the scoped package. See [upgrade and uninstall](docs/upgrading.md#upgrading-from-the-unscoped-110-to-111).
+
 > Migrating from `dsh-ops`: both packages publish the same `ops_*` tools and cannot be enabled together. Remove `dsh-ops` first, then install this package; see [upgrading](docs/upgrading.md).
 
-In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops-pro`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
+In the target DSH application's plugin marketplace, enter the npm package name **`@huoweifang/dsh-ops-pro`**, choose a custom registry and enter `https://mirrors.huaweicloud.com/repository/npm/`, install, then enable it. Installing through npmmirror is currently not recommended — it has bugs.
 
 Of course, if you are sure you can reach the official npm registry, pick the official registry; if you are not sure, follow the steps above.
 
@@ -86,9 +90,9 @@ Of course, if you are sure you can reach the official npm registry, pick the off
 #### Installation
 
 ```console
-npx --yes dsh-ops-pro@latest install --profile desktop
-npx --yes dsh-ops-pro@latest install --profile web
-npx --yes dsh-ops-pro@latest install --profile tui
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile web
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile tui
 ```
 
 An explicit target profile is required. `tui` maps to the **dsh-TUI product's `dsh-tui` profile**, not the old `tui` directory. Initialize the target application first. This entry point delegates installation to the official DSH CLI rather than implementing a separate profile lock and rollback logic.
@@ -100,9 +104,9 @@ Add `--dry-run` to an install or uninstall command to preview it. The preview re
 You can also use the official commands directly:
 
 ```console
-dsh plugin --profile web add dsh-ops-pro
-dsh plugin --profile dsh-tui add dsh-ops-pro
-"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops-pro
+dsh plugin --profile web add @huoweifang/dsh-ops-pro
+dsh plugin --profile dsh-tui add @huoweifang/dsh-ops-pro
+"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add @huoweifang/dsh-ops-pro
 ```
 
 A regular DSH CLI cannot manage the reserved `desktop` profile; do not confuse it with the desktop app's own entry point.
@@ -117,18 +121,18 @@ The 0.5 series supports DSH **from 0.2.2-rc.1**, not 0.2.0/0.2.1 or earlier 0.2.
 [host versions and display metadata](docs/usage.md#host-compatibility-and-display-metadata)
 for component icon exports, profile refresh and config/schema checks.
 
-Re-run the same `npx --yes dsh-ops-pro@latest install --profile ...`, or use the official CLI `add dsh-ops-pro@latest`. Reload when the app asks; restart the app when replacing code that is already loaded.
+Re-run the same `npx --yes @huoweifang/dsh-ops-pro@latest install --profile ...`, or use the official CLI `add @huoweifang/dsh-ops-pro@latest`. Reload when the app asks; restart the app when replacing code that is already loaded.
 
 #### Uninstall and status
 
 ```console
-npx --yes dsh-ops-pro@latest status --profile desktop
-npx --yes dsh-ops-pro@latest uninstall --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest status --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops-pro bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
+Replace `desktop` with `web` or `tui` as needed. You can also uninstall from the marketplace, or run the official `dsh plugin --profile ... remove @huoweifang/dsh-ops-pro`. Profile uninstall removes plugin dependency references, including the optional Windows Bash payload. Remove separately provisioned Bash with `dsh-ops-pro bash-runtime remove --yes`; this does not delete the system shell, copies in other profiles, or the package manager's shared cache.
 
-Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
+Old files explicitly provisioned by earlier versions under `<DSH_HOME>/dsh-ops/` (provisioned shells, and the FastCtx runtime earlier versions could provision) need separate cleanup: `npx --yes @huoweifang/dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is not deleted by default; add `--purge-fastctx` when needed.
 
 The former `dsh-ops/background` component (FastCtx background jobs) has been removed. A profile that still has its row keeps loading: the row publishes nothing and logs one warning, and can be deleted.
 

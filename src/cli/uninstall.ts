@@ -14,7 +14,7 @@ import { errorMessage } from '../shells/types.js'
 import path from 'node:path'
 import { fastctxDataDir, managedDir } from './report.js'
 import { unsealDirectorySync } from '../niubash/seal.js'
-import { PACKAGE_NAME } from '../identity.js'
+import { PACKAGE_NAME, LEGACY_PACKAGE_NAMES } from '../identity.js'
 
 /**
  * Render a byte count for a human report.
@@ -153,6 +153,7 @@ export function commandUninstall({ yes, purgeFastctx, dryRun }: { yes: boolean; 
 
   console.log('\nplugin installation (not handled by this command)')
   console.log(`  action:    remove the plugin itself with \`dsh plugin --profile <profile> remove ${PACKAGE_NAME}\`,`)
+  if (LEGACY_PACKAGE_NAMES.length > 0) console.log(`             (an older unscoped install is named ${LEGACY_PACKAGE_NAMES.join(' or ')})`)
   console.log('             or the plugin_manager `remove_bundle` tool; this command only removes the')
   console.log('             runtime and state the plugin wrote outside the profile.')
 

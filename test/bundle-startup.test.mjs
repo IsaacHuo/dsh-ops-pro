@@ -21,7 +21,7 @@ resolveWorker({})
 // The shipped data-only bundle uses the public serialized Loader expression for platform defaults.
 const rows = parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'cordis.patch.yml'), 'utf8'))[0].insert
 const enabled = row => !(isJsExpr(row.disabled) ? evaluate({ process }, row.disabled.__jsExpr) : row.disabled)
-assert.deepEqual(rows.map(row => [row.id, row.name]), [['dsh-ops-pro', 'dsh-ops-pro']])
+assert.deepEqual(rows.map(row => [row.id, row.name]), [['dsh-ops-pro', '@huoweifang/dsh-ops-pro']])
 
 /** Mount the shipped enabled rows, each under its own component name. */
 async function mountBundle(ctx) {

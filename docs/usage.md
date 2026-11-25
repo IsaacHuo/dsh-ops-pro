@@ -90,7 +90,7 @@ PowerShell 7 is unavailable there.
 
 ### Official plugin marketplace
 
-In the target DSH application's plugin marketplace, enter the npm package name **`dsh-ops-pro`**, install, then enable. Installation belongs to the currently running profile, which is `desktop` for the desktop app. The main package declares the Windows Bash payload as an optional dependency (`@dsh-ops/bash-win32-x64@0.2.1`), so a Windows x64 install automatically fetches the pinned PortableGit runtime (GNU bash 5.3.15); other platforms skip it and keep the system Bash. PowerShell stays under host control. Installation runs no shell downloader and does not change system PATH.
+In the target DSH application's plugin marketplace, enter the npm package name **`@huoweifang/dsh-ops-pro`**, install, then enable. Installation belongs to the currently running profile, which is `desktop` for the desktop app. The main package declares the Windows Bash payload as an optional dependency (`@dsh-ops/bash-win32-x64@0.2.1`), so a Windows x64 install automatically fetches the pinned PortableGit runtime (GNU bash 5.3.15); other platforms skip it and keep the system Bash. PowerShell stays under host control. Installation runs no shell downloader and does not change system PATH.
 
 ### Optional Bash runtime
 
@@ -120,9 +120,9 @@ Long command output that overflows the in-memory tail is spilled by the host sub
 ### One-command npm installation
 
 ```console
-npx --yes dsh-ops-pro@latest install --profile desktop
-npx --yes dsh-ops-pro@latest install --profile web
-npx --yes dsh-ops-pro@latest install --profile tui
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile web
+npx --yes @huoweifang/dsh-ops-pro@latest install --profile tui
 ```
 
 An explicit target profile is required. `tui` maps to the **dsh-TUI product's `dsh-tui` profile**, not the old `tui` directory. Initialize the target application first. This entry point delegates installation to the official DSH CLI rather than implementing separate profile locking and rollback logic.
@@ -132,16 +132,16 @@ Desktop must use the CLI bundled with the desktop application; the default auto-
 ### Using the official commands directly
 
 ```console
-dsh plugin --profile web add dsh-ops-pro
-dsh plugin --profile dsh-tui add dsh-ops-pro
-"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add dsh-ops-pro
+dsh plugin --profile web add @huoweifang/dsh-ops-pro
+dsh plugin --profile dsh-tui add @huoweifang/dsh-ops-pro
+"<desktop installation>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add @huoweifang/dsh-ops-pro
 ```
 
 The ordinary DSH CLI cannot manage the reserved `desktop` profile; do not confuse it with the desktop app's bundled entry point.
 
 ### Which channels install a loadable plugin
 
-`add dsh-ops-pro` resolves the published registry tarball, which carries the compiled
+`add @huoweifang/dsh-ops-pro` resolves the published registry tarball, which carries the compiled
 `lib/` and every staged `runtime/` target. A fully built source tarball is also supported.
 Direct Git installation or an unbuilt checkout is unsupported. `.gitignore` keeps `lib/` and `runtime/` out
 of the repository, and the native worker is staged by `npm run build:ptc`, which needs cargo
@@ -168,7 +168,7 @@ test profile, refresh the bundle through the official installer, then inspect th
 composition and schema without starting a model request:
 
 ```console
-dsh plugin --profile ops-test add dsh-ops-pro@latest
+dsh plugin --profile ops-test add @huoweifang/dsh-ops-pro@latest
 dsh --profile ops-test --dump-config
 dsh --profile ops-test --dump-config-schema
 ```
@@ -186,22 +186,22 @@ and its validated defaults; the real-host settings suites verify saves and reloa
 For inherited whitelist limits, missing discovery rows and provider tool-change
 errors, see [host integration troubleshooting](host-integration.md).
 
-Repeat the same `npx --yes dsh-ops-pro@latest install --profile ...` command, or use the official CLI's `add dsh-ops-pro@latest`. Reload as requested by the application; restart it when replacing already-loaded code.
+Repeat the same `npx --yes @huoweifang/dsh-ops-pro@latest install --profile ...` command, or use the official CLI's `add @huoweifang/dsh-ops-pro@latest`. Reload as requested by the application; restart it when replacing already-loaded code.
 
 ---
 
 ## Remove and check status
 
 ```console
-npx --yes dsh-ops-pro@latest status --profile desktop
-npx --yes dsh-ops-pro@latest uninstall --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest status --profile desktop
+npx --yes @huoweifang/dsh-ops-pro@latest uninstall --profile desktop
 ```
 
-Replace `desktop` with `web` or `tui` as appropriate. You can also uninstall in the marketplace or run the official `dsh plugin --profile ... remove dsh-ops-pro`. Binaries are managed as profile plugin dependencies; uninstalling removes dependency references without deleting system shells, copies in other profiles or shared package-manager caches.
+Replace `desktop` with `web` or `tui` as appropriate. You can also uninstall in the marketplace or run the official `dsh plugin --profile ... remove @huoweifang/dsh-ops-pro`. Binaries are managed as profile plugin dependencies; uninstalling removes dependency references without deleting system shells, copies in other profiles or shared package-manager caches.
 
-A successful `uninstall --profile` also clears a profile default that still names `ops-ptc` (`selectedDefault` under `agent-preset-registry`), so new sessions fall back to the registry default instead of a preset that no longer exists. Another default is left alone, and a file whose layout the command does not recognise is never rewritten; it prints the manual step instead. If you removed the plugin from the marketplace or with `dsh plugin ... remove`, run `npx --yes dsh-ops-pro@latest repair-default --profile desktop` (add `--dry-run` to preview).
+A successful `uninstall --profile` also clears a profile default that still names `ops-ptc` (`selectedDefault` under `agent-preset-registry`), so new sessions fall back to the registry default instead of a preset that no longer exists. Another default is left alone, and a file whose layout the command does not recognise is never rewritten; it prints the manual step instead. If you removed the plugin from the marketplace or with `dsh plugin ... remove`, run `npx --yes @huoweifang/dsh-ops-pro@latest repair-default --profile desktop` (add `--dry-run` to preview).
 
-Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files (provisioned shells, and the FastCtx runtime earlier versions could provision) must be cleaned separately with `npx --yes dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is kept by default; add `--purge-fastctx` explicitly to remove it as well.
+Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files (provisioned shells, and the FastCtx runtime earlier versions could provision) must be cleaned separately with `npx --yes @huoweifang/dsh-ops-pro@latest uninstall --yes`. The `~/.fastctx/` state left by the removed background component is kept by default; add `--purge-fastctx` explicitly to remove it as well.
 
 ---
 

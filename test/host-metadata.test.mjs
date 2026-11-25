@@ -62,7 +62,7 @@ await test('the host composes every shipped row and refuses a missing override t
   // at runtime, so no layer of this package may override the host preset registry.
   const rows = composeBundle([HOST_PRESET_LAYER, patch], boot.composeEntries)
   assert.deepEqual(rows.map(row => row.id), ['agent-preset-registry', 'dsh-ops-pro'])
-  assert.deepEqual(rows.find(row => row.id === 'dsh-ops-pro').name, 'dsh-ops-pro')
+  assert.deepEqual(rows.find(row => row.id === 'dsh-ops-pro').name, '@huoweifang/dsh-ops-pro')
   assert.deepEqual(rows.find(row => row.id === 'agent-preset-registry').config,
     { default: 'standard', selectedDefault: 'standard' }, 'this bundle leaves the host default preset alone')
   const upstream = [{ insert: [{ id: 'upstream', name: 'cordis:fixture' }] }]

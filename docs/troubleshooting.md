@@ -26,7 +26,7 @@ Measured on 2026-10-12: on `registry.npmmirror.com`, `@dsh-ops/bash-win32-x64` r
 **Preferred remedy**: `provision-shells` bypasses the registry, fetches the pinned asset from the upstream GitHub Release, checks its sha256, unpacks it and writes a `.provisioned.json` receipt.
 
 ```console
-npx --yes dsh-ops-pro@latest provision-shells --bash
+npx --yes @huoweifang/dsh-ops-pro@latest provision-shells --bash
 ```
 
 Behind a proxy (`HTTPS_PROXY` is handed to curl explicitly as `--proxy` and is inherited through the environment as well):
@@ -34,19 +34,19 @@ Behind a proxy (`HTTPS_PROXY` is handed to curl explicitly as `--proxy` and is i
 ```console
 :: cmd
 set HTTPS_PROXY=http://127.0.0.1:<clash-port>
-npx --yes dsh-ops-pro@latest provision-shells --bash
+npx --yes @huoweifang/dsh-ops-pro@latest provision-shells --bash
 ```
 
 ```console
 # PowerShell
 $env:HTTPS_PROXY = 'http://127.0.0.1:<clash-port>'
-npx --yes dsh-ops-pro@latest provision-shells --bash
+npx --yes @huoweifang/dsh-ops-pro@latest provision-shells --bash
 ```
 
 **To check the result, run the profile's own copy**: `ladder` reports the bundled rung of **the copy that runs it**, so `npx … ladder` inspects the npx cache copy and its answer has nothing to do with your profile.
 
 ```console
-node "%USERPROFILE%\.dsh\profiles\<profile>\node_modules\dsh-ops-pro\bin\dsh-ops.mjs" ladder
+node "%USERPROFILE%\.dsh\profiles\<profile>\node_modules/@huoweifang/dsh-ops-pro\bin\dsh-ops.mjs" ladder
 ```
 
 The provisioned copy lives in `<DSH_HOME>/dsh-ops/shells` (shared across profiles, so one provision covers every profile on the machine) and outranks the bundled copy when the shells are resolved; `ladder` reports `source: provisioned`.
@@ -113,9 +113,9 @@ Symptom, in a read-only or workspace-write session: `EXECUTOR_UNAVAILABLE: ops_b
 
 What to do:
 
-- Remove `bashPath` (and `allowSystemShellFallback`) from the mode row so the bundled pinned bash is used; if that payload is missing, run `npx --yes dsh-ops-pro@latest provision-shells --bash`.
+- Remove `bashPath` (and `allowSystemShellFallback`) from the mode row so the bundled pinned bash is used; if that payload is missing, run `npx --yes @huoweifang/dsh-ops-pro@latest provision-shells --bash`.
 - Or switch the session to `danger-full-access`, where `bashPath` runs directly.
-- Check with the profile's own copy: `node "<profile>\node_modules\dsh-ops-pro\bin\dsh-ops.mjs" ladder --config <file>` reports `restricted: yes/no` for the resolved bash.
+- Check with the profile's own copy: `node "<profile>\node_modules/@huoweifang/dsh-ops-pro\bin\dsh-ops.mjs" ladder --config <file>` reports `restricted: yes/no` for the resolved bash.
 
 ### A full-access `ops_bash` child seems to keep the restricted Low token
 
@@ -433,7 +433,7 @@ It is state left by the removed background component and is kept by default; add
 
 ### Legacy provisioned files were not cleaned up
 
-Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files must be cleaned separately with `npx --yes dsh-ops-pro@latest uninstall --yes`.
+Legacy explicitly provisioned `<DSH_HOME>/dsh-ops/` files must be cleaned separately with `npx --yes @huoweifang/dsh-ops-pro@latest uninstall --yes`.
 
 ---
 

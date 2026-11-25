@@ -2,14 +2,14 @@
 
 English | [中文](集成接口.md)
 
-This document describes the opt-in preset integration exported as `dsh-ops-pro/integration`.
+This document describes the opt-in preset integration exported as `@huoweifang/dsh-ops-pro/integration`.
 Installing OPS or importing the module publishes nothing. The preset owner must mount one
 integration inside its own composition, or provide an explicit preset id.
 
 ## Minimal Native integration
 
 ```js
-import { integration } from 'dsh-ops-pro/integration'
+import { integration } from '@huoweifang/dsh-ops-pro/integration'
 export default integration({ preset: 'acme-chat' })
 ```
 

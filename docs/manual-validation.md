@@ -1,12 +1,12 @@
 # Manual acceptance
 
-中文：[手动验收](手动验收.md). The 1.1.0 checklist below is the current release checklist; the 0.4.0 checklist after it is kept as a historical record. These are operator checks, not claims that every UI or deployment has been exercised. Use a disposable profile and workspace; retain commands, observed results, platform/host versions and the candidate commit.
+中文：[手动验收](手动验收.md). The 1.1.1 checklist below is the current release checklist; the 0.4.0 checklist after it is kept as a historical record. These are operator checks, not claims that every UI or deployment has been exercised. Use a disposable profile and workspace; retain commands, observed results, platform/host versions and the candidate commit.
 
-## 1.1.0 computer use (current)
+## 1.1.1 computer use (current)
 
 Run on a real Windows 10/11 x64 desktop. Nothing in this list is exercised by CI: the repository suites cover the vendored upstream units with mocks, not a live desktop. Record the OS build, the DSH version, the commit and a screenshot per step.
 
-1. **Install and identity.** In a disposable profile, run `npx --yes dsh-ops-pro@latest install --profile desktop`, start the host and confirm exactly one row with id `dsh-ops-pro` at 1.1.0; `dsh-ops-pro status --profile desktop` agrees. The `ops_cu_*` tools are absent while the computer-use row is disabled.
+1. **Install and identity.** In a disposable profile, run `npx --yes @huoweifang/dsh-ops-pro@latest install --profile desktop`, start the host and confirm exactly one row with id `dsh-ops-pro` at 1.1.1; `dsh-ops-pro status --profile desktop` agrees. The `ops_cu_*` tools are absent while the computer-use row is disabled.
 2. **Enable.** Turn the computer-use row on, restart, and confirm the 26 `ops_cu_*` tools appear. With the row off again, they disappear and no child process remains (check with `tasklist`).
 3. **Desktop identification.** Open a normal Win32 application (Notepad is enough). `cu_snapshot` and `cu_accessibility_tree` return an element tree; `cu_find` locates a menu item by name; `cu_invoke` activates it. Do not move the mouse: the lane works in the background, so the pointer position must be unchanged afterwards.
 4. **Element ids.** Reuse an id from step 3 for `cu_element_info` and one action; then activate another window, return, and confirm the stale id is rejected rather than acting on the wrong element. `cu_set_value` with `elementId: "new-tab"` in the browser lane opens a page.

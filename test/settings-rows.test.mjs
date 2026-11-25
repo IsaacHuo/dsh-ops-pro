@@ -170,7 +170,7 @@ await test('the disclosure card reads the saved rows and writes exactly one tier
 })
 
 await test('the status section belongs to the bundle and to the one row', () => {
-  const pkg = { name: 'dsh-ops-pro', installed: true, enabled: true, rows: [] }
+  const pkg = { name: '@huoweifang/dsh-ops-pro', installed: true, enabled: true, rows: [] }
   // Other plugins' pages mount the same slot; the section must stay off them.
   assert.equal(hasStatus({ kind: 'bundle', pkg: { ...pkg, name: 'dsh-win-pwsh7' } }), false)
   assert.equal(hasStatus({ kind: 'row', pkg: { ...pkg, name: 'dsh-win-pwsh7' }, row: { rowId: 'dsh-ops-pro', moduleName: 'dsh-ops', enabled: true } }), false)
@@ -257,7 +257,7 @@ await test('a linked development install still finds the profile that mounts it'
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'companion-home-'))
   const pkg = path.join(home, 'checkout', 'dsh-ops')
   fs.mkdirSync(path.join(pkg, 'lib'), { recursive: true })
-  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name: 'dsh-ops-pro', version: '0.0.0' }))
+  fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name: '@huoweifang/dsh-ops-pro', version: '0.0.0' }))
   const profile = path.join(home, 'profiles', 'work')
   const modules = path.join(profile, 'node_modules')
   fs.mkdirSync(path.join(modules, 'dsh-win-pwsh7'), { recursive: true })
@@ -265,7 +265,8 @@ await test('a linked development install still finds the profile that mounts it'
   // A `link:` install is a junction from the profile to the checkout, so the module
   // URL sits outside every profile; matching the mounted package names it anyway.
   // A junction is the Windows spelling of a directory link.
-  fs.symlinkSync(pkg, path.join(modules, 'dsh-ops-pro'), process.platform === 'win32' ? 'junction' : 'dir')
+  fs.mkdirSync(path.join(modules, '@huoweifang'), { recursive: true })
+  fs.symlinkSync(pkg, path.join(modules, '@huoweifang', 'dsh-ops-pro'), process.platform === 'win32' ? 'junction' : 'dir')
   const from = path.join(pkg, 'lib', 'index.js')
   assert.equal(companionVersion({ env: { DSH_HOME: home }, from, sweep: false, now: () => Date.now() + 6e9 }), '9.9.7')
   // A profile that mounts a different copy does not answer for this one.

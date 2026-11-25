@@ -42,7 +42,7 @@ added 45 packages in 499ms
 
 根包的 `os` 已声明为 `["win32", "linux"]`，因此 npm 在 Linux 上不会施加平台否决。
 若你手上的树其 `os` 仍是 Windows-only（例如已发布的 0.3.0 tarball），同一条命令会在
-`EBADPLATFORM` 停下，已发布的 `npx dsh-ops-pro@latest install` 入口在 Linux 上也不可用。
+`EBADPLATFORM` 停下，已发布的 `npx @huoweifang/dsh-ops-pro@latest install` 入口在 Linux 上也不可用。
 与 tarball 如何发布无关、始终可用的路径见
 [第 5 节：安装进 profile](#5-安装进-profile)。
 
@@ -152,7 +152,7 @@ Validated 1 native runtime(s); no install-time scripts or permission changes.
 
 ## 5. 安装进 profile
 
-`npx dsh-ops-pro@latest install` 是文档里的 Windows 路径，依赖一个 Windows-only 的 npm
+`npx @huoweifang/dsh-ops-pro@latest install` 是文档里的 Windows 路径，依赖一个 Windows-only 的 npm
 tarball。在 Linux 上，请通过 DSH 自己的插件管理器从检出目录安装，它会转发给 pnpm：
 
 ```console

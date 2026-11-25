@@ -10,7 +10,7 @@
 import type { Context } from '../adapter/dsh/types.js'
 import type {} from '../adapter/dsh/types.js'
 import { LEGACY_FASTCTX_KEYS } from './resolve.js'
-import { PACKAGE_NAME } from '../identity.js'
+import { PACKAGE_NAME, ROW_ID } from '../identity.js'
 
 export const CONFIG_UPDATE_VERSION = 2
 
@@ -32,7 +32,7 @@ export function updatedConfig(value: unknown = {}, disableEvaluatedFallback = fa
 }
 
 // `dsh-ops/background` is a no-op stub that reads no config, so it needs no migration.
-const OWN_NAMES = new Set([PACKAGE_NAME, `${PACKAGE_NAME}/shell`, `${PACKAGE_NAME}/file`])
+const OWN_NAMES = new Set([PACKAGE_NAME, ROW_ID, `${ROW_ID}/shell`, `${ROW_ID}/file`])
 const pending = new WeakSet()
 
 // #136's discipline, kept in the middle of #138's persistence: a missing editor and a refused save

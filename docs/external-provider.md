@@ -3,10 +3,10 @@
 English | [中文](外部工具提供者.md)
 
 An advanced plugin may opt into OPS discovery without changing OPS source. Mount
-`dsh-ops-pro/integration` for the target preset and register its own scoped Native capability:
+`@huoweifang/dsh-ops-pro/integration` for the target preset and register its own scoped Native capability:
 
 ```js
-import { registerNativeCapability } from 'dsh-ops-pro/integration'
+import { registerNativeCapability } from '@huoweifang/dsh-ops-pro/integration'
 export async function apply(ctx) {
   await registerNativeCapability(ctx, {
     search: 'catalogue lookup acme records',

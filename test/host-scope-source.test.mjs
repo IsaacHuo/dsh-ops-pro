@@ -88,7 +88,7 @@ await test('without a host copy the adapter still loads the bare resolution', ()
 await test('an installed profile resolves the host copy over a hoisted one (#752)', () =>
   withTempDir('host-scope-installed', async root => {
     // The plugin lives in the profile tree, where a bundle can hoist its own copy.
-    const installed = path.join(root, 'profiles', 'web', 'node_modules', 'dsh-ops-pro', 'lib', 'adapter', 'dsh', 'host.js')
+    const installed = path.join(root, 'profiles', 'web', 'node_modules', '@huoweifang', 'dsh-ops-pro', 'lib', 'adapter', 'dsh', 'host.js')
     fs.mkdirSync(path.dirname(installed), { recursive: true })
     fs.copyFileSync(adapter, installed)
     scopeCopy(path.join(root, 'profiles', 'web'), 'hoisted')

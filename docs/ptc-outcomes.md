@@ -67,7 +67,7 @@ ships this file. It is build output and must not be edited by hand. TypeScript
 consumers can use the type-only package export:
 
 ```ts
-import type { OpsSdk, Outcome, StorageReference } from "dsh-ops-pro/ptc-sdk";
+import type { OpsSdk, Outcome, StorageReference } from "@huoweifang/dsh-ops-pro/ptc-sdk";
 ```
 
 `OpsSdk` describes the complete supported API, not the bindings currently loaded

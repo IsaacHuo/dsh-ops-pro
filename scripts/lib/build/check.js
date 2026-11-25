@@ -16,7 +16,7 @@ import { checkUnixWorkerModes } from './tar-modes.js'
 import path from 'node:path'
 import { stageDir } from './assemble.js'
 import { injectedOptionalDependencies, printInjection } from './publish-dir.js'
-import { mainManifest, readJsonIfExists, sha256File, size, treeFiles } from './util.js'
+import { flattenPackageName, mainManifest, readJsonIfExists, sha256File, size, tarballName, treeFiles } from './util.js'
 
 /**
  * Verify every artifact this release would publish, without producing any.
@@ -112,7 +112,7 @@ export async function stepCheck(context) {
     // npm names a tarball after the package name with the scope marker removed
     // and the separator replaced (`@scope/name` -> `scope-name-<version>.tgz`),
     // so the expected file is derived, not searched for.
-    const tarball = `${pkg.name.replace(/^@/u, '').replace(/\//gu, '-')}-${pkg.version}.tgz`
+    const tarball = tarballName(pkg.name, pkg.version)
     expectedTarballs.push(tarball)
     if (!fs.existsSync(path.join(dist, tarball))) {
       missing('tarball', `${pkg.name} is not packed (expected ${tarball})`)
@@ -132,7 +132,7 @@ export async function stepCheck(context) {
   // else: an entry left over from an earlier build is a digest waiting to be
   // trusted about bytes that are no longer there, and an artifact missing from
   // it cannot be verified offline at all.
-  const mainTarballName = `${mainManifest().name}-${mainManifest().version}.tgz`
+  const mainTarballName = tarballName(mainManifest().name, mainManifest().version)
   if (fs.existsSync(path.join(dist, mainTarballName))) expectedTarballs.push(mainTarballName)
   if (sums.size > 0) {
     const extra = [...sums.keys()].filter((name) => !expectedTarballs.includes(name))
@@ -151,9 +151,9 @@ export async function stepCheck(context) {
   // Each platform package is compared with its own declared pin, not with the main package
   // version: the restored Windows Bash payload stays at 0.2.1 while the plugin is at 0.4.0.
   const declaredVersions = new Map(context.packages.map((pkg) => [pkg.name, pkg.version]))
-  const publishDir = path.join(dist, 'publish', `${manifest.name}-${manifest.version}`)
+  const publishDir = path.join(dist, 'publish', `${flattenPackageName(manifest.name)}-${manifest.version}`)
   const publishManifest = readJsonIfExists(path.join(publishDir, 'package.json'))
-  const mainTarball = path.join(dist, `${manifest.name}-${manifest.version}.tgz`)
+  const mainTarball = path.join(dist, tarballName(manifest.name, manifest.version))
   if (publishManifest === undefined) {
     missing('publish', `${path.relative(dist, publishDir)}/package.json does not exist`)
   } else {

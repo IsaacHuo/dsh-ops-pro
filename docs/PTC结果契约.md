@@ -56,7 +56,7 @@ return { code: result.error.code, effectState: result.error.effectState,
 可以使用纯类型导出：
 
 ```ts
-import type { OpsSdk, Outcome, StorageReference } from "dsh-ops-pro/ptc-sdk";
+import type { OpsSdk, Outcome, StorageReference } from "@huoweifang/dsh-ops-pro/ptc-sdk";
 ```
 
 `OpsSdk` 描述完整受支持 API，不代表某个 agent 已加载全部绑定；宿主实际 SDK 段只包含
