@@ -220,8 +220,11 @@ if (release) {
   }
   check(/name: Refuse a moved tag/.test(text), 'release.yml: refuses a tag that was force-moved away from the built commit')
   check(/name: Require a green CI required check/.test(text), 'release.yml: requires a green CI required check on the tagged commit')
-  check(/node scripts\/verify-gate\.mjs --skip-install/.test(text), 'release.yml: the release gate runs the same verify-gate as CI')
-  check(/node bin\/check-release\.mjs/.test(text), 'release.yml: the release gate checks the release closure')
+  const releaseGate = (release.doc.jobs?.gate?.steps ?? []).find(step =>
+    /node scripts\/verify-gate\.mjs --skip-install/.test(String(step.run ?? '')))
+  check(Boolean(releaseGate), 'release.yml: the release gate runs the same verify-gate as CI')
+  check(releaseGate?.shell === 'bash', 'release.yml: the release gate uses the same fail-fast Bash shell as CI')
+  check(/node bin\/check-release\.mjs/.test(String(releaseGate?.run ?? '')), 'release.yml: the release gate checks the release closure')
   // The comment above the publish step names `--clobber` to explain why it is absent; only the
   // commands matter, so assert on the publish job's run blocks rather than on the raw file.
   const publishRuns = (release.doc.jobs?.publish?.steps ?? []).map(step => String(step.run ?? '')).join('\n')
