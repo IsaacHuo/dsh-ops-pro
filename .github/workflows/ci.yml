@@ -2,11 +2,12 @@ name: Cross-platform validation
 on:
   # A merge must validate itself. Without this, a branch was only ever checked when someone
   # remembered to dispatch the workflow by hand — which is how a stale number shipped in #134.
-  # Release branches validate on push exactly like `main`; each 0.4.0 slice lands on its
-  # staging branch before the final release PR.
+  # Release branches validate on push exactly like `main`, so the commit a release tag will
+  # point at already carries a green `CI required` — `release.yml` refuses a tag without one.
   push:
     # pro/next is the fork's integration branch: every slice lands there before main.
-    branches: [main, 0.3.2, release/0.4.0, pro/next]
+    # `release/*` keeps a staged release branch gated until it is tagged.
+    branches: [main, 0.3.2, pro/next, 'release/*']
   # Every PR needs evidence, including stacked changes targeting a feature branch.
   # No target-branch or path filter: an omitted run cannot satisfy CI required.
   pull_request:

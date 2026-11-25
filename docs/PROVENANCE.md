@@ -3,6 +3,38 @@
 What this repository is, where its parts came from, what was verified, and what
 was not.
 
+## 1.1.0 — 2026-11-25: computer use, sidebar console, usage statistics
+
+### Computer use runtime
+
+`lib/computer-use/` is `dsh-computer-use-win` 0.6.3 at commit `acfb689`, MIT, Copyright (c) 2026 Yu-tao-Li and Copyright (c) 2026 cgissing. Upstream: https://github.com/Yu-tao-Li/dsh-computer-use-win . The license text and the derivation record are `licenses/computer-use/LICENSE` and `licenses/computer-use/THIRD_PARTY.md`; the runtime is a derivative of https://github.com/cgissing/windows-computer-use .
+
+Its files ship byte-identical to upstream and are pinned by SHA-256 in
+`vendor/computer-use/upstream.json`. `vendor/computer-use/UPSTREAM.md` records the pin and the
+update procedure: re-vendor the whole tree and rewrite the manifest, never patch a vendored file
+in place, and take behavioural changes upstream first. Four upstream files exceed the 1000-line
+source gate (`mcp/server.mjs`, `mcp/browser.mjs`, `scripts/windows-uia.ps1`,
+`scripts/windows-takeover.cs`), so they are stored as `<name>.partN.<ext>` and reassembled by
+`npm run build` into `lib/computer-use/`, which refuses a digest mismatch.
+
+Only the upstream MCP stdio server, the PowerShell UIA backend and the upstream non-desktop
+suites are vendored. The upstream DSH adapter, settings client, routes and docs are not: the
+adapter is `src/components/computer-use/index.ts` with `src/cu/` (approval, config, names,
+overrides, RPC client, state). The row mounts beside the mode rows, the `ops_cu_*` tools are
+registered globally, and the server runs as one persistent child behind a stdio JSON-RPC client.
+
+### Local state
+
+`<DSH_HOME>/dsh-ops/computer-use.json` holds sidebar-console overrides for the computer-use
+settings and `<DSH_HOME>/dsh-ops/usage.json` holds the usage counters. Both are written by this
+plugin alone, atomically, and neither is part of the published package.
+
+### Release provenance
+
+Unchanged from 1.0.0: each staged target carries `runtime/<target>/provenance.json` (version,
+target, executable, sha256), the assembled release carries a release-wide manifest plus
+`SHA256SUMS`, and no sigstore/SLSA attestation is produced.
+
 ## Unreleased: OPS PTC preset fragment
 
 `presets/ops-ptc.patch.yml` is a generated copy of `@deepseek-ai/dsh-web-app/presets/ptc.patch.yml` (MIT,
@@ -78,7 +110,7 @@ FastCtx, `vendor/fastctx/`, the background component, or the FastCtx payload
 package, they describe those releases, not this one; those files remain in the
 repository history and in the published tarballs of the versions that carried them.
 
-## Current target matrix (0.4.x)
+## Target matrix history (0.4.x)
 
 The current package declares `win32-x64`, `linux-x64`, `darwin-arm64` and `darwin-x64` as its release targets (`RELEASE_TARGETS`). The resolver's `PLATFORMS` additionally accepts `linux-arm64` as a locally staged source build: `stage --platform linux-arm64` writes a receipt, `check --platform linux-arm64` and `check --staged` validate it, and a release tarball does not carry it.
 The 0.3.1 record below is historical: it shipped Apple Silicon only and did not include

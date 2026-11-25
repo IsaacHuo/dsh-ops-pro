@@ -1,11 +1,14 @@
-dsh-ops
+dsh-ops-pro
 Copyright (c) 2026 T-Auto and the dsh-ops contributors
+
+dsh-ops-pro is the maintained continuation of the fork T-Auto/dsh-ops. Earlier
+releases, branches and records use the name dsh-ops; they refer to the same work.
 
 ================================================================
 LICENSE
 ================================================================
 
-dsh-ops is licensed under the MIT License. The license text is in `LICENSE`.
+dsh-ops-pro is licensed under the MIT License. The license text is in `LICENSE`.
 Nothing in this distribution is relicensed. The MIT grant covers only the work
 this repository authored; components with their own licenses are noted below.
 

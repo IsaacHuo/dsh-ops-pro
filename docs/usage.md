@@ -3,41 +3,42 @@
 The complete install, update and remove flow, plus every option of the command-line interface.
 
 Before replacing a running installation, read [Upgrade and uninstall safely](upgrading.md)
-for stopping the host, registry-policy failures and the 0.4.x-to-0.5.x migration checklist.
+for stopping the host, registry-policy failures and the 0.5.x-to-1.1.0 migration checklist.
 
-## 0.5.0 candidate and component defaults
+## 1.1.0 components and defaults
 
-Native file paths (including copy/move destinations), omitted search paths and Bash's default or
-relative `workdir` follow the live `workingDirectory` service. Each call resolves its base once;
-`resolvedFrom` and `cwdSource` identify that base in structured and rendered file/Bash results
-(credential refusals remain path-free).
-The DSH 0.2.2 `workingDirectory` service is required. Missing services, service errors
-or cancellation stop the call rather than silently using an old directory. Changing cwd never
-widens `sandboxPolicy.workspaceRoot` write authority. Native `ops_result` defaults to the live cwd;
-after changing directories, pass the original returned `referenceRoot` as `root` to page or release
-an older reference. The shared PTC result capability also defaults to the live cwd; use an explicit root for workspace-bound batch audits.
+The bundle declares one `dsh-ops-pro` row. The five built-in presets (`minimal`, `standard`, `ptc`,
+`ops-ptc`, `cordis`), discovery, resultCache and disk reporting are configured on that row's
+Plugins page. The `ops-ptc` preset is registered by the plugin at runtime from the bundled fragment
+`presets/ops-ptc.patch.yml`.
 
-This checkout is an unreleased candidate. The bundle declares one enabled `dsh-ops-pro` row. Its
-built-in preset consumers, explicit `presets` map, Native discovery, panel, TUI and companion link
-are configured on the same page. Panel and TUI start off. Migrate saved legacy-row values into
-this row before removing obsolete overrides; OPS does not rewrite profiles automatically.
+Enabled by default: the five presets, `discovery`, `resultCache`. Disabled by default: `panel`
+(read-only sidebar capture), `tui` (TUI integration), `download-guard` (no listener until a template
+is set) and `computer-use` (enabling it drives the real desktop). `disk.retention` is a validated
+contract only; this release evicts nothing.
 
-Standard and Cordis publish resident Native tools; Minimal has no file baseline; PTC publishes
-typed APIs with a separate SDK loader; OPS PTC (`ops-ptc`) is registered at plugin runtime and keeps
-that surface, adding the batch-call guidance from the editable `prompts/batching-guidance.md`: one lesson on
-the first accepted pre-step batch, then shape notices for root `run_code` programs
-(`bypass`/`plan`/`shape`, each latched per turn), all delivered as user-role messages carrying the plugin
-source kind `dsh-ops:batching-guidance` (no plugin envelope) that enter logged history (on in the packaged
-bundle; see [presets](presets.md)).
-The default preset is set by one button on the row's detail page; nothing forces or restores it automatically.
-Residency, dynamic loading, Bash, file replacement and
-Windows host-shell hiding are independently controlled. Global gates preserve saved per-preset
-intent. Explicit consumers use the same assembler; unlisted presets remain unchanged.
-[Configuration](configuration-reference.md) describes native Switch controls and exact custom ids;
-see the [upgrade notes](upgrading.md#moving-from-04x-to-05x) for migration.
+`computer-use` is the capability row added in 1.1.0: Windows only, `ops_cu_*` tools registered
+globally, running the bundled `dsh-computer-use-win` 0.6.3 runtime (pinned commit `acfb689`, files
+byte-identical to upstream with SHA-256 verification). Element identification is tree-first (Windows
+UIA tree, browser CDP accessibility tree); screenshots and OCR are the fallback. See
+[Computer use, sidebar console and usage statistics](computer-use.md).
 
+After installing 1.1.0 the Plugins page gains a Computer use and a Usage panel. Desktop automation
+requires enabling the `computer-use` row first, and approving each write when approval is asked for.
 
-In 0.5, enabling official-tool replacement does not guarantee that a conditional official tool disappears from the model's tool table. When the OPS counterpart has conditional admission, OPS keeps the official registration visible and guards its dispatch only when the same captured step toolSet admits the counterpart and the consumer still has current authority. An absent, revoked or not-yet-ready counterpart cannot disable the official tool as well. Safe unconditional resident replacements may still use host restrictions. OPS never wraps official definitions or hides tools from inside admission conditions or prompt assembly.
+Legacy component modules (`mode-*`, `discovery`, `panel`, `tui`, `shell`, `file`, `ptc`,
+`hide-official`, `background`) remain exported: a saved override for one of those specifiers still
+loads its legacy module, but it cannot match the `dsh-ops-pro` row. The upgrade needs no manual
+configuration deletion; dropping such an override returns the plugin to single-row behaviour.
+
+Native file paths (including copy/move targets), omitted search paths and a Bash default or relative
+`workdir` all follow the live `workingDirectory` service. Each call resolves the base once, and the
+structured file and Bash results name that base through `resolvedFrom` and `cwdSource`; a host
+without the service falls back to `session.header.cwd` and says so. Changing the cwd never widens the
+write policy of `sandboxPolicy.workspaceRoot`.
+
+Meaning and defaults of every switch are in [Configuration reference](configuration-reference.md);
+preset registration and the default preset are in [Presets](presets.md).
 
 ---
 

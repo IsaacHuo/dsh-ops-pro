@@ -162,6 +162,8 @@ Settings, the tool list, element-id rules and known issues are in [computer use]
 
 ## Documentation
 
+- [Documentation index](docs/README.md): every technical document grouped by purpose, with bilingual pairs marked.
+
 - [Third-party preset integration API](docs/integration-api.md) · [External Native providers](docs/external-provider.md) · [Scoped diagnostics](docs/diagnostics.md)
 
 - [Usage](docs/usage.md) · [Troubleshooting](docs/troubleshooting.md) · [Component reference](docs/component-reference.md) · [Configuration reference](docs/configuration-reference.md) · [Presets](docs/presets.md)
@@ -181,7 +183,7 @@ Medium/unlabeled files. Unreadable labels remain unknown. See
 
 ## License
 
-The current dsh-ops source is distributed under the **MIT License**; see [LICENSE](LICENSE). Versions before 0.3.2 bundled Apache-2.0-licensed FastCtx source; that source was removed together with the background component, and no FastCtx code or binary is part of the current distribution. FastCtx's license text and upstream notice are retained in `licenses/fastctx/`, and its historical attribution is preserved in [NOTICE](NOTICE).
+The current dsh-ops-pro source is distributed under the **MIT License**; see [LICENSE](LICENSE). Versions before 0.3.2 bundled Apache-2.0-licensed FastCtx source; that source was removed together with the background component, and no FastCtx code or binary is part of the current distribution. FastCtx's license text and upstream notice are retained in `licenses/fastctx/`, and its historical attribution is preserved in [NOTICE](NOTICE).
 
 The separate Windows Bash payload package (the npm optional dependency `@dsh-ops/bash-win32-x64`) is distributed under its upstream components' licenses: Git for Windows includes GPL-2.0 and other licensed components, whose original licenses, notices and provenance records are kept with the payload. PowerShell stays host-managed and is distributed under Microsoft's MIT and third-party component licenses. The plugin's MIT license does not replace those licenses. See [PROVENANCE.md](docs/PROVENANCE.md).
 

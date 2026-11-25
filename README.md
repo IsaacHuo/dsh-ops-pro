@@ -116,7 +116,7 @@ npx --yes dsh-ops-pro@latest uninstall --profile desktop
 
 旧版显式 provision 的 `<DSH_HOME>/dsh-ops/` 文件（provision 的 shell，以及早期版本可 provision 的 FastCtx 运行时）需单独清理：`npx --yes dsh-ops-pro@latest uninstall --yes`。已移除的后台组件留下的 `~/.fastctx/` 状态默认不删；需要时显式加 `--purge-fastctx`。
 
-组件 bundle 只插入一个 `dsh-ops` 行：其中按预设配置常驻、动态加载、Bash、文件替换与宿主 PowerShell 隐藏，并可通过 `presets` 显式接入自定义消费者。内置与外部预设共用装配流程。旧 `mode-*`、`discovery`、`compat`、`panel`、`tui` 及更早的 `shell`、`file`、`ptc`、`hide-official` 行覆盖须迁入单行；兼容开关已移除，改用各项隐藏开关。见[配置参考](docs/配置参考.md)。
+组件 bundle 只插入一个 `dsh-ops-pro` 行：其中按预设配置常驻、动态加载、Bash、文件替换与宿主 PowerShell 隐藏，并可通过 `presets` 显式接入自定义消费者。内置与外部预设共用装配流程。旧 `mode-*`、`discovery`、`compat`、`panel`、`tui` 及更早的 `shell`、`file`、`ptc`、`hide-official` 行覆盖须迁入单行；兼容开关已移除，改用各项隐藏开关。见[配置参考](docs/配置参考.md)。
 
 原 `dsh-ops/background` 组件（FastCtx 后台任务）已移除。仍保留该行的 profile 照常加载：该行不发布任何工具，只记录一条警告，可直接删除。
 
@@ -137,6 +137,8 @@ npx --yes dsh-ops-pro@latest uninstall --profile desktop
 
 ## 文档
 
+- [文档索引](docs/README.md)：按用途分组的全部技术文档，标注中英文对照。
+
 - [第三方预设集成接口](docs/集成接口.md) · [外部 Native 提供者](docs/外部工具提供者.md) · [作用域诊断](docs/集成诊断.md)
 
 - [使用指南](docs/使用指南.md) · [常见问题](docs/常见问题.md) · [组件参考](docs/组件参考.md) · [配置参考](docs/配置参考.md) · [预设与默认模式](docs/预设与默认模式.md)
@@ -155,7 +157,7 @@ Windows Bash 自检：`dsh-ops-pro ladder` 分别报告映像/祖先路径完整
 
 ## 许可证
 
-当前 `dsh-ops` 源码以 **MIT** 许可分发，见 [LICENSE](LICENSE)。`0.3.2` 之前的版本曾内置以 Apache-2.0 许可的 FastCtx 源码；该源码随后台组件一并移除，当前发行版不再包含任何 FastCtx 代码或二进制。FastCtx 的许可文本与上游声明保留在 `licenses/fastctx/`，历史归属见 [NOTICE](NOTICE)。
+当前 `dsh-ops-pro` 源码以 **MIT** 许可分发，见 [LICENSE](LICENSE)。`0.3.2` 之前的版本曾内置以 Apache-2.0 许可的 FastCtx 源码；该源码随后台组件一并移除，当前发行版不再包含任何 FastCtx 代码或二进制。FastCtx 的许可文本与上游声明保留在 `licenses/fastctx/`，历史归属见 [NOTICE](NOTICE)。
 
 Windows 随包 Niubash 及其 WinuxCmd、Git 等组件分别遵循上游许可证；原始许可证、NOTICE 与来源记录随完整载荷保留。Git Bash 仅保留为显式 legacy 后端与源码路径，不再默认下载其可选包。插件 MIT 许可不替代任何第三方许可；见 [NOTICE](NOTICE) 和[升级与卸载](docs/升级与卸载.md)。
 

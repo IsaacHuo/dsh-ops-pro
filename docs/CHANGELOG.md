@@ -7,6 +7,15 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+Release engineering for 1.1.0.
+
+- `.github/workflows/ci.yml`: the push trigger now covers `release/*` (it listed only `release/0.4.0`), so a staged release branch is validated on push and the commit a release tag points at already carries a green `CI required` check, which `release.yml` requires. `scripts/check-workflows.mjs` asserts the pattern instead of the 0.4.0 branch name.
+- `docs/PROVENANCE.md`: new `## 1.1.0` section records the vendored computer-use runtime (upstream, pinned commit `acfb689`, MIT holders, byte-identical pinning, part-file reassembly, what is not vendored and who owns the adapter), the two local state files, and that the receipt-plus-checksum provenance mechanism is unchanged. The stale `Current target matrix (0.4.x)` heading is now `Target matrix history (0.4.x)`.
+- `NOTICE`: the distribution identifies itself as `dsh-ops-pro` and states that it continues the `T-Auto/dsh-ops` fork; copyright holders and the historical FastCtx paragraph are unchanged.
+- `docs/usage.md` / `docs/使用指南.md`: the 0.5.0-candidate section is replaced by the 1.1.0 component and default-value description (single row, five presets, defaults for panel/tui/download-guard/computer-use, legacy module exports, live working-directory base).
+- `docs/upgrading.md` / `docs/升级与卸载.md`: new "Upgrading from 0.5.x to 1.1.0" section — package and command rename, install and verify steps, unchanged state directory and log prefix, the two new state files, and rollback.
+- `README.md`: the single-row paragraph names the `dsh-ops-pro` row.
+
 Documentation pass on the computer-use surface; no code, configuration or vendored file changed.
 
 - `README.md` / `README.en.md`: the intro now states what the plugin adds instead of comparative claims; a **Requirements** section lists the supported platforms and the Windows computer-use prerequisites (PowerShell 5.1 and the .NET UI Automation assemblies that ship with Windows, Edge or Chrome for the browser lane) and says that every executable part — native worker, bash payload, computer-use runtime — is inside the npm package, so no component is installed separately. A **Computer use** section summarizes the structure-first identification model (UIA tree, page accessibility tree, element ids), the two lanes, the upstream provenance and the browser choice, and links the reference doc.
@@ -14,6 +23,14 @@ Documentation pass on the computer-use surface; no code, configuration or vendor
 - `docs/configuration-reference.md` / `docs/配置参考.md`: the single `computer-use.enabled` row now points at a short subsection with the three keys, the six settings groups, the "unknown keys are errors" rule and the console-override precedence.
 - `docs/troubleshooting.md` / `docs/常见问题.md`: three computer-use questions — what has to be installed additionally, how Edge, Chrome and other Chromium browsers differ, and whether it takes over the mouse and keyboard.
 - The computer-use docs follow the structure of the Microsoft Hybrid-Computer-Use documentation for organization; the technical content follows this repository's implementation, and the runtime provenance and pinned-commit notice stay as recorded in `vendor/computer-use/UPSTREAM.md`.
+
+Release record and documentation structure.
+
+- `docs/README.md` is new: one index groups every document by purpose (getting started, computer use, architecture, tools and contracts, cross-platform, operations and verification, benchmarks, governance and history) and marks which entries are bilingual pairs; `README.md` / `README.en.md` link it as the documentation entry point. Every relative target was checked to exist.
+- `docs/roadmap.md` / `docs/路线图.md`: the shipped table now ends at 1.1.0 (computer use, sidebar console, usage statistics) and the open directions name what is actually left — remaining upstream desktop surfaces, the Firefox lane, ARM64 targets, `check-release` partial runs and the missing `bench/cli.mjs tracks` subcommand.
+- `docs/manual-validation.md` / `docs/手动验收.md`: a current 1.1.0 section lists the ten desktop steps CI cannot cover (identity, tool publication without a stray child, element-id lifecycle, approval and denial, browser lane, crash restart limit, console settings write, usage counters, uninstall keeps state); the 0.4.0 checklist is kept below as history.
+- `AGENTS.md`: the project description, the `release/<version>` staging convention, the docs row (bilingual pairs indexed by `docs/README.md`) and the rule that both sides of a bilingual pair change together.
+- `docs/release-1.1.0.md` is the release record: contents, inheritance and modification of both upstreams, the verification table with real command results, the gates that were not run on the release host, known limits, rollback, the release checklist and the GO/NO-GO verdict.
 
 
 ## [1.1.0] — 2026-11-25 — Computer use, sidebar console, usage statistics

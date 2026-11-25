@@ -1,9 +1,23 @@
-# 0.4.0 manual acceptance
+# Manual acceptance
 
-中文：[手动验收](手动验收.md). These are operator checks, not claims that every UI or deployment
-has been exercised. Use a disposable profile and workspace; retain commands, observed results,
-platform/host versions and candidate commit. Do not install or upgrade a real runtime merely to
-open its settings page.
+中文：[手动验收](手动验收.md). The 1.1.0 checklist below is the current release checklist; the 0.4.0 checklist after it is kept as a historical record. These are operator checks, not claims that every UI or deployment has been exercised. Use a disposable profile and workspace; retain commands, observed results, platform/host versions and the candidate commit.
+
+## 1.1.0 computer use (current)
+
+Run on a real Windows 10/11 x64 desktop. Nothing in this list is exercised by CI: the repository suites cover the vendored upstream units with mocks, not a live desktop. Record the OS build, the DSH version, the commit and a screenshot per step.
+
+1. **Install and identity.** In a disposable profile, run `npx --yes dsh-ops-pro@latest install --profile desktop`, start the host and confirm exactly one row with id `dsh-ops-pro` at 1.1.0; `dsh-ops-pro status --profile desktop` agrees. The `ops_cu_*` tools are absent while the computer-use row is disabled.
+2. **Enable.** Turn the computer-use row on, restart, and confirm the 26 `ops_cu_*` tools appear. With the row off again, they disappear and no child process remains (check with `tasklist`).
+3. **Desktop identification.** Open a normal Win32 application (Notepad is enough). `cu_snapshot` and `cu_accessibility_tree` return an element tree; `cu_find` locates a menu item by name; `cu_invoke` activates it. Do not move the mouse: the lane works in the background, so the pointer position must be unchanged afterwards.
+4. **Element ids.** Reuse an id from step 3 for `cu_element_info` and one action; then activate another window, return, and confirm the stale id is rejected rather than acting on the wrong element. `cu_set_value` with `elementId: "new-tab"` in the browser lane opens a page.
+5. **Approval and refusal.** Trigger an action that needs approval (for example `cu_type_text` into a focused field after `cu_focus`). Confirm the approval prompt names the action and the target; deny once and confirm nothing was typed. No credential value may appear in the prompt or the report.
+6. **Browser lane.** Launch the browser lane with a throwaway profile, open one site, read the accessibility outline, fill a field with `cu_set_value` and close the lane. Then set `browserAttachUser` and confirm attaching to the user's own browser requires explicit approval plus remote debugging, and that the plugin never signs in on its own.
+7. **Failure recovery.** Kill the computer-use child process once and confirm it restarts; kill it twice within a minute and confirm the tools report `CU_UNAVAILABLE` instead of retrying silently. A tool timeout reports `CU_TIMEOUT` and leaves no half-executed action.
+8. **Sidebar console.** Open the 电脑操控 tab, change one setting, and confirm it lands in `<DSH_HOME>/dsh-ops/computer-use.json` and restarts only the computer-use runtime. The Status tab reports the same state the CLI prints.
+9. **Usage statistics.** Run a handful of tool calls, check calls, failures, p50/p95 wall time and the estimated token count in the 用量统计 tab; `resetUsage` clears them and `<DSH_HOME>/dsh-ops/usage.json` stays valid JSON.
+10. **Uninstall.** Uninstall, restart, and confirm no `ops_cu_*` tools, no child process, and that `computer-use.json` and `usage.json` survive for a rollback.
+
+## 0.4.0 checklist (historical)
 
 ## Build and release evidence
 
