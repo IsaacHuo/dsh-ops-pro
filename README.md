@@ -24,16 +24,16 @@
 >
 > **从上游 `dsh-ops` 迁移**：两者发布同一组 `ops_*` 工具，不能同时启用——先 `remove dsh-ops` 再 `add dsh-ops-pro`。插件行改名为 `dsh-ops-pro`，原 `dsh-ops` 行上保存的设置不会自动带过来，需在设置页重新确认；集成方的导入路径从 `dsh-ops/integration` 改为 `dsh-ops-pro/integration`。
 
-以提高token效率为目的，提供新增的ops系列工具并隐藏部分官方工具为方案的插件，低改动面，低侵入性，与其他插件广泛兼容。
+插件在 DSH 的现有工具集之外新增一组 `ops_*` 工具，并可按配置隐藏部分官方工具。默认只新增工具与配置项，不接管宿主逻辑，可与其它插件同时启用。
 
-- 在windows平台下：
-  - 提供bash工具并隐藏pwsh工具，均可配置。本插件包随插件包提供约100mb的niubash荷载，比300mb的git bash轻量60%，比1G的wsl轻量90%，并有约10%的性能与运行时间收益；同时可选使用本机gitbash或wsl
-- 在windows，linux，mac下：
-  - 提供一系列常驻高级工具，大约增加约1000token的系统提示词，可关闭。高级工具会使用 [Tranquillitatis-Lab/ops-ga](https://github.com/Tranquillitatis-Lab/ops-ga) ，以及其他方案进行持续优化，并跟进最新的模型进展
-  - 提供缓存友好的动态工具加载框架，可以按需加载面向具体场景的高级专项工具，可关闭
-  - 提供一个包含教师模型轨迹的预设，让AI学会单次调用多个工具以减少任务完成需要的轮数
+功能范围：
+
+- Windows：发布 `ops_bash`，可选隐藏官方 PowerShell 工具。随包提供约 100 MB 的 Niubash bash 载荷，也可改用本机 Git Bash 或 WSL。
+- Windows、Linux、macOS：发布一组常驻高级工具，系统提示词约增加 1000 token，可关闭。实现参考 [Tranquillitatis-Lab/ops-ga](https://github.com/Tranquillitatis-Lab/ops-ga) 等方案持续调整。
+- 缓存友好的动态工具加载：按需加载面向具体场景的专项工具，可关闭。
+- 带教师模型轨迹的预设：让模型学会一次调用多个工具，减少完成任务所需的轮数。
 - PTC SDK 目录包含 18 个 API：15 个文件/文档工具，加批处理、结果引用和加载器。
-- 可与 [Tranquillitatis-Lab/dsh-live-compact](https://github.com/Tranquillitatis-Lab/dsh-live-compact) 搭配使用。两个插件都属于独立乘区，和上下文管理/记忆框架/上下文压缩/提示词注入等token节省方案乘算叠加
+- 可与 [Tranquillitatis-Lab/dsh-live-compact](https://github.com/Tranquillitatis-Lab/dsh-live-compact) 搭配使用，两者互不依赖。
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/8238e4cd-61aa-4740-83bf-3aa6dd61291b" height="300" alt="dsh token 效率">
@@ -43,6 +43,18 @@
 <p align="center"><em>左：deepseek-v4.1-flash-1017在各harness的跑分与开销<br>右：ops在自用benchmark上取得的的成绩。完整benchmark将随后续更新发布<br>dsh-ops团队将致力于持续优化dsh的token效率，以更低的成本更好地完成同样的任务</em></p>
 
 交流群：企鹅 1127808570
+
+## 系统要求
+
+| 平台 | 要求 |
+| --- | --- |
+| Windows | 10 / 11 x64；Windows PowerShell 5.1（系统自带）；使用电脑操控时另需 Edge 或 Chrome |
+| Linux | x64 |
+| macOS | 13 及以上，arm64 与 x64 |
+
+所有可执行部分随 npm 包发布：预编译的 native worker、约 100 MB 的 bash 载荷、内置的电脑操控运行时。安装后不需要再下载或另装组件；npm 与插件市场两条安装路径的内容相同。
+
+系统要求之外没有额外依赖。电脑操控在 Windows 上读 Windows UI Automation 树（系统自带），网页通道通过 CDP 驱动 Edge 或 Chrome；两者都不需要单独安装 MCP 服务或浏览器扩展。
 
 ## 安装、更新、卸载
 
@@ -112,11 +124,23 @@ npx --yes dsh-ops-pro@latest uninstall --profile desktop
 
 在 dsh-TUI 中启用 `dsh-ops/tui` 行并重启，即可添加 OPS 侧栏；不抢焦点，不执行额外工具调用。没有 `tuiPanels` 的宿主仅让该可选行等待，不影响其它组件。见 [侧栏说明](docs/tui-panel.zh.md)。 聚焦后可用 `f` 筛选、`n`/`p` 本地翻页、`a` 确认跨会话提醒；只浏览有界保留元数据，不拉取结果分页。
 
+## 电脑操作（computer use）
+
+`computer-use` 配置段在 Windows 上发布 26 个 `ops_cu_*` 工具，覆盖桌面程序与 Chromium 浏览器，默认关闭。
+
+- 元素识别以结构为主：桌面通道读 Windows UI Automation 元素树，网页通道读页面的可访问性树；拿到元素 id 后直接点击、写入、展开、滚动，不依赖截图坐标。没有语义节点时才回退到截图、OCR 与坐标。
+- 两条通道：桌面窗口，以及网页通道（Edge 或 Chrome）。网页通道可连接用户自己的浏览器，读到的是用户已登录的标签页。
+- 来源：内置 dsh-computer-use-win 0.6.3（MIT，固定提交 `acfb689`），工具名由 `mcp__wincu__windows_computer_use_*` 改为 `ops_cu_*`。
+- 浏览器选择：Edge 与 Chrome 的能力相同，差别在启动顺序与 profile 模式（一次性 profile / 保留登录 / 连接用户浏览器）。其他 Chromium 浏览器可用环境变量接入，属于可选配置，不是依赖。
+
+设置项、工具清单、元素 id 规则与已知问题见[电脑操控](docs/computer-use.zh.md)。
+
 ## 文档
 
 - [第三方预设集成接口](docs/集成接口.md) · [外部 Native 提供者](docs/外部工具提供者.md) · [作用域诊断](docs/集成诊断.md)
 
 - [使用指南](docs/使用指南.md) · [常见问题](docs/常见问题.md) · [组件参考](docs/组件参考.md) · [配置参考](docs/配置参考.md) · [预设与默认模式](docs/预设与默认模式.md)
+- [电脑操控、侧边栏控制台与用量统计](docs/computer-use.zh.md)：系统要求、配置项、工具与元素识别模型。
 - [Windows 运行时证据](docs/windows-runtime-evidence.zh.md)：载荷兼容、Low 完整性、MSYS 启动及杀软/审批排查。
 - [PTC 设计与使用](docs/native-ptc.md) · [手动验证](docs/手动验收.md)
 - [贡献指南](docs/贡献指南.md) · [路线图](docs/路线图.md) · [变更日志](docs/CHANGELOG.md) · [溯源记录](docs/PROVENANCE.md)

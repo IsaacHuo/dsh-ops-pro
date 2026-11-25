@@ -224,6 +224,18 @@ Standalone `integration({ preset, ...options })` uses the same options and assem
 to its own mounting plugin; unrelated bundle global switches do not control it. Avoid duplicate
 bindings for the same id/scope. See [scope/lifetime restrictions](integration-api.md#lifecycle-and-ownership).
 
+### Computer use (`computer-use`)
+
+Windows only. The section has three keys; everything else is controlled by the upstream settings inside `settings`:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `computer-use.enabled` | false | Whether to publish the 26 `ops_cu_*` tools in every mode |
+| `computer-use.callTimeoutMs` | 90000 | Per-call time limit, 1000–600000 |
+| `computer-use.settings` | `{}` | Upstream settings object; unknown keys are errors, enum values are validated |
+
+`settings` falls into six groups — desktop, browser, overlay, toolset, indicator and notes — with keys and values in [computer use](computer-use.md#enable-and-configure). Plain values saved on the computer use page of the sidebar console go to `<DSH_HOME>/dsh-ops/computer-use.json` and win over the same key in the configuration section; saving restarts only the computer-use runtime.
+
 ## Built-in advanced configuration
 
 Built-in sections retain validated worker/Shell settings (`binaryPath`, `required`, `bashPath`,

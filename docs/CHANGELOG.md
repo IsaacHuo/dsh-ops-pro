@@ -7,6 +7,15 @@ this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+Documentation pass on the computer-use surface; no code, configuration or vendored file changed.
+
+- `README.md` / `README.en.md`: the intro now states what the plugin adds instead of comparative claims; a **Requirements** section lists the supported platforms and the Windows computer-use prerequisites (PowerShell 5.1 and the .NET UI Automation assemblies that ship with Windows, Edge or Chrome for the browser lane) and says that every executable part — native worker, bash payload, computer-use runtime — is inside the npm package, so no component is installed separately. A **Computer use** section summarizes the structure-first identification model (UIA tree, page accessibility tree, element ids), the two lanes, the upstream provenance and the browser choice, and links the reference doc.
+- `docs/computer-use.md` / `docs/computer-use.zh.md`: rewritten as reference documents with a fixed section order — overview, requirements, enable and configure (three keys plus the six settings groups), the 26 tools with their key parameters, the element identification model (element-id lifecycle, browser-lane special ids, fallback order, boundaries, screen-coordinate mapping), the browser lane (settings, profile modes, attaching to the user's browser, `WCU_BROWSER_*` variables), limits and known issues, and source and license. The sidebar-console and usage-statistics sections are kept unchanged in substance.
+- `docs/configuration-reference.md` / `docs/配置参考.md`: the single `computer-use.enabled` row now points at a short subsection with the three keys, the six settings groups, the "unknown keys are errors" rule and the console-override precedence.
+- `docs/troubleshooting.md` / `docs/常见问题.md`: three computer-use questions — what has to be installed additionally, how Edge, Chrome and other Chromium browsers differ, and whether it takes over the mouse and keyboard.
+- The computer-use docs follow the structure of the Microsoft Hybrid-Computer-Use documentation for organization; the technical content follows this repository's implementation, and the runtime provenance and pinned-commit notice stay as recorded in `vendor/computer-use/UPSTREAM.md`.
+
+
 ## [1.1.0] — 2026-11-25 — Computer use, sidebar console, usage statistics
 
 Guide: [computer-use.md](computer-use.md) / [computer-use.zh.md](computer-use.zh.md).

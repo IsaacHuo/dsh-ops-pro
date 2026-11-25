@@ -29,9 +29,6 @@ OPS adds bounded file and document tools to DSH. Native mode returns compact, li
 PTC code receives typed Outcome values from the same one-shot Rust worker. Host integration is
 strict TypeScript, compiled to the existing JavaScript package paths.
 
-Supported: Windows x64, Linux x64, and macOS 13+ on Apple Silicon or Intel
-(`darwin-arm64`, `darwin-x64`). See [macOS](docs/macos.md).
-
 > [!IMPORTANT]
 > This branch is the **0.5.0 candidate**, not a published release: configuration now uses one
 > `dsh-ops` row. Commands using `@latest` below select the published package; build and pack this
@@ -74,6 +71,18 @@ its documented partial enforcement and runtime-compatibility limits.
 
 Historical token-saving claims are not evidence that this candidate meets its release gates.
 The name “ops” means general operations, not an operations/SRE product.
+
+## Requirements
+
+| Platform | Requirement |
+| --- | --- |
+| Windows | 10 / 11 x64; Windows PowerShell 5.1 (shipped with Windows); Edge or Chrome when computer use is enabled |
+| Linux | x64 |
+| macOS | 13+ on Apple Silicon or Intel (`darwin-arm64`, `darwin-x64`); see [macOS](docs/macos.md) |
+
+Every executable part ships inside the npm package: the prebuilt native worker, the ~100 MB bash payload and the built-in computer-use runtime. Nothing has to be downloaded or installed afterwards; the npm and marketplace install paths deliver the same contents.
+
+Nothing beyond these requirements is a dependency. Computer use reads the Windows UI Automation tree (shipped with Windows) and drives Edge or Chrome over CDP; neither needs a separately installed MCP server or browser extension.
 
 ## Install, update and uninstall
 
@@ -140,11 +149,23 @@ The former `dsh-ops/background` component (FastCtx background jobs) has been rem
 
 Enable `tui.enabled` on the `dsh-ops` row in dsh-TUI and restart to add the OPS sidebar without stealing focus or executing tools. Without `tuiPanels`, only that optional row stays pending. See [Sidebar guide](docs/tui-panel.md). While focused, use `f` to filter, `n`/`p` for local pages and `a` to acknowledge all-session alerts; only bounded retained metadata is browsed, never fetched result pages.
 
+## Computer use
+
+The `computer-use` configuration section publishes 26 `ops_cu_*` tools on Windows, covering desktop programs and Chromium browsers. It is off by default.
+
+- Identification is structure-first: the desktop lane reads the Windows UI Automation element tree, the browser lane reads the page accessibility tree. Element ids then go straight into click, set-value, invoke and scroll calls; screenshot coordinates are only a fallback when no semantic node exists.
+- Two lanes: desktop windows, and the browser lane (Edge or Chrome). The browser lane can attach to the user's own browser and work with the tabs they are already signed in to.
+- Source: the built-in dsh-computer-use-win 0.6.3 (MIT, pinned commit `acfb689`); tool names change from `mcp__wincu__windows_computer_use_*` to `ops_cu_*`.
+- Browser choice: Edge and Chrome have the same capability. The difference is launch order and profile mode (throwaway profile, kept sign-ins, or the user's own browser). Other Chromium browsers connect through environment variables; that is optional configuration, not a dependency.
+
+Settings, the tool list, element-id rules and known issues are in [computer use](docs/computer-use.md).
+
 ## Documentation
 
 - [Third-party preset integration API](docs/integration-api.md) · [External Native providers](docs/external-provider.md) · [Scoped diagnostics](docs/diagnostics.md)
 
 - [Usage](docs/usage.md) · [Troubleshooting](docs/troubleshooting.md) · [Component reference](docs/component-reference.md) · [Configuration reference](docs/configuration-reference.md) · [Presets](docs/presets.md)
+- [Computer use, sidebar console and usage statistics](docs/computer-use.md): requirements, settings, tools and the element identification model.
 - [Windows runtime evidence](docs/windows-runtime-evidence.md): payload compatibility, Low integrity, MSYS startup and antivirus/approval diagnostics.
 - [Native PTC](docs/native-ptc.md) · [Manual validation](docs/manual-validation.md)
 - [Contributing](docs/CONTRIBUTING.md) · [Roadmap](docs/roadmap.md) · [Changelog](docs/CHANGELOG.md) · [Provenance](docs/PROVENANCE.md)
