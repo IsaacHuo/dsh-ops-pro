@@ -270,6 +270,8 @@ jobs:
         # against the staged bytes and re-checks the Windows IPC binary and source digests. A
         # partial download, a foreign-architecture binary, a stale receipt or a manifest/target
         # disagreement fails here instead of shipping.
+        # Use Git Bash tar for Unicode filenames and stop when either verification fails.
+        shell: bash
         run: |
           node scripts/verify-gate.mjs --skip-install
           node bin/check-release.mjs
